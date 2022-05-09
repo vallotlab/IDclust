@@ -1,0 +1,39 @@
+Package: IDclust
+Title: Iterative Differential Clustering for single-cell
+Version: 0.99.00
+Authors@R: c(person(given = "Pacome",
+           family = "Prompsy",
+           role = c("aut", "cre"),
+           email = "pacome.prompsy@curie.fr",
+           comment = c(ORCID = "0000-0003-4375-7583")),
+	   person(given = "Celine",
+           family = "Vallot",
+           role = c("aut"),
+           email = "celine.vallot@curie.fr",
+           comment = c(ORCID = "0000-0003-1601-2359")))	
+Description: IDclust is an unsupervised method for clustering single-cell datasets (scRNA, scEpigenome). The cells are iteratively re-processed and re-clustered. Subclusters are created provided they are significantly different from each other. 
+License: GPL-3
+biocViews: Software, SingleCell, ChIPSeq, ATACSeq, Classification, Clustering, Epigenetics, PrincipalComponent, SingleCell, ATACSeq, ChIPSeq, MultipleComparison, Normalization, Visualization
+VignetteBuilder: knitr
+URL: https://github.com/vallotlab/IDclust
+BugReports: https://github.com/vallotlab/IDclust/issues
+Encoding: UTF-8
+LazyData: false
+Suggests: 
+    DoParallel,
+    knitr,
+    markdown,
+    igraph,
+    ChromSCape,
+    Seurat,
+    edgeR
+RoxygenNote: 7.1.2
+Roxygen: list(markdown = TRUE)
+Imports: 
+    Matrix,
+    ggplot2,
+    qs,
+    dplyr,
+    tidyr
+Depends: 
+    R (>= 4.1)

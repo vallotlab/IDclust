@@ -10,9 +10,9 @@ iterative_differential_clustering_scEpigenomics(
   plotting = TRUE,
   saving = TRUE,
   nPCA = 10,
-  percent_feature = 1,
+  frac_feature = 1,
   quantile.activation = 0.7,
-  min.pct.cell_assigned = 0.1,
+  min_frac_cell_assigned = 0.1,
   FC.th = 2,
   qval.th = 0.1,
   limit = 5,
@@ -29,43 +29,91 @@ iterative_differential_clustering_scEpigenomics(
 \arguments{
 \item{scExp}{A SingleCellExperiment object}
 
-\item{output_dir}{}
+\item{output_dir}{The output directory in which to plot and save objects.}
 
-\item{plotting}{}
+\item{plotting}{A logical specifying wether to save the plots or not.}
 
-\item{nPCA}{}
+\item{saving}{A logical specifying wether to save the data or not.}
 
-\item{percent_feature}{}
+\item{nPCA}{An integer specifying the number of first PC to keep in the
+dimensionality reduction step.}
 
-\item{quantile.activation}{}
+\item{frac_feature}{A numeric between 0 and 1 specifying the fraction of
+features to keep at each iteration when re-processing the subset of cells.}
 
-\item{min.pct.cell_assigned}{}
+\item{quantile.activation}{A numeric between 0 and 1 specifying the quantile
+of global activation to take as minimal percentage of activation for the
+differential analysis. Increasing this value will decrease the number of
+differential features.}
 
-\item{FC.th}{}
+\item{min_frac_cell_assigned}{A numeric between 0 and 1 specifying the
+minimum percentage of the total cells in the SingleCellExperiment object that
+needs to be assigned. If a lower proportion is assigned, all cells are
+assigned to the cluster of origin.}
 
-\item{qval.th}{}
+\item{FC.th}{A numeric specifying the fold change of activation above/below
+which a feature is considered as significantly differential.}
 
-\item{limit}{}
+\item{qval.th}{A numeric specifying the adjusted p-value below
+which a feature is considered as significantly differential.}
 
-\item{k}{}
+\item{limit}{An integer specifying the minimum number of significantly
+enriched / depleted features required in order for a subcluster to be called
+a 'true' subcluster}
 
-\item{resolution}{}
+\item{k}{An integer specifying the number of nearest neighbors to use for
+the Louvain clustering at each iteration.}
 
-\item{runFDR}{}
+\item{starting.resolution}{A numeric specifying the resolution to use for the
+Louvain clustering of the first iteration. It is recommended to set it quite
+low in order to have few starting clusters.}
 
-\item{limit_by_proportion}{}
+\item{resolution}{A numeric specifying the resolution to use for the Louvain
+clustering at each iteration.}
 
-\item{nThreads}{}
+\item{runFDR}{A logical indicating wether to also run the FDR calculation at
+each iteration. This operation is optional and requires time x CPU x RAM.}
+
+\item{limit_by_proportion}{Optional. A data.frame containing 3 columns -
+ncells, mean_n_differential, sd_n_differential - that reflect the number of
+false positive expected for a given cluster size.}
+
+\item{color}{Set of colors to use for the coloring of the clusters. This must
+contains enough colors for each cluster (minimum 20 colors, but 100 colors
+at least is recommended, based on the dataset).}
+
+\item{nThreads}{If runFDR==TRUE. An integer specifying of threads to use
+for the calculation of the FDR.}
+
+\item{verbose}{A logical specifying wether to print.}
 }
 \value{
-
+A character vector containing the assignation of cells to clusters.
+If saving is true, also saves list of differential analyses, differential
+analyses summaries and embeddings for each re-clustered cluster. If runFDR is
+TRUE, also saves the list of FDR for each re-clusterd cluster.
 }
 \description{
-Iterative Differential Clustering scEpigenomics
+Main function of the IDclust package. Provided a
+SingleCellExperiment pre-processed with ChromSCape, will find biologically
+relevant clusters by iteratively re-clustering and re-processing clusters.
+At each iteration, subclusters having enough significantly enriched features
+compared to other subclusters are defined as 'true' subclusters. Others are
+assigned to parent clusters. The algorithm will stop when no more 'true'
+subclusters are found.
+
+This method ensure that each cluster found in this unsupervised way have
+significant biological differences, based on the user defined thresholds.
+}
+\details{
+The default differential analysis used is the
+differential_activation function from ChromSCape package. This function
+compares the \% of active cells in the cluster versus the rest of cells and
+perform a Chi-squared test to calculate p-values.
 }
 \examples{
-library(ChromSCape)
-data("scExp")
+if(require(ChromSCape)){
+scExp = qs::qread("/media/")
 output_dir = tempdir()
 iterative_differential_clustering_scEpigenomics(
 scExp,
@@ -73,9 +121,9 @@ output_dir = "./",
 plotting = TRUE,
 saving = TRUE,
 nPCA = 10,
-percent_feature = 1,
+frac_feature = 1,
 quantile.activation = 0.7,
-min.pct.cell_assigned = 0.1,
+min_frac_cell_assigned = 0.1,
 FC.th = 2,
 qval.th = 0.1,
 limit = 5,
@@ -88,5 +136,6 @@ color = NULL,
 nThreads = 10,
 verbose = TRUE
 )
+}
 
 }

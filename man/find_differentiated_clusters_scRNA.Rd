@@ -2,50 +2,60 @@
 % Please edit documentation in R/differential_clustering_scRNA_Seurat.R
 \name{find_differentiated_clusters_scRNA}
 \alias{find_differentiated_clusters_scRNA}
-\title{Iterative Differential Clustering scEpigenomics}
+\title{Find Differentiated Clusters scRNA}
 \usage{
 find_differentiated_clusters_scRNA(
   Seu,
-  output_dir = "./",
-  plotting = TRUE,
+  diff_method = c("edgeR-LRT", "Seurat")[1],
   logFC.th = log2(1.5),
   qval.th = 0.01,
-  test.use = c("edgeR-LRT", "Seurat")[1],
   biological_replicate_col = NULL,
   min.pct = 0.1,
-  resolution = 0.8,
-  starting.resolution = 0.1,
   limit = 5,
-  cluster_of_origin = "Initial",
-  nPCA = 50,
-  min.pct.cell_assigned = 0.75,
-  color = TRUE,
-  verbose = TRUE
+  cluster_of_origin = "Omega",
+  min_frac_cell_assigned = 0.1
 )
 }
 \arguments{
 \item{Seu}{A Seurat object containing scRNA dataset with 'seurat_clusters'
 column.}
 
-\item{logFC.th}{}
+\item{diff_method}{A character specifying the method to use for differential
+analysis. Must be either "edgeR-LRT" or "Seurat".}
 
-\item{qval.th}{}
+\item{logFC.th}{A numeric specifying the log Fold-Change of activation
+(\% cells activated) threshold above which a feature is defined as
+significantly differential.}
 
-\item{test.use}{}
+\item{qval.th}{A numeric specifying the adjusted p-value threshold above
+which a feature is defined as significantly differential.}
 
-\item{biological_replicate_col}{}
+\item{biological_replicate_col}{Optional. If diff_method == "edgeR-LRT",
+a character specifying a column of the Seurat object corresponding to the
+replicates or batches of the dataset in order to take in  account
+biological/technical noise for differential analysis. If NULL, will create
+3 random layers of pseudo replicates.}
 
-\item{min.pct}{}
+\item{min.pct}{Minimum percentage of cells to be active in the cells of the
+cluster to consider a feature as potentially significantly differential.}
 
-\item{limit}{}
+\item{limit}{An integer specifying the minimum number of features required
+for a subcluster to be called 'true' subcluster.}
 
-\item{cluster_of_origin}{}
+\item{cluster_of_origin}{A character specifying the name of the cluster of
+origin that will be concatenated before the name of true subclusters.}
 
-\item{min.pct.cell_assigned}{}
+\item{min_frac_cell_assigned}{A numeric between 0 and 1 specifying the
+minimum percentage of the total cells in the SingleCellExperiment object that
+needs to be assigned. If a lower proportion is assigned, all cells are
+assigned to the cluster of origin.}
 }
 \value{
 
 }
 \description{
-Iterative Differential Clustering scEpigenomics
+Find Differentiated Clusters scRNA
+}
+\details{
+
 }

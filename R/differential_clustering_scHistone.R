@@ -1,3 +1,4 @@
+
 #' Find Differentiated Clusters scEpigenomics
 #'
 #' @details  Find significantly differential features between the given set
@@ -9,23 +10,25 @@
 #' 
 #' @param scExp A SingleCellExperiment with 'cell_cluster' column filled with 
 #' cluster assignations.  
-#' @param qval.th The adjusted p-value threshold above which a feature is defined
-#' as significantly differential.
-#' @param min.pct The minimum percentage of cells activated for a given feature
-#' to consider it as differential.
-#' @param logFC.th The log Fold-Change of activation (% cells activated) 
-#' threshold above which a feature is defined as significantly differential.
-#' @param limit The minimum number of genes required for a subcluster to be 
-#' called 'true' subcluster.
+#' @param qval.th A numeric specifying the adjusted p-value threshold above 
+#' which a feature is defined as significantly differential.
+#' @param min.frac A numeric between 0 and 1 specifying the minimum fraction of
+#' cells activated for a given feature to consider it as differential.
+#' @param logFC.th A numeric specifying the log Fold-Change of activation
+#' (% cells activated) threshold above which a feature is defined as
+#' significantly differential.
+#' @param limit An integer specifying the minimum number of features required 
+#' for a subcluster to be called 'true' subcluster.
 #' @param limit_by_proportion Optional. A data.frame containing 3 columns - 
 #' ncells, mean_n_differential, sd_n_differential - that reflect the number of 
 #' false positive expected for a given cluster size.
-#'  (See @seealso [IDclust::calculate_FDR]).
-#' @param cluster_of_origin A characted specifying the name of the cluster of 
+#'  (See  \link{calculate_FDR_scEpigenomics}).
+#' @param cluster_of_origin A character specifying the name of the cluster of 
 #' origin that will be concatenated before the name of true subclusters. 
-#' @param min.pct.cell_assigned The minimum percentage of the total cells in the
-#' SingleCellExperiment object that needs to be assigned. If a lower proportion
-#' is assigned, all cells are assigned to the cluster of origin.
+#' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
+#' minimum percentage of the total cells in the SingleCellExperiment object that
+#' needs to be assigned. If a lower proportion is assigned, all cells are 
+#' assigned to the cluster of origin.
 #'
 #' @return A list containing :
 #'  * "diffmat_n" - A data.frame containing the number of differential regions
@@ -34,17 +37,19 @@
 #'  * "passing_min_pct_cell_assigned" - A boolean indicating if enough cells
 #'   were  assigned
 #' @export
-#'
+#' 
+#' @import dplyr
+#' 
 #' @examples
+#'
 find_differentiated_clusters_scEpigenomics <- function(scExp,
-                                         qval.th = 0.1,
-                                         min.pct = 0.1,
-                                         logFC.th = 0.5,
-                                         limit = 5,
-                                         limit_by_proportion = NULL,
-                                         limit_factor = 2,
-                                         min.pct.cell_assigned = 0.75,
-                                         cluster_of_origin = "0"){
+                                                       qval.th = 0.1,
+                                                       min.frac = 0.1,
+                                                       logFC.th = 0.5,
+                                                       limit = 5,
+                                                       limit_by_proportion = NULL,
+                                                       min_frac_cell_assigned = 0.1,
+                                                       cluster_of_origin = "Omega"){
     cluster_u = names(sort(table(scExp$cell_cluster)))
     diffmat_n = data.frame(n_differential = rep(0,length(cluster_u)),
                            cluster_of_origin = cluster_of_origin,
@@ -60,7 +65,7 @@ find_differentiated_clusters_scEpigenomics <- function(scExp,
         diffmat_n$n_differential[i] = length(which(
             res[,paste0("logFC.", group)] > logFC.th  & 
                 res[,paste0("qval.", group)] < qval.th  & 
-                res[,paste0("group_activation.", group)] > min.pct
+                res[,paste0("group_activation.", group)] > min.frac
         ))
         
         cat(cluster_u[i]," - found", diffmat_n$n_differential[i], "enriched features.\n")
@@ -88,7 +93,7 @@ find_differentiated_clusters_scEpigenomics <- function(scExp,
     passing = TRUE
     
     cat("Finished finding differences - ", n_cell_assigned/ ncol(scExp), " fraction of cells were assigned.\n")
-    if((n_cell_assigned/ ncol(scExp)) < min.pct.cell_assigned){
+    if((n_cell_assigned/ ncol(scExp)) < min_frac_cell_assigned){
         cat("Not enough cells were assigned - not clustering.\n")
         passing = FALSE
     }
@@ -98,53 +103,149 @@ find_differentiated_clusters_scEpigenomics <- function(scExp,
 }
 
 
-#' Iterative Differential Clustering scEpigenomics
+#' Title
 #'
 #' @param scExp A SingleCellExperiment object 
-#' @param output_dir 
-#' @param plotting 
-#' @param nPCA 
-#' @param percent_feature 
-#' @param quantile.activation 
-#' @param min.pct.cell_assigned 
-#' @param FC.th 
-#' @param qval.th 
-#' @param limit 
-#' @param k 
-#' @param resolution 
-#' @param runFDR 
-#' @param limit_by_proportion 
-#' @param nThreads 
-#'
+#' @param limit An integer specifying the minimum number of significantly 
+#' enriched / depleted features required in order for a subcluster to be called
+#' a 'true' subcluster
+#' @param qval.th A numeric specifying the adjusted p-value below
+#' which a feature is considered as significantly differential.
+#' @param logFC.th A numeric specifying the log Fold-Change of activation
+#' (% cells activated) threshold above which a feature is defined as
+#' significantly differential.
+#' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
+#' minimum percentage of the total cells in the SingleCellExperiment object that
+#' needs to be assigned. If a lower proportion is assigned, all cells are 
+#' @param min.pct Minimum percentage of cells to be active in the cells of the
+#' cluster to consider a feature as potentially significantly differential.
+#' @param cluster_of_origin Name of the parent cluster
+#' @param nThreads If runFDR==TRUE. An integer specifying of threads to use
+#' for the calculation of the FDR.
 #' @return
 #' @export
 #'
 #' @examples
-#' if(require(ChromSCape)){
-#' scExp = qs::qread("/media/")
-#' output_dir = tempdir()
-#' iterative_differential_clustering_scEpigenomics(
-#' scExp,
-#' output_dir = "./",
-#' plotting = TRUE,
-#' saving = TRUE,
-#' nPCA = 10,
-#' percent_feature = 1,
-#' quantile.activation = 0.7,
-#' min.pct.cell_assigned = 0.1,
-#' FC.th = 2,
-#' qval.th = 0.1,
-#' limit = 5,
-#' k = 100,
-#' starting.resolution = 0.1,
-#' resolution = 0.8,
-#' runFDR = FALSE,
-#' limit_by_proportion = NULL,
-#' color = NULL,
-#' nThreads = 10,
-#' verbose = TRUE
-#' )
-#' }
+calculate_FDR_scEpigenomics <- function(scExp,
+                                        limit = 5,
+                                        qval.th = 0.01,
+                                        logFC.th = log2(2),
+                                        min.pct = 0.01,
+                                        min_frac_cell_assigned = 0.1,
+                                        cluster_of_origin = "Omega",
+                                        nThreads = 10){
+    if(!requireNamespace("doParallel")){
+        stop("IDclust::calculate_FDR_scEpigenomics - Please install ",
+             "doParallel to run FDR in parallel")
+    }
+    if(!requireNamespace("foreach")){
+        stop("IDclust::calculate_FDR_scEpigenomics - Please install ",
+             "foreach to run FDR in parallel")
+    }
+    
+    myCluster <- parallel::makeCluster(nThreads, type = "FORK")
+    doParallel::registerDoParallel(myCluster)
+    FDR_iterations = foreach::foreach(i = 1:10) %dopar% {
+        set.seed(i * 47)
+        scExp$cell_cluster = sample(scExp$cell_cluster, length(scExp$cell_cluster), replace = F)
+        DA <- run_real_one_vs_all_comparisons_activation_scExp(scExp = scExp,
+                                                               qval.th = qval.th,
+                                                               min.pct = min.pct.activation,
+                                                               logFC.th = log2(FC.th),
+                                                               min_frac_cell_assigned = min_frac_cell_assigned,
+                                                               limit = limit,
+                                                               cluster_of_origin = partition_cluster_of_origin)
+        df = DA$diffmat_n[,-4]
+        df$iteration = i
+        df
+    }  
+
+    FDR = do.call("rbind", FDR_iterations)
+    
+    parallel::stopCluster(myCluster)
+    gc()
+    
+    return(FDR)
+}
+
+#' Iterative Differential Clustering scEpigenomics
+#'
+#' @description Main function of the IDclust package. Provided a 
+#' SingleCellExperiment pre-processed with ChromSCape, will find biologically 
+#' relevant clusters by iteratively re-clustering and re-processing clusters. 
+#' At each iteration, subclusters having enough significantly enriched features 
+#' compared to other subclusters are defined as 'true' subclusters. Others are 
+#' assigned to parent clusters. The algorithm will stop when no more 'true' 
+#' subclusters are found. 
+#' 
+#' This method ensure that each cluster found in this unsupervised way have
+#' significant biological differences, based on the user defined thresholds.
+#' 
+#' @details The default differential analysis used is the 
+#' differential_activation function from ChromSCape package. This function 
+#' compares the % of active cells in the cluster versus the rest of cells and 
+#' perform a Chi-squared test to calculate p-values.  
+#' 
+#'
+#' @param scExp A SingleCellExperiment object 
+#' @param output_dir The output directory in which to plot and save objects.
+#' @param plotting A logical specifying wether to save the plots or not.
+#' @param saving A logical specifying wether to save the data or not.
+#' @param limit An integer specifying the minimum number of significantly 
+#' enriched / depleted features required in order for a subcluster to be called
+#' a 'true' subcluster
+#' @param FC.th  A numeric specifying the fold change of activation above/below
+#' which a feature is considered as significantly differential.
+#' @param qval.th A numeric specifying the adjusted p-value below
+#' which a feature is considered as significantly differential.
+#' @param quantile.activation A numeric between 0 and 1 specifying the quantile
+#' of global activation to take as minimal percentage of activation for the 
+#' differential analysis. Increasing this value will decrease the number of 
+#' differential features.
+#' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
+#' minimum percentage of the total cells in the SingleCellExperiment object that
+#' needs to be assigned. If a lower proportion is assigned, all cells are 
+#' assigned to the cluster of origin.
+#' @param k An integer specifying the number of nearest neighbors to use for 
+#' the Louvain clustering at each iteration.
+#' @param resolution A numeric specifying the resolution to use for the Louvain
+#' clustering at each iteration.
+#' @param starting.resolution A numeric specifying the resolution to use for the 
+#' Louvain clustering of the first iteration. It is recommended to set it quite
+#' low in order to have few starting clusters.
+#' @param limit_by_proportion Optional. A data.frame containing 3 columns - 
+#' ncells, mean_n_differential, sd_n_differential - that reflect the number of 
+#' false positive expected for a given cluster size.
+#' @param frac_feature A numeric between 0 and 1 specifying the fraction of 
+#' features to keep at each iteration when re-processing the subset of cells.
+#' @param nPCA  An integer specifying the number of first PC to keep in the 
+#' dimensionality reduction step.
+#' @param runFDR A logical indicating wether to also run the FDR calculation at
+#' each iteration. This operation is optional and requires time x CPU x RAM.
+#' @param nThreads If runFDR==TRUE. An integer specifying of threads to use
+#' for the calculation of the FDR.
+#' @param color Set of colors to use for the coloring of the clusters. This must
+#' contains enough colors for each cluster (minimum 20 colors, but 100 colors
+#' at least is recommended, based on the dataset).
+#' @param verbose A logical specifying wether to print.
+#'
+#'
+#' @return A character vector containing the assignation of cells to clusters.
+#' If saving is true, also saves list of differential analyses, differential 
+#' analyses summaries and embeddings for each re-clustered cluster. If runFDR is 
+#' TRUE, also saves the list of FDR for each re-clusterd cluster.
+#' 
+#' @export
+#' 
+#' @importFrom  Matrix Matrix rowSums
+#' @importFrom qs qsave
+#' @importFrom  SummarizedExperiment assays 
+#' @importFrom  grDevices colors 
+#' @importFrom  SingleCellExperiment reducedDim  
+#' @import ggplot2
+#' @import dplyr
+#' 
+#' @examples
 #' 
 iterative_differential_clustering_scEpigenomics <- function(
     scExp,
@@ -152,9 +253,9 @@ iterative_differential_clustering_scEpigenomics <- function(
     plotting = TRUE,
     saving = TRUE,
     nPCA = 10,
-    percent_feature = 1,
+    frac_feature = 1,
     quantile.activation = 0.7,
-    min.pct.cell_assigned = 0.1,
+    min_frac_cell_assigned = 0.1,
     FC.th = 2,
     qval.th = 0.1,
     limit = 5,
@@ -172,15 +273,15 @@ iterative_differential_clustering_scEpigenomics <- function(
     # For the first partition, try to find very low level clusters (e.g. low
     # resolution, high number of neighbors)
     scExp = ChromSCape::find_clusters_louvain_scExp(scExp,
-                                                                 k = 100,
-                                                                 resolution = starting.resolution,
-                                                                 use.dimred = "PCA")
+                                                    k = 100,
+                                                    resolution = starting.resolution,
+                                                    use.dimred = "PCA")
     scExp$cell_cluster = gsub("C","A", scExp$cell_cluster)
     
     # Calculate the average % cells activated in a feature
     # and return a level of activation based on a given decile
     binmat = Matrix::Matrix((SummarizedExperiment::assays(scExp)$counts > 0) + 0, sparse = TRUE)
-    min.pct.activation = quantile(Matrix::rowSums(binmat) / ncol(binmat), quantile.activation)
+    min.frac.activation = quantile(Matrix::rowSums(binmat) / ncol(binmat), quantile.activation)
     
     
     # Find initial differences (even if there are none, the initial clusters
@@ -189,16 +290,16 @@ iterative_differential_clustering_scEpigenomics <- function(
         " for this first round only.\n")
     DA = find_differentiated_clusters_scEpigenomics(scExp = scExp,
                                                     qval.th = qval.th,
-                                                    min.pct = min.pct.activation,
+                                                    min.frac = min.frac.activation,
                                                     logFC.th = log2(FC.th),
-                                                    min.pct.cell_assigned = min.pct.cell_assigned,
+                                                    min_frac_cell_assigned = min_frac_cell_assigned,
                                                     limit = 0,
                                                     limit_by_proportion = NULL,
                                                     cluster_of_origin = "Omega")
     
     # Starting list of clusters to re-cluster
     differential_summary_df = data.frame("cluster" = unique(scExp$cell_cluster),
-                                                  "n_differential" = 10) # we assume the initial clusters are differential
+                                         "n_differential" = 10) # we assume the initial clusters are differential
     
     # Colors for the plot
     if (is.null(color)){
@@ -230,7 +331,7 @@ iterative_differential_clustering_scEpigenomics <- function(
     iteration = 0
     gc()
     
-
+    
     # Run IDC until no more clusters can be re-clustered into meaningful clusters
     while(iteration < nrow(differential_summary_df)){
         
@@ -240,7 +341,7 @@ iterative_differential_clustering_scEpigenomics <- function(
             print(
                 ChromSCape::plot_reduced_dim_scExp(scExp, reduced_dim = "UMAP", color_by = "cell_cluster",
                                                    downsample = 50000, size = 0.35, transparency = 0.75) +
-                    ggplot2::ggtitle(paste0("Initital Clustering")) + theme(legend.position = "none")
+                    ggtitle(paste0("Initital Clustering")) + theme(legend.position = "none")
             )
             dev.off()
         }
@@ -270,7 +371,7 @@ iterative_differential_clustering_scEpigenomics <- function(
             if(ncol(scExp.) > 100){
                 
                 # Re-run TFIDF and PCA and clusters using Louvain algorithm 
-                scExp. = ChromSCape::find_top_features(scExp.,n = floor(percent_feature * nrow(scExp.)),
+                scExp. = ChromSCape::find_top_features(scExp.,n = floor(frac_feature * nrow(scExp.)),
                                                        keep_others = FALSE)
                 scExp. = ChromSCape::normalize_scExp(scExp., type = "TFIDF")
                 scExp. = ChromSCape::reduce_dims_scExp(scExp., dimension_reductions = "PCA",
@@ -299,13 +400,13 @@ iterative_differential_clustering_scEpigenomics <- function(
                     
                     # Find differentiated clusters
                     DA = find_differentiated_clusters_scEpigenomics(scExp = scExp.,
-                                                      qval.th = qval.th,
-                                                      min.pct = min.pct.activation,
-                                                      logFC.th = log2(FC.th),
-                                                      min.pct.cell_assigned = min.pct.cell_assigned,
-                                                      limit = limit,
-                                                      limit_by_proportion = limit_by_proportion,
-                                                      cluster_of_origin = partition_cluster_of_origin)
+                                                                    qval.th = qval.th,
+                                                                    min.frac = min.frac.activation,
+                                                                    logFC.th = log2(FC.th),
+                                                                    min_frac_cell_assigned = min_frac_cell_assigned,
+                                                                    limit = limit,
+                                                                    limit_by_proportion = limit_by_proportion,
+                                                                    cluster_of_origin = partition_cluster_of_origin)
                     gc()
                     
                     # Retrieve DA results
@@ -314,7 +415,7 @@ iterative_differential_clustering_scEpigenomics <- function(
                     list_embeddings[[partition_cluster_of_origin]] = SingleCellExperiment::reducedDim(scExp., "PCA")
                     list_diffmat[[partition_cluster_of_origin]] = diffmat_n
                     
-                    # If more than 'min.pct.cell_assigned' of the cells were assigned
+                    # If more than 'min_frac_cell_assigned' of the cells were assigned
                     # to 'true' subclusters (with marker features)
                     if(!isFALSE(DA$passing_min_pct_cell_assigned)){
                         
@@ -327,31 +428,22 @@ iterative_differential_clustering_scEpigenomics <- function(
                         # Calculate FDR by mixing the cluster assignation 
                         #  10 times and calculate the number of false positive
                         if(runFDR == TRUE){
-                            gc()
-                            myCluster <- parallel::makeCluster(nThreads, type = "FORK")
-                            doParallel::registerDoParallel(myCluster)
-                            scExp.. = scExp.
-                            FDR_list. = foreach(i = 1:10) %dopar% {
-                                set.seed(i * 47)
-                                scExp..$cell_cluster = sample(scExp..$cell_cluster, length(scExp..$cell_cluster), replace = F)
-                                DA <- run_real_one_vs_all_comparisons_activation_scExp(scExp = scExp..,
-                                                                                       qval.th = qval.th,
-                                                                                       min.pct = min.pct.activation,
-                                                                                       logFC.th = log2(FC.th),
-                                                                                       min.pct.cell_assigned = min.pct.cell_assigned,
-                                                                                       limit = limit,
-                                                                                       cluster_of_origin = partition_cluster_of_origin)
-                                df = DA$diffmat_n[,-4]
-                                df$iteration = i
-                                df
-                            }  
-                            FDR_list[[partition_cluster_of_origin]] = do.call("rbind", FDR_list.)
-                            FDR = length(which(FDR_list[[partition_cluster_of_origin]]$n_differential >= 5)) / nrow(FDR_list[[partition_cluster_of_origin]])
-                            parallel::stopCluster(myCluster)
+                            
+                            FDR = calculate_FDR_scEpigenomics(scExp,
+                                                              limit = limit,
+                                                              qval.th = qval.th,
+                                                              logFC.th = log2(FC.th),
+                                                              min.pct = min.pct.activation,
+                                                              min_frac_cell_assigned = min_frac_cell_assigned,
+                                                              cluster_of_origin = "Omega",
+                                                              nThreads = nThreads)
+                            
+                            FDR_list[[partition_cluster_of_origin]] = FDR
+                            FDR_val = length(which(FDR_list[[partition_cluster_of_origin]]$n_differential >= 5)) / nrow(FDR_list[[partition_cluster_of_origin]])
                             gc()
                         }
                         
-                        tit = ifelse(runFDR, paste0(" - FDR - ", FDR), "")
+                        tit = ifelse(runFDR, paste0(" - FDR - ", FDR_val), "")
                         if(plotting == TRUE){
                             png(file.path(output_dir, paste0(partition_cluster_of_origin,"_true.png")), width = 1400, height = 1200, res = 200)
                             print(
@@ -379,20 +471,22 @@ iterative_differential_clustering_scEpigenomics <- function(
         "\n##########################################################\n")
     
     ## Saving results
-    
-    # List of differential features for each re-clustering
-    qs::qsave(list_res, file.path(output_dir, "IDC_DA.qs"))
-    
-    # List of embedding of each re-clustered cluster
-    qs::qsave(list_embeddings, file.path(output_dir, "IDC_embeddings.qs"))
-    
-    # List of summaries of the number of differential features for each re-clustering
-    qs::qsave(list_diffmat, file.path(output_dir, "IDC_summaries_DA.qs"))
-    
-    # Final SingleCellExperiment with the clusters found by IDC 
-    qs::qsave(scExp, file.path(output_dir, "scExp_IDC.qs"))
-    
+    if(saving){
+        # List of differential features for each re-clustering
+        qs::qsave(list_res, file.path(output_dir, "IDC_DA.qs"))
+        
+        # List of embedding of each re-clustered cluster
+        qs::qsave(list_embeddings, file.path(output_dir, "IDC_embeddings.qs"))
+        
+        # List of summaries of the number of differential features for each re-clustering
+        qs::qsave(list_diffmat, file.path(output_dir, "IDC_summaries_DA.qs"))
+        
+        # Final SingleCellExperiment with the clusters found by IDC 
+        qs::qsave(scExp, file.path(output_dir, "scExp_IDC.qs"))
+    }
     # List of FDR for each re-clustering
     if(runFDR) qs::qsave(FDR_list, file.path(output_dir, "FDR_list.qs"))
+    
+    return(scExp$cell_cluster)
 }
 

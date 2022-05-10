@@ -17,6 +17,11 @@
 #' 
 #' @export
 #' 
+#' @import dplyr
+#' @importFrom edgeR DGEList filterByExpr calcNormFactors estimateDisp glmFit
+#' @importFrom Matrix Matrix rowSums
+#' @importFrom stats p.adjust
+#' 
 #' @examples
 pseudobulk_LRT_edgeR <- function(Seu, biological_replicate_col = NULL){
     cluster_u = unique(Seu$seurat_clusters)
@@ -42,21 +47,20 @@ pseudobulk_LRT_edgeR <- function(Seu, biological_replicate_col = NULL){
                 y <- edgeR::estimateDisp(y,design)
                 fit <- edgeR::glmFit(y,design)
                 lrt <- edgeR::glmLRT(fit,coef=2)
-                topTags(lrt)
                 tab = lrt$table
                 
-                binmat = Matrix((Seu@assays$RNA@counts > 0) + 0, sparse = TRUE)
-                pct.1 = rowSums(binmat[,which(Seu$seurat_clusters == cluster_u[i])]) / length(which(Seu$seurat_clusters == cluster_u[i]))
-                pct.2 = rowSums(binmat[,which(Seu$seurat_clusters != cluster_u[i])]) / length(which(Seu$seurat_clusters != cluster_u[i]))
+                binmat = Matrix::Matrix((Seu@assays$RNA@counts > 0) + 0, sparse = TRUE)
+                pct.1 = Matrix::rowSums(binmat[,which(Seu$seurat_clusters == cluster_u[i])]) / length(which(Seu$seurat_clusters == cluster_u[i]))
+                pct.2 = Matrix::rowSums(binmat[,which(Seu$seurat_clusters != cluster_u[i])]) / length(which(Seu$seurat_clusters != cluster_u[i]))
                 
-                tab = tab %>% filter(abs(logFC) > 0.1 & PValue < 0.1) # very loose filter
+                tab = tab %>% dplyr::filter(abs(logFC) > 0.1 & PValue < 0.1) # very loose filter
                 
                 res. = data.frame(
                     "p_val" = tab$PValue,
                     "avg_log2FC"= tab$logFC,
                     "pct.1" = pct.1[match(rownames(tab), names(pct.1))], 
                     "pct.2"= pct.2[match(rownames(tab), names(pct.2))],
-                    "p_val_adj" = p.adjust(tab$PValue, method = "bonferroni"),
+                    "p_val_adj" = stats::p.adjust(tab$PValue, method = "bonferroni"),
                     "cluster"= cluster_u[i],
                     "gene"= rownames(tab)
                 )
@@ -83,7 +87,8 @@ pseudobulk_LRT_edgeR <- function(Seu, biological_replicate_col = NULL){
 #' fake replicates.
 #' 
 #' @export
-#'
+#' @importFrom Matrix colSums rowSums
+#' 
 #' @examples
 create_pseudobulk_mat_Seu <- function(Seu, biological_replicate_col){
     cluster_u = unique(Seu$seurat_clusters)
@@ -108,45 +113,56 @@ create_pseudobulk_mat_Seu <- function(Seu, biological_replicate_col){
             }
         }
     }
-    mat = mat[,which(colSums(mat) > 0)]
+    mat = mat[,which(Matrix::colSums(mat) > 0)]
     colnames(mat) = names_mat
     return(mat)
 }
 
-
-#' Iterative Differential Clustering scEpigenomics
+#' Find Differentiated Clusters scRNA
+#'
+#' @details 
+#'
 #'
 #' @param Seu A Seurat object containing scRNA dataset with 'seurat_clusters' 
 #' column.
-#' @param logFC.th 
-#' @param qval.th 
-#' @param test.use 
-#' @param biological_replicate_col 
-#' @param min.pct 
-#' @param limit 
-#' @param cluster_of_origin 
-#' @param min.pct.cell_assigned 
+#' @param diff_method A character specifying the method to use for differential
+#' analysis. Must be either "edgeR-LRT" or "Seurat".
+#' @param biological_replicate_col Optional. If diff_method == "edgeR-LRT",
+#' a character specifying a column of the Seurat object corresponding to the 
+#' replicates or batches of the dataset in order to take in  account 
+#' biological/technical noise for differential analysis. If NULL, will create 
+#' 3 random layers of pseudo replicates.
+#' @param qval.th A numeric specifying the adjusted p-value threshold above 
+#' which a feature is defined as significantly differential.
+#' @param logFC.th A numeric specifying the log Fold-Change of activation
+#' (% cells activated) threshold above which a feature is defined as
+#' significantly differential.
+#' @param limit An integer specifying the minimum number of features required 
+#' for a subcluster to be called 'true' subcluster.
+#' @param cluster_of_origin A character specifying the name of the cluster of 
+#' origin that will be concatenated before the name of true subclusters. 
+#' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
+#' minimum percentage of the total cells in the SingleCellExperiment object that
+#' needs to be assigned. If a lower proportion is assigned, all cells are 
+#' assigned to the cluster of origin.
+#' @param min.pct Minimum percentage of cells to be active in the cells of the
+#' cluster to consider a feature as potentially significantly differential.
 #'
 #' @return
 #' @export
-#'
+#' 
+#' 
 #' @examples
 find_differentiated_clusters_scRNA <- function(Seu,
-                                               output_dir = "./",
-                                               plotting = TRUE,
+                                               diff_method = c("edgeR-LRT", "Seurat")[1],
                                                logFC.th = log2(1.5),
                                                qval.th = 0.01,
-                                               test.use = c("edgeR-LRT", "Seurat")[1],
                                                biological_replicate_col = NULL,
                                                min.pct = 0.1,
-                                               resolution = 0.8,
-                                               starting.resolution = 0.1,
                                                limit = 5,
-                                               cluster_of_origin = "Initial",
-                                               nPCA = 50,
-                                               min.pct.cell_assigned = 0.75,
-                                               color = TRUE,
-                                               verbose = TRUE){
+                                               cluster_of_origin = "Omega",
+                                               min_frac_cell_assigned = 0.1
+                                               ){
     
     # If Seurat is a SingleCellExperiment or else, try convert it to Seurat
     if(!is(Seu, "Seurat")) {
@@ -165,7 +181,7 @@ find_differentiated_clusters_scRNA <- function(Seu,
                            subcluster = cluster_u,
                            subcluster_after_diff = cluster_u)
     
-    if(test.use == "Seurat") {
+    if(diff_method == "Seurat") {
         res = Seurat::FindAllMarkers(Seu, logfc.threshold = logFC.th, return.thresh = qval.th,
                                      test.use = "wilcox", min.pct = min.pct, only.pos = TRUE)
     } else {
@@ -192,7 +208,7 @@ find_differentiated_clusters_scRNA <- function(Seu,
     passing = TRUE
     
     cat("Finished finding differences - ", n_cell_assigned/ ncol(Seu), " fraction of cells were assigned.\n")
-    if((n_cell_assigned/ ncol(Seu)) < min.pct.cell_assigned){
+    if((n_cell_assigned/ ncol(Seu)) < min_frac_cell_assigned){
         cat("Not enough cells were assigned - not clustering.\n")
         passing = FALSE
     }
@@ -204,46 +220,65 @@ find_differentiated_clusters_scRNA <- function(Seu,
 
 #'  Iterative Differential Clustering scRNA
 #'
-#' @param Seu 
-#' @param method 
-#' @param starting_differential_summary_df 
-#' @param output_dir 
-#' @param plotting 
-#' @param saving 
-#' @param nPCA 
-#' @param nfeatures 
-#' @param logFC.th 
-#' @param qval.th 
-#' @param min.pct 
-#' @param min.pct.cell_assigned 
-#' @param limit 
-#' @param test.use 
-#' @param k 
-#' @param resolution 
-#' @param biological_replicate_col 
+#' @param Seu A Seurat object preprocessed with Seurat.
+#' @param output_dir The output directory in which to plot and save objects.
+#' @param plotting A logical specifying wether to save the plots or not.
+#' @param saving A logical specifying wether to save the data or not.
+#' @param biological_replicate_col Optional. If diff_method == "edgeR-LRT",
+#' a character specifying a column of the Seurat object corresponding to the 
+#' replicates or batches of the dataset in order to take in  account 
+#' biological/technical noise for differential analysis. If NULL, will create 
+#' 3 random layers of pseudo replicates.
+#' @param diff_method A character specifying the method to use for differential
+#' analysis. Must be either "edgeR-LRT" or "Seurat".
+#' @param logFC.th A numeric specifying the log Fold-Change of activation
+#' (% cells activated) threshold above which a feature is defined as
+#' significantly differential.
+#' @param min.pct Minimum percentage of cells to be active in the cells of the
+#' cluster to consider a feature as potentially significantly differential.
+#' @param limit An integer specifying the minimum number of significantly 
+#' enriched / depleted features required in order for a subcluster to be called
+#' a 'true' subcluster
+#' @param qval.th A numeric specifying the adjusted p-value below
+#' which a feature is considered as significantly differential.
+#' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
+#' minimum percentage of the total cells in the SingleCellExperiment object that
+#' needs to be assigned. If a lower proportion is assigned, all cells are 
+#' assigned to the cluster of origin.
+#' @param k An integer specifying the number of nearest neighbors to use for 
+#' the Louvain clustering at each iteration.
+#' @param resolution A numeric specifying the resolution to use for the Louvain
+#' clustering at each iteration.
+#' @param nPCA  An integer specifying the number of first PC to keep in the 
+#' dimensionality reduction step
 #'
-#' @return
+#' @return A character vector containing the assignation of cells to clusters.
+#' If saving is true, also saves list of differential analyses, differential 
+#' analyses summaries and embeddings for each re-clustered cluster.
+#'
 #' @export
-#'
+#' 
+#' @import ggplot2
+#' @import dplyr
+#' @importFrom grDevices colors
+#' @importFrom qs qsave
+#' 
 #' @examples
 iterative_differential_clustering_scRNA <- function(
     Seu,
-    method = c("Seurat", "monocle")[1],
-    starting_differential_summary_df,
     output_dir = "./",
     plotting = TRUE,
     saving = TRUE,
+    biological_replicate_col = "Target",
     nPCA = 50,
-    nfeatures = 2000,
+    diff_method = c("edgeR-LRT", "Seurat")[1],
     logFC.th = log2(2),
     qval.th = 0.01,
     min.pct = 0.1,
-    min.pct.cell_assigned = 0.25,
+    min_frac_cell_assigned = 0.25,
     limit = 10,
-    test.use = "wilcox",
     k = 100,
-    resolution = 0.5,
-    biological_replicate_col = "Target"
+    resolution = 0.5
 ){
     
     set.seed(47)
@@ -276,8 +311,9 @@ iterative_differential_clustering_scRNA <- function(
         " for this first round only.\n")
     DA = find_differentiated_clusters_scRNA(
         Seu, logFC.th = logFC.th, qval.th = qval.th,
-        min.pct = min.pct, test.use = test.use, biological_replicate_col = biological_replicate_col,
-        min.pct.cell_assigned = min.pct.cell_assigned, 
+        min.pct = min.pct, diff_method = diff_method,
+        biological_replicate_col = biological_replicate_col,
+        min_frac_cell_assigned = min_frac_cell_assigned, 
         cluster_of_origin =  "Omega",
         limit = 0)
     
@@ -297,14 +333,14 @@ iterative_differential_clustering_scRNA <- function(
     
     iteration = 0
     gc()
-
+    
     while(iteration < nrow(differential_summary_df)){
         
         if(plotting == TRUE){
             # Plot initial
             png(file.path(output_dir, paste0("Iteration_",iteration,".png")), width = 1600, height = 1200, res = 200)
             print(
-                DimPlot(Seu, group.by =  "seurat_clusters", cols = color) 
+                Seurat::DimPlot(Seu, group.by =  "seurat_clusters", cols = color) 
             )
             dev.off()
         }
@@ -314,81 +350,83 @@ iterative_differential_clustering_scRNA <- function(
         
         partition_cluster_of_origin = differential_summary_df$cluster[iteration]
         if(!(partition_cluster_of_origin  %in% differential_summary_df$cluster[duplicated(differential_summary_df$cluster)])){
-
-        partition_depth = which(LETTERS == substr(gsub(".*:","",partition_cluster_of_origin),1,1)) + 1
-        
-        # Select first cluster
-        Seu. = Seu[, which(Seu$seurat_clusters %in%  partition_cluster_of_origin)]
-        cat("Re-calculating PCA and subclustering for cluster", partition_cluster_of_origin,".\n")
-        
-        if(ncol(Seu.) > 100){
-            # Rerun PCA
-            Seu. = FindVariableFeatures(Seu., selection.method = "vst", verbose = FALSE)
-            Seu. <- ScaleData(Seu., verbose = FALSE)
-            Seu. <- RunPCA(Seu., features = VariableFeatures(object = Seu.), verbose = FALSE)
-            Seu. <- FindNeighbors(Seu., use.dimred = "pca", verbose = FALSE)
-            Seu. <- FindClusters(Seu., algorithm = 2, resolution = 0.1,  random.seed = 47, verbose = FALSE)
-            Seu.$seurat_clusters <- paste0(LETTERS[partition_depth],as.numeric(Seu.$seurat_clusters))
-            Idents(Seu.) = Seu.$seurat_clusters
             
-            if(plotting == TRUE){
-                png(file.path(output_dir, paste0(partition_cluster_of_origin,"_raw.png")), width = 1400, height = 1200, res = 200)
-                print(
-                    DimPlot(Seu., reduction = "pca") + ggtitle(paste0(partition_cluster_of_origin, " - raw"))
-                )
-                dev.off()
-            }
-            clusters = Seu.$seurat_clusters 
-            cluster_u = unique(clusters)
+            partition_depth = which(LETTERS == substr(gsub(".*:","",partition_cluster_of_origin),1,1)) + 1
             
+            # Select first cluster
+            Seu. = Seu[, which(Seu$seurat_clusters %in%  partition_cluster_of_origin)]
+            cat("Re-calculating PCA and subclustering for cluster", partition_cluster_of_origin,".\n")
             
-            if(length(cluster_u) > 1 ){
-                cat("Found", length(cluster_u),"subclusters.\n")
-                print(table(clusters))
+            if(ncol(Seu.) > 100){
+                # Rerun PCA
+                Seu. = Seurat::FindVariableFeatures(Seu., selection.method = "vst", verbose = FALSE)
+                Seu. = Seurat::ScaleData(Seu., verbose = FALSE)
+                Seu. = Seurat::RunPCA(Seu., features = Seurat::VariableFeatures(object = Seu.), verbose = FALSE)
+                Seu. = Seurat::FindNeighbors(Seu., use.dimred = "pca", verbose = FALSE)
+                Seu. = Seurat::FindClusters(Seu., algorithm = 2, resolution = 0.1,  random.seed = 47, verbose = FALSE)
+                Seu.$seurat_clusters = paste0(LETTERS[partition_depth], as.numeric(Seu.$seurat_clusters))
+                Seurat::Idents(Seu.) = Seu.$seurat_clusters
                 
-                ## Differential analysis
-                DA = find_differentiated_clusters_scRNA(Seu., logFC.th = logFC.th, qval.th = qval.th,
-                                                          min.pct = min.pct, test.use = test.use, biological_replicate_col = biological_replicate_col,
-                                                          min.pct.cell_assigned = min.pct.cell_assigned, 
-                                                          cluster_of_origin =  partition_cluster_of_origin, limit = limit)
+                if(plotting == TRUE){
+                    png(file.path(output_dir, paste0(partition_cluster_of_origin,"_raw.png")), width = 1400, height = 1200, res = 200)
+                    print(
+                        Seurat::DimPlot(Seu., reduction = "pca") + ggtitle(paste0(partition_cluster_of_origin, " - raw"))
+                    )
+                    dev.off()
+                }
+                clusters = Seu.$seurat_clusters 
+                cluster_u = unique(clusters)
                 
-                diffmat_n = DA$diffmat_n
-                print(diffmat_n)
-                list_res[[partition_cluster_of_origin]] = DA$res
-                list_embeddings[[partition_cluster_of_origin]] = Seu.@reductions$pca@cell.embeddings
-                list_diffmat[[partition_cluster_of_origin]] = diffmat_n
                 
+                if(length(cluster_u) > 1 ){
+                    cat("Found", length(cluster_u),"subclusters.\n")
+                    if(verbose) print(table(clusters))
+                    
+                    ## Differential analysis
+                    DA = find_differentiated_clusters_scRNA(Seu., diff_method = diff_method,
+                                                            logFC.th = logFC.th, qval.th = qval.th,
+                                                            min.pct = min.pct,  limit = limit,
+                                                            biological_replicate_col = biological_replicate_col,
+                                                            min_frac_cell_assigned = min_frac_cell_assigned, 
+                                                            cluster_of_origin =  partition_cluster_of_origin)
+                    
+                    # Retrieve DA results
+                    diffmat_n = DA$diffmat_n
+                    list_res[[partition_cluster_of_origin]] = DA$res
+                    list_embeddings[[partition_cluster_of_origin]] = Seu.@reductions$pca@cell.embeddings
+                    list_diffmat[[partition_cluster_of_origin]] = diffmat_n
+                    
+                    # If more than 'min_frac_cell_assigned' of the cells were assigned
+                    # to 'true' subclusters (with marker features)
                     if(!isFALSE(DA$passing_min_pct_cell_assigned)){
-                      df = data.frame("cluster" = diffmat_n$subcluster_after_diff, n_differential = diffmat_n$n_differential)
-                      differential_summary_df = rbind(differential_summary_df, df)
-                      
-                      Seu.$seurat_clusters = diffmat_n$subcluster_after_diff[match(Seu.$seurat_clusters, diffmat_n$subcluster)]
-                      Seu$seurat_clusters[match(colnames(Seu.), colnames(Seu))] = Seu.$seurat_clusters
-                      
-                      list_embeddings[[partition_cluster_of_origin]] = Seu.@reductions$pca@cell.embeddings
-                      list_diffmat[[partition_cluster_of_origin]] = diffmat_n
-                      
-                      Idents(Seu.) = Seu.$seurat_clusters
-                      
-                      if(plotting == TRUE){
-                          png(file.path(output_dir, paste0(partition_cluster_of_origin,"_true.png")), width = 1400, height = 1200, res = 200)
-                          print(
-                              DimPlot(Seu., reduction = "pca") + ggtitle(paste0(partition_cluster_of_origin, " - true"))
-                          )
-                          dev.off()
-                      }
+                        
+                        # Add the new sublclusters to the list of clusters
+                        df = data.frame("cluster" = diffmat_n$subcluster_after_diff, n_differential = diffmat_n$n_differential)
+                        differential_summary_df = rbind(differential_summary_df, df)
+                        Seu.$seurat_clusters = diffmat_n$subcluster_after_diff[match(Seu.$seurat_clusters, diffmat_n$subcluster)]
+                        Seu$seurat_clusters[match(colnames(Seu.), colnames(Seu))] = Seu.$seurat_clusters
+                        
+                        Seurat::Idents(Seu.) = Seu.$seurat_clusters
+                        
+                        if(plotting == TRUE){
+                            png(file.path(output_dir, paste0(partition_cluster_of_origin,"_true.png")), width = 1400, height = 1200, res = 200)
+                            print(
+                                Seurat::DimPlot(Seu., reduction = "pca") + ggtitle(paste0(partition_cluster_of_origin, " - true"))
+                            )
+                            dev.off()
+                        }
                     } else{
-                      cat("Found 2 subcluster for", partition_cluster_of_origin," but with no difference. Maximum clustering reached...\n")
+                        cat("Found 2 subcluster for", partition_cluster_of_origin," but with no difference. Maximum clustering reached...\n")
                     }
-                
-            } else{
-              cat("Found only 1 subcluster for", partition_cluster_of_origin,". Maximum clustering reached...\n")
+                    
+                } else{
+                    cat("Found only 1 subcluster for", partition_cluster_of_origin,". Maximum clustering reached...\n")
+                }
             }
-        }
-        gc()
-        
+            gc()
+            
         } else{
-          cat(partition_cluster_of_origin,"- This cluster was formed by 'unassigned' cells, not clustering it further...\n")
+            cat(partition_cluster_of_origin,"- This cluster was formed by 'unassigned' cells, not clustering it further...\n")
         }
     }
     
@@ -397,10 +435,22 @@ iterative_differential_clustering_scRNA <- function(
         "\nThe number of initital clusters not subclustered is ",length(grep(":", unique(Seu$seurat_clusters),invert = TRUE)),".",
         "\n##########################################################\n")
     
-    qs::qsave(list_res, file.path(output_dir, "list_res.qs"))
-    qs::qsave(list_embeddings, file.path(output_dir, "list_embeddings.qs"))
-    qs::qsave(list_diffmat, file.path(output_dir, "list_diffmat.qs"))
-    qs::qsave(Seu, file.path(output_dir, "Seu_clustered.qs"))
     
+    ## Saving results
+    if(saving){
+        # List of differential features for each re-clustering
+        qs::qsave(list_res, file.path(output_dir, "IDC_DA.qs"))
+        
+        # List of embedding of each re-clustered cluster
+        qs::qsave(list_embeddings, file.path(output_dir, "IDC_embeddings.qs"))
+        
+        # List of summaries of the number of differential features for each re-clustering
+        qs::qsave(list_diffmat, file.path(output_dir, "IDC_summaries_DA.qs"))
+        
+        # Final SingleCellExperiment with the clusters found by IDC 
+        qs::qsave(Seu, file.path(output_dir, "Seu_IDC.qs"))
+    }
+    
+    return(Seu$seurat_clusters)
 }
 

@@ -6,61 +6,71 @@
 \usage{
 iterative_differential_clustering_scRNA(
   Seu,
-  method = c("Seurat", "monocle")[1],
-  starting_differential_summary_df,
   output_dir = "./",
   plotting = TRUE,
   saving = TRUE,
+  biological_replicate_col = "Target",
   nPCA = 50,
-  nfeatures = 2000,
+  diff_method = c("edgeR-LRT", "Seurat")[1],
   logFC.th = log2(2),
   qval.th = 0.01,
   min.pct = 0.1,
-  min.pct.cell_assigned = 0.25,
+  min_frac_cell_assigned = 0.25,
   limit = 10,
-  test.use = "wilcox",
   k = 100,
-  resolution = 0.5,
-  biological_replicate_col = "Target"
+  resolution = 0.5
 )
 }
 \arguments{
-\item{Seu}{}
+\item{Seu}{A Seurat object preprocessed with Seurat.}
 
-\item{method}{}
+\item{output_dir}{The output directory in which to plot and save objects.}
 
-\item{starting_differential_summary_df}{}
+\item{plotting}{A logical specifying wether to save the plots or not.}
 
-\item{output_dir}{}
+\item{saving}{A logical specifying wether to save the data or not.}
 
-\item{plotting}{}
+\item{biological_replicate_col}{Optional. If diff_method == "edgeR-LRT",
+a character specifying a column of the Seurat object corresponding to the
+replicates or batches of the dataset in order to take in  account
+biological/technical noise for differential analysis. If NULL, will create
+3 random layers of pseudo replicates.}
 
-\item{saving}{}
+\item{nPCA}{An integer specifying the number of first PC to keep in the
+dimensionality reduction step}
 
-\item{nPCA}{}
+\item{diff_method}{A character specifying the method to use for differential
+analysis. Must be either "edgeR-LRT" or "Seurat".}
 
-\item{nfeatures}{}
+\item{logFC.th}{A numeric specifying the log Fold-Change of activation
+(\% cells activated) threshold above which a feature is defined as
+significantly differential.}
 
-\item{logFC.th}{}
+\item{qval.th}{A numeric specifying the adjusted p-value below
+which a feature is considered as significantly differential.}
 
-\item{qval.th}{}
+\item{min.pct}{Minimum percentage of cells to be active in the cells of the
+cluster to consider a feature as potentially significantly differential.}
 
-\item{min.pct}{}
+\item{min_frac_cell_assigned}{A numeric between 0 and 1 specifying the
+minimum percentage of the total cells in the SingleCellExperiment object that
+needs to be assigned. If a lower proportion is assigned, all cells are
+assigned to the cluster of origin.}
 
-\item{min.pct.cell_assigned}{}
+\item{limit}{An integer specifying the minimum number of significantly
+enriched / depleted features required in order for a subcluster to be called
+a 'true' subcluster}
 
-\item{limit}{}
+\item{k}{An integer specifying the number of nearest neighbors to use for
+the Louvain clustering at each iteration.}
 
-\item{test.use}{}
-
-\item{k}{}
-
-\item{resolution}{}
-
-\item{biological_replicate_col}{}
+\item{resolution}{A numeric specifying the resolution to use for the Louvain
+clustering at each iteration.}
 }
 \value{
-
+A character vector containing the assignation of cells to clusters.
+If saving is true, also saves list of differential analyses, differential
+analyses summaries and embeddings for each re-clustered cluster.
 }
 \description{
 Iterative Differential Clustering scRNA

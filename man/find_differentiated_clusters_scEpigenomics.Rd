@@ -7,41 +7,42 @@
 find_differentiated_clusters_scEpigenomics(
   scExp,
   qval.th = 0.1,
-  min.pct = 0.1,
+  min.frac = 0.1,
   logFC.th = 0.5,
   limit = 5,
   limit_by_proportion = NULL,
-  limit_factor = 2,
-  min.pct.cell_assigned = 0.75,
-  cluster_of_origin = "0"
+  min_frac_cell_assigned = 0.1,
+  cluster_of_origin = "Omega"
 )
 }
 \arguments{
 \item{scExp}{A SingleCellExperiment with 'cell_cluster' column filled with
 cluster assignations.}
 
-\item{qval.th}{The adjusted p-value threshold above which a feature is defined
-as significantly differential.}
+\item{qval.th}{A numeric specifying the adjusted p-value threshold above
+which a feature is defined as significantly differential.}
 
-\item{min.pct}{The minimum percentage of cells activated for a given feature
-to consider it as differential.}
+\item{min.frac}{A numeric between 0 and 1 specifying the minimum fraction of
+cells activated for a given feature to consider it as differential.}
 
-\item{logFC.th}{The log Fold-Change of activation (\% cells activated)
-threshold above which a feature is defined as significantly differential.}
+\item{logFC.th}{A numeric specifying the log Fold-Change of activation
+(\% cells activated) threshold above which a feature is defined as
+significantly differential.}
 
-\item{limit}{The minimum number of genes required for a subcluster to be
-called 'true' subcluster.}
+\item{limit}{An integer specifying the minimum number of features required
+for a subcluster to be called 'true' subcluster.}
 
 \item{limit_by_proportion}{Optional. A data.frame containing 3 columns -
 ncells, mean_n_differential, sd_n_differential - that reflect the number of
 false positive expected for a given cluster size.
-(See @seealso \link{calculate_FDR}).}
+(See  \link{calculate_FDR_scEpigenomics}).}
 
-\item{min.pct.cell_assigned}{The minimum percentage of the total cells in the
-SingleCellExperiment object that needs to be assigned. If a lower proportion
-is assigned, all cells are assigned to the cluster of origin.}
+\item{min_frac_cell_assigned}{A numeric between 0 and 1 specifying the
+minimum percentage of the total cells in the SingleCellExperiment object that
+needs to be assigned. If a lower proportion is assigned, all cells are
+assigned to the cluster of origin.}
 
-\item{cluster_of_origin}{A characted specifying the name of the cluster of
+\item{cluster_of_origin}{A character specifying the name of the cluster of
 origin that will be concatenated before the name of true subclusters.}
 }
 \value{
@@ -64,4 +65,7 @@ For each cluster, if enough differences are found, mark the cluster as a
 'true' subcluster and gives it the alias 'cluster_of_origin:cluster'.
 The function will use by default ChromSCape::differential_activation function
 to define differential features.
+}
+\examples{
+
 }

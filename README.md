@@ -75,3 +75,7 @@ iterative_differential_clustering_scEpigenomics <- function(
 )
    
 ```
+
+![alt text](https://github.com/vallotlab/IDclust/blob/master/inst/www/network.png?raw=true)
+
+

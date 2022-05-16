@@ -1,4 +1,3 @@
-
 #' Normalize and run PCA with Seurat 
 #'
 #' @description  Runs Seurat PCA with 10 PC and by removing the first 

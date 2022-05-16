@@ -5,7 +5,7 @@
 \title{Differential analysis with ChromSCape (differential activation)}
 \usage{
 differential_ChromSCape(
-  scExp,
+  object,
   by = "cell_cluster",
   logFC.th = log2(1.5),
   qval.th = 0.01,
@@ -13,7 +13,7 @@ differential_ChromSCape(
 )
 }
 \arguments{
-\item{scExp}{A SingleCellExperiment object containing scRNA dataset with a
+\item{object}{A SingleCellExperiment object containing scRNA dataset with a
 metadata column name matching the by parameter}
 
 \item{by}{A character specifying the name of the metadata column referencing
@@ -35,6 +35,12 @@ cluster to consider a feature as potentially significantly differential.}
 Runs \code{\link[ChromSCape:differential_activation]{ChromSCape::differential_activation()}} function on clusters in the
 'by' column of the SingleCellExperiment object and returns a data.frame
 containing the differential features that passed the thresholds.
+}
+\examples{
+if(requireNamespace("ChromSCape", quietly=TRUE)){
+ data("scExp", package = "IDclust")
+DA <- differential_ChromSCape(scExp)
+}
 }
 \seealso{
 See \code{\link[ChromSCape:differential_activation]{ChromSCape::differential_activation()}}

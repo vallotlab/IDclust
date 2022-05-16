@@ -4,11 +4,19 @@
 \alias{create_pseudobulk_mat_Seu}
 \title{Create Pseudo-Bulk Matrice from scRNA clusters & replicates}
 \usage{
-create_pseudobulk_mat_Seu(Seu, biological_replicate_col = NULL, assay = "RNA")
+create_pseudobulk_mat_Seu(
+  Seu,
+  by = "cell_cluster",
+  biological_replicate_col = NULL,
+  assay = "RNA"
+)
 }
 \arguments{
 \item{Seu}{A Seurat object containing scRNA dataset with 'cell_cluster'
 column.}
+
+\item{by}{A character specifying the name of the metadata column referencing
+the clusters.}
 
 \item{biological_replicate_col}{Optional. A column of the Seurat object
 indicating the replicates or batches of the dataset in order to take in
@@ -23,4 +31,10 @@ fake replicates.
 }
 \description{
 Create Pseudo-Bulk Matrice from scRNA clusters & replicates
+}
+\examples{
+if(requireNamespace("Seurat", quietly=TRUE)){
+data("Seu", package = "IDclust")
+mat <- create_pseudobulk_mat_Seu(Seu, by = "seurat_clusters")
+}
 }

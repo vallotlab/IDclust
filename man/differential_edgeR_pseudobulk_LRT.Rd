@@ -5,7 +5,7 @@
 \title{Pseudo-bulk differential analysis with edgeR (LRT)}
 \usage{
 differential_edgeR_pseudobulk_LRT(
-  Seu,
+  object,
   by = "cell_cluster",
   assay = "RNA",
   biological_replicate_col = NULL,
@@ -15,13 +15,18 @@ differential_edgeR_pseudobulk_LRT(
 )
 }
 \arguments{
-\item{Seu}{A Seurat object containing scRNA dataset with a metadata column
+\item{object}{A Seurat object containing scRNA dataset with a metadata column
 name matching the by parameter}
 
 \item{by}{A character specifying the name of the metadata column referencing
 the clusters.}
 
 \item{assay}{Assay to use.}
+
+\item{biological_replicate_col}{A character specifying the column of the
+object metadata definin the biological / technical replicates. If NULL, three
+random set of replicates will be created per cluster, provided there are
+enough cells.}
 
 \item{logFC.th}{A numeric specifying the log2 fold change of activation
 above/below which a feature is considered as significantly differential.}
@@ -44,6 +49,12 @@ create a 'pseudo-bulk' matrice of multiple replicates per cluster. If no
 replicates are present, will assign replicates at random to create 3 replicates
 per cluster. Conducts 'LRT' (likelihood ratio tests) edgeR tests to test.
 See \code{\link[edgeR:glmfit]{edgeR::glmLRT()}}
+}
+\examples{
+if(requireNamespace("Seurat", quietly=TRUE)){
+data("Seu", package = "IDclust")
+DA <- differential_edgeR_pseudobulk_LRT(Seu)
+}
 }
 \seealso{
 See \code{\link[edgeR:glmfit]{edgeR::glmLRT()}}

@@ -151,3 +151,22 @@ The default differential analysis used is the
 compares the \% of active cells in the cluster versus the rest of cells and
 perform a Chi-squared test to calculate p-values.
 }
+\examples{
+# Clustering of Seurat scRNA object (Paired-Tag)
+if(requireNamespace("Seurat", quietly=TRUE)){
+
+data("Seu", package = "IDclust")
+Seu = iterative_differential_clustering(Seu, saving = FALSE, plotting =FALSE,
+logFC.th = 0.2, qval.th = 0.1)
+
+}
+
+# Clustering of scExp scH3K27ac object (Paired-Tag)
+if(requireNamespace("ChromSCape", quietly=TRUE)){
+
+data("scExp", package = "IDclust")
+scExp = iterative_differential_clustering(scExp,  saving = FALSE, plotting =FALSE,
+logFC.th = 0.5, qval.th = 0.01)
+
+}
+}

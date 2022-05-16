@@ -11,6 +11,7 @@ find_differentiated_clusters(object, ...)
 \method{find_differentiated_clusters}{default}(
   object,
   differential_function = differential_ChromSCape,
+  by = "cell_cluster",
   min_frac_cell_assigned = 0.1,
   limit = 5,
   limit_by_proportion = NULL,
@@ -22,6 +23,7 @@ find_differentiated_clusters(object, ...)
 \method{find_differentiated_clusters}{Seurat}(
   object,
   differential_function = differential_edgeR_pseudobulk_LRT,
+  by = "cell_cluster",
   limit = 5,
   cluster_of_origin = "Omega",
   min_frac_cell_assigned = 0.1,
@@ -41,6 +43,9 @@ parameters for the default function.}
 SingleCellExperiment object and  parameters passed in ... and returns a
 data.frame containing the significantly differential features for each
 cluster. See \link{differential_edgeR_pseudobulk_LRT} for the default function.}
+
+\item{by}{A character specifying the name of the metadata column referencing
+the clusters.}
 
 \item{min_frac_cell_assigned}{A numeric between 0 and 1 specifying the
 minimum percentage of the total cells in the SingleCellExperiment object that
@@ -84,6 +89,85 @@ For each cluster, if enough differences are found, mark the cluster as a
 'true' subcluster and gives it the alias 'cluster_of_origin:cluster'.
 The function will use by default \code{\link[ChromSCape:differential_activation]{ChromSCape::differential_activation()}}
 function to define differential features.
+}
+\examples{
+if(requireNamespace("Seurat", quietly=TRUE)){
+# Find differentiated clusters in Seurat object using 
+# edgeR_pseudobulk_LRT function
+data("Seu")
+
+DA = find_differentiated_clusters(
+    Seu,
+    differential_function = differential_edgeR_pseudobulk_LRT,
+    logFC.th = log2(1.5),
+    qval.th = 0.01,
+    by = "seurat_clusters",
+    limit = 5,
+    cluster_of_origin = "Omega",
+    min_frac_cell_assigned = 0.1,
+    verbose = TRUE
+)
+
+# Summary of differential genes per cluster
+head(DA$diffmat_n)
+
+# Differential analysis
+head(DA$res)
+
+# Did the clustering pass the minimum percent of cell assigned threshold ?
+print(DA$passing_min_pct_cell_assigned)
+
+# Find differentiated clusters in Seurat object using Seurat function
+data("Seu")
+
+DA = find_differentiated_clusters(
+    Seu,
+    differential_function = differential_Seurat,
+    logFC.th = log2(1.5),
+    qval.th = 0.01,
+    by = "seurat_clusters",
+    limit = 5,
+    cluster_of_origin = "Omega",
+    min_frac_cell_assigned = 0.1,
+    verbose = TRUE
+)
+
+# Find differentiated clusters in Seurat object using Seurat function, 
+# passing additional arguments to differential_Seurat and thus 
+# Seurat::FindAllMarkers funtion.
+data("Seu")
+
+DA = find_differentiated_clusters(
+    Seu,
+    differential_function = differential_Seurat,
+    logFC.th = log2(1.5),
+    qval.th = 0.01,
+    by = "seurat_clusters",
+    limit = 5,
+    cluster_of_origin = "Omega",
+    min_frac_cell_assigned = 0.1,
+    verbose = TRUE,
+    test.use = "roc" # additional argument
+)
+}
+# Find differentiated clusters in SingleCellExperiment object using 
+# differential_ChromSCape function.
+if(requireNamespace("ChromSCape", quietly=TRUE)){
+data("scExp")
+scExp = ChromSCape::find_clusters_louvain_scExp(scExp, 
+resolution = 0.1)
+DA = find_differentiated_clusters(
+    scExp,
+    differential_function = differential_ChromSCape,
+    logFC.th = log2(5),
+    qval.th = 0.01,
+    by = "cell_cluster",
+    limit = 5,
+    cluster_of_origin = "Omega",
+    min_frac_cell_assigned = 0.1,
+    verbose = TRUE,
+)
+}
 }
 \seealso{
 \code{\link[=differential_ChromSCape]{differential_ChromSCape()}}

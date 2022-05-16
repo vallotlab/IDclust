@@ -2,21 +2,33 @@
 % Please edit documentation in R/helpers.R
 \name{calculate_FDR_scEpigenomics}
 \alias{calculate_FDR_scEpigenomics}
-\title{Title}
+\title{Calculate FDR for SingleCellExperiment object}
 \usage{
 calculate_FDR_scEpigenomics(
   scExp,
+  differential_function = differential_ChromSCape,
+  by = "cell_cluster",
   limit = 5,
   qval.th = 0.01,
   logFC.th = log2(2),
   min.pct = 0.01,
   min_frac_cell_assigned = 0.1,
   cluster_of_origin = "Omega",
-  nThreads = 10
+  nThreads = 10,
+  iterations = 10,
+  ...
 )
 }
 \arguments{
 \item{scExp}{A SingleCellExperiment object}
+
+\item{differential_function}{A function that take in entry a
+SingleCellExperiment object and  parameters passed in ... and returns a
+data.frame containing the significantly differential features for each
+cluster.}
+
+\item{by}{A character specifying the name of the metadata column referencing
+the clusters.}
 
 \item{limit}{An integer specifying the minimum number of significantly
 enriched / depleted features required in order for a subcluster to be called
@@ -40,10 +52,25 @@ needs to be assigned. If a lower proportion is assigned, all cells are}
 
 \item{nThreads}{If runFDR==TRUE. An integer specifying of threads to use
 for the calculation of the FDR.}
+
+\item{iterations}{An integer specifyung the number of iterations of random
+subsampling to run.}
+
+\item{...}{Additional parameters passed to the differential_function. See
+\code{\link[=differential_ChromSCape]{differential_ChromSCape()}} for more information on additional
+parameters for the default function.}
 }
 \value{
 
 }
 \description{
-Title
+Calculate FDR for SingleCellExperiment object
+}
+\examples{
+if(requireNamespace("ChromSCape", quietly=TRUE)){
+data("scExp", package = "IDclust")
+scExp = ChromSCape::find_clusters_louvain_scExp(scExp, resolution = 0.1)
+FDR_df = calculate_FDR_scEpigenomics(scExp, nThreads = 1, iterations = 2)
+head(FDR_df)
+}
 }

@@ -4,7 +4,7 @@
 #' clusters in the 'by' column and return a data.frame  containing the marker 
 #' genes of each cluster passing the thresholds .
 #' 
-#' @param Seu A Seurat object containing scRNA dataset with a metadata column
+#' @param object A Seurat object containing scRNA dataset with a metadata column
 #'  name matching the by parameter
 #' @param by A character specifying the name of the metadata column referencing
 #' the clusters.
@@ -22,14 +22,18 @@
 #' @export
 #'
 #' @examples
-differential_Seurat <- function(Seu,
+#' if(requireNamespace("Seurat", quietly=TRUE)){
+#' data("Seu", package = "IDclust")
+#' DA <- differential_Seurat(Seu)
+#' }
+differential_Seurat <- function(object,
                                 by = "cell_cluster",
                                 logFC.th = log2(1.5),
                                 qval.th = 0.01,
                                 min.pct = 0.1,
                                 ...){
-  Seurat::Idents(Seu) = unique(Seu@meta.data[,by])
-  res =  Seurat::FindAllMarkers(Seu,
+  Seurat::Idents(object) = object@meta.data[,by]
+  res =  Seurat::FindAllMarkers(object,
                                 logfc.threshold = logFC.th,
                                 return.thresh = qval.th,
                                 min.pct = min.pct, 
@@ -46,10 +50,14 @@ differential_Seurat <- function(Seu,
 #' per cluster. Conducts 'LRT' (likelihood ratio tests) edgeR tests to test. 
 #' See [edgeR::glmLRT()] 
 #' 
-#' @param Seu A Seurat object containing scRNA dataset with a metadata column
+#' @param object A Seurat object containing scRNA dataset with a metadata column
 #'  name matching the by parameter
 #' @param by A character specifying the name of the metadata column referencing
 #' the clusters.
+#' @param biological_replicate_col A character specifying the column of the 
+#' object metadata definin the biological / technical replicates. If NULL, three
+#' random set of replicates will be created per cluster, provided there are 
+#' enough cells.
 #' @param assay Assay to use.
 #' @param logFC.th  A numeric specifying the log2 fold change of activation 
 #' above/below which a feature is considered as significantly differential.
@@ -70,7 +78,11 @@ differential_Seurat <- function(Seu,
 #' @importFrom stats p.adjust
 #' 
 #' @examples
-differential_edgeR_pseudobulk_LRT <- function(Seu,
+#' if(requireNamespace("Seurat", quietly=TRUE)){
+#' data("Seu", package = "IDclust")
+#' DA <- differential_edgeR_pseudobulk_LRT(Seu)
+#' }
+differential_edgeR_pseudobulk_LRT <- function(object,
                                               by = "cell_cluster",
                                               assay = "RNA",
                                               biological_replicate_col = NULL,
@@ -78,9 +90,9 @@ differential_edgeR_pseudobulk_LRT <- function(Seu,
                                               qval.th = 0.01,
                                               min.pct = 0.1
 ){
-  cluster_u = unique(Seu@meta.data[,by])
+  cluster_u = unique(object@meta.data[,by])
   n_cell_assigned = 0
-  mat = create_pseudobulk_mat_Seu(Seu, biological_replicate_col, assay)
+  mat = create_pseudobulk_mat_Seu(object, by = by, biological_replicate_col, assay)
   res = data.frame("p_val" = 0, "avg_log2FC"= 0, "pct.1" = 0, "pct.2"= 0, "p_val_adj" = 0, "cluster"= "", "gene"= "")
   
   for(i in seq_along(cluster_u)){
@@ -103,9 +115,9 @@ differential_edgeR_pseudobulk_LRT <- function(Seu,
         lrt <- edgeR::glmLRT(fit,coef=2)
         tab = lrt$table
         
-        binmat = Matrix::Matrix((Seu@assays[[assay]]@counts > 0) + 0, sparse = TRUE)
-        pct.1 = Matrix::rowSums(binmat[,which(Seu@meta.data[,by] == cluster_u[i])]) / length(which(Seu@meta.data[,by] == cluster_u[i]))
-        pct.2 = Matrix::rowSums(binmat[,which(Seu@meta.data[,by]!= cluster_u[i])]) / length(which(Seu@meta.data[,by] != cluster_u[i]))
+        binmat = Matrix::Matrix((object@assays[[assay]]@counts > 0) + 0, sparse = TRUE)
+        pct.1 = Matrix::rowSums(binmat[,which(object@meta.data[,by] == cluster_u[i])]) / length(which(object@meta.data[,by] == cluster_u[i]))
+        pct.2 = Matrix::rowSums(binmat[,which(object@meta.data[,by]!= cluster_u[i])]) / length(which(object@meta.data[,by] != cluster_u[i]))
         
         tab = tab %>% dplyr::filter(abs(logFC) > 0.1 & PValue < 0.1) # very loose filter
         
@@ -140,7 +152,7 @@ differential_edgeR_pseudobulk_LRT <- function(Seu,
 #' 'by' column of the SingleCellExperiment object and returns a data.frame 
 #' containing the differential features that passed the thresholds.
 #' 
-#' @param scExp A SingleCellExperiment object containing scRNA dataset with a
+#' @param object A SingleCellExperiment object containing scRNA dataset with a
 #'  metadata column name matching the by parameter
 #' @param by A character specifying the name of the metadata column referencing
 #' the clusters.
@@ -156,15 +168,19 @@ differential_edgeR_pseudobulk_LRT <- function(Seu,
 #' @export
 #'
 #' @examples
+#' if(requireNamespace("ChromSCape", quietly=TRUE)){
+#'  data("scExp", package = "IDclust")
+#' DA <- differential_ChromSCape(scExp)
+#' }
 differential_ChromSCape <- function(
-    scExp,
+    object,
     by = "cell_cluster",
     logFC.th = log2(1.5),
     qval.th = 0.01,
     min.pct = 0.01
     ){
   
-  res = ChromSCape::differential_activation(scExp = scExp, group_by = by)
+  res = ChromSCape::differential_activation(scExp = object, group_by = by)
   res = res %>% dplyr::select(-chr, -start, -end)
   res = res %>% tidyr::gather("key", "var", -ID)
   res = res %>% tidyr::extract(key, c("column", "cluster"), "(.*)\\.(.*)")

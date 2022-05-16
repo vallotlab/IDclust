@@ -17,7 +17,7 @@ plot_cluster_network(object, ...)
   node_size_factor = 7.5,
   edge_size_factor = 1,
   function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
-    flip.y = F),
+    flip.y = FALSE),
   ...
 )
 
@@ -30,7 +30,7 @@ plot_cluster_network(object, ...)
   node_size_factor = 7.5,
   edge_size_factor = 1,
   function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
-    flip.y = F),
+    flip.y = FALSE),
   ...
 )
 }
@@ -50,7 +50,14 @@ to use for coloring the nodes.}
 \item{cluster_col}{A character specifying the column of the
 Seurat to use to store the iterative differential clusters.}
 
-\item{node_size_factor}{A numeric specifying the size of the nodes.}
+\item{colors}{A character vector of colors. If NULL, will take R default
+color.}
+
+\item{node_size_factor}{A numeric specifying  a multiplicator of the size of
+the nodes.}
+
+\item{edge_size_factor}{A numeric specifying a multiplicator of the
+size of the edges.}
 
 \item{function_layout}{A function of g for the layout of the graph.}
 }
@@ -77,4 +84,46 @@ Plot Iterative Differential Clustering network
 Plot Iterative Differential Clustering network
 
 Plot Iterative Differential Clustering network
+}
+\examples{
+# Plotting of Seurat scRNA object (Paired-Tag)
+if(requireNamespace("Seurat", quietly=TRUE)){
+
+data("Seu", package = "IDclust")
+data("IDC_summary_scRNA", package = "IDclust")
+
+plot_cluster_network(
+    object = Seu,
+    differential_summary_df = IDC_summary_scRNA,
+    color_by = "cell_cluster",
+    cluster_col = "cell_cluster",
+    colors = NULL,
+    node_size_factor = 7.5,
+    edge_size_factor = 1,
+    function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
+                                                         flip.y = FALSE)
+)
+
+}
+
+# Clustering of scExp scH3K27ac object (Paired-Tag)
+if(requireNamespace("ChromSCape", quietly=TRUE)){
+
+data("scExp", package = "IDclust")
+data("IDC_summary_scEpigenomics", package = "IDclust")
+
+plot_cluster_network(
+    object = scExp,
+    differential_summary_df = IDC_summary_scEpigenomics,
+    color_by = "cell_cluster",
+    cluster_col = "cell_cluster",
+    colors = NULL,
+    node_size_factor = 7.5,
+    edge_size_factor = 1,
+    function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
+                                                         flip.y = FALSE)
+)
+
+
+}
 }

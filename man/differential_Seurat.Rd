@@ -5,7 +5,7 @@
 \title{Differential function Seurat (wilcoxon)}
 \usage{
 differential_Seurat(
-  Seu,
+  object,
   by = "cell_cluster",
   logFC.th = log2(1.5),
   qval.th = 0.01,
@@ -14,7 +14,7 @@ differential_Seurat(
 )
 }
 \arguments{
-\item{Seu}{A Seurat object containing scRNA dataset with a metadata column
+\item{object}{A Seurat object containing scRNA dataset with a metadata column
 name matching the by parameter}
 
 \item{by}{A character specifying the name of the metadata column referencing
@@ -38,6 +38,12 @@ cluster to consider a feature as potentially significantly differential.}
 Run \code{\link[Seurat:FindAllMarkers]{Seurat::FindAllMarkers()}}  function on the
 clusters in the 'by' column and return a data.frame  containing the marker
 genes of each cluster passing the thresholds .
+}
+\examples{
+if(requireNamespace("Seurat", quietly=TRUE)){
+data("Seu", package = "IDclust")
+DA <- differential_Seurat(Seu)
+}
 }
 \seealso{
 See \code{\link[Seurat:FindAllMarkers]{Seurat::FindAllMarkers()}}

@@ -1,19 +1,61 @@
 #' Plot Iterative Differential Clustering network
 #'
-#' @param object 
+#' @param object  An object clustered with
+#'  [iterative_differential_clustering()].
 #' @param ... 
 #'
 #' @return
 #' @export
 #'
 #' @examples
+#' # Plotting of Seurat scRNA object (Paired-Tag)
+#' if(requireNamespace("Seurat", quietly=TRUE)){
+#' 
+#' data("Seu", package = "IDclust")
+#' data("IDC_summary_scRNA", package = "IDclust")
+#' 
+#' plot_cluster_network(
+#'     object = Seu,
+#'     differential_summary_df = IDC_summary_scRNA,
+#'     color_by = "cell_cluster",
+#'     cluster_col = "cell_cluster",
+#'     colors = NULL,
+#'     node_size_factor = 7.5,
+#'     edge_size_factor = 1,
+#'     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
+#'                                                          flip.y = FALSE)
+#' )
+#' 
+#' }
+#' 
+#' # Clustering of scExp scH3K27ac object (Paired-Tag)
+#' if(requireNamespace("ChromSCape", quietly=TRUE)){
+#' 
+#' data("scExp", package = "IDclust")
+#' data("IDC_summary_scEpigenomics", package = "IDclust")
+#' 
+#' plot_cluster_network(
+#'     object = scExp,
+#'     differential_summary_df = IDC_summary_scEpigenomics,
+#'     color_by = "cell_cluster",
+#'     cluster_col = "cell_cluster",
+#'     colors = NULL,
+#'     node_size_factor = 7.5,
+#'     edge_size_factor = 1,
+#'     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
+#'                                                          flip.y = FALSE)
+#' )
+#' 
+#' 
+#' }
 plot_cluster_network <- function(object, ...) {
     UseMethod(generic = 'plot_cluster_network', object = object)
 }
 
 #' Plot Iterative Differential Clustering network
 #'
-#' @param object A SingleCellExperiment object clustered with [iterative_differential_clustering()]
+#' @param object A SingleCellExperiment object clustered with
+#'  [iterative_differential_clustering()].
 #' @param differential_summary_df Optional. A data.frame of differential
 #' analyses summary outputed by [iterative_differential_clustering()] when 
 #' saving option is TRUE. Use to determine the width of the edges based on the
@@ -37,9 +79,8 @@ plot_cluster_network <- function(object, ...) {
 #' @export
 #'
 #' @rdname plot_cluster_network
-#' @method plot_cluster_network default
-#' @S3method plot_cluster_network default
-#' @examples
+#' @exportS3Method plot_cluster_network default
+#' 
 plot_cluster_network.default <- function(
     object,
     differential_summary_df,
@@ -48,7 +89,7 @@ plot_cluster_network.default <- function(
     colors = NULL,
     node_size_factor = 7.5,
     edge_size_factor = 1,
-    function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE, flip.y = F),
+    function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE, flip.y = FALSE),
     ...
 ){
     
@@ -61,7 +102,7 @@ plot_cluster_network.default <- function(
   # Make a color data.frame
   color_df = data.frame(
     "color_by" = sort(unique(object[[color_by]])),
-    "color_by_color" = sample(colors, length(unique(object[[color_by]])), replace = F)
+    "color_by_color" = sample(colors, length(unique(object[[color_by]])), replace = FALSE)
   )
   colnames(color_df) = gsub("color_by", color_by, colnames(color_df))
   
@@ -172,7 +213,12 @@ return(color_df)
 #'  to use for coloring the nodes.
 #' @param cluster_col A character specifying the column of the 
 #' Seurat to use to store the iterative differential clusters. 
-#' @param node_size_factor A numeric specifying the size of the nodes.  
+#' @param colors A character vector of colors. If NULL, will take R default 
+#' color.
+#' @param node_size_factor A numeric specifying  a multiplicator of the size of
+#' the nodes.  
+#' @param edge_size_factor A numeric specifying a multiplicator of the 
+#' size of the edges.  
 #' @param function_layout A function of g for the layout of the graph.
 #' @param ... Additional parameters passed to the plot function.
 #'
@@ -187,9 +233,8 @@ return(color_df)
 #' @export
 #'
 #' @rdname plot_cluster_network
-#' @method plot_cluster_network Seurat
-#' @S3method plot_cluster_network Seurat
-#' @examples
+#' @exportS3Method plot_cluster_network Seurat
+#' 
 plot_cluster_network.Seurat <- function(
     object,
     differential_summary_df,
@@ -198,7 +243,7 @@ plot_cluster_network.Seurat <- function(
     colors = NULL,
     node_size_factor = 7.5,
     edge_size_factor = 1,
-    function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE, flip.y = F),
+    function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE, flip.y = FALSE),
     ...
 ){
     
@@ -211,7 +256,7 @@ plot_cluster_network.Seurat <- function(
     # Make a color data.frame
     color_df = data.frame(
         "color_by" = sort(unique(object@meta.data[,color_by])),
-        "color_by_color" = sample(colors, length(unique(object@meta.data[,color_by])), replace = F)
+        "color_by_color" = sample(colors, length(unique(object@meta.data[,color_by])), replace = FALSE)
     )
     colnames(color_df) = gsub("color_by", color_by, colnames(color_df))
     

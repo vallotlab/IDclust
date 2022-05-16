@@ -14,6 +14,83 @@ NULL
 #' @export find_differentiated_clusters
 #'
 #' @examples
+#' if(requireNamespace("Seurat", quietly=TRUE)){
+#' # Find differentiated clusters in Seurat object using 
+#' # edgeR_pseudobulk_LRT function
+#' data("Seu")
+#'
+#' DA = find_differentiated_clusters(
+#'     Seu,
+#'     differential_function = differential_edgeR_pseudobulk_LRT,
+#'     logFC.th = log2(1.5),
+#'     qval.th = 0.01,
+#'     by = "seurat_clusters",
+#'     limit = 5,
+#'     cluster_of_origin = "Omega",
+#'     min_frac_cell_assigned = 0.1,
+#'     verbose = TRUE
+#' )
+#' 
+#' # Summary of differential genes per cluster
+#' head(DA$diffmat_n)
+#' 
+#' # Differential analysis
+#' head(DA$res)
+#' 
+#' # Did the clustering pass the minimum percent of cell assigned threshold ?
+#' print(DA$passing_min_pct_cell_assigned)
+#' 
+#' # Find differentiated clusters in Seurat object using Seurat function
+#' data("Seu")
+#' 
+#' DA = find_differentiated_clusters(
+#'     Seu,
+#'     differential_function = differential_Seurat,
+#'     logFC.th = log2(1.5),
+#'     qval.th = 0.01,
+#'     by = "seurat_clusters",
+#'     limit = 5,
+#'     cluster_of_origin = "Omega",
+#'     min_frac_cell_assigned = 0.1,
+#'     verbose = TRUE
+#' )
+#' 
+#' # Find differentiated clusters in Seurat object using Seurat function, 
+#' # passing additional arguments to differential_Seurat and thus 
+#' # Seurat::FindAllMarkers funtion.
+#' data("Seu")
+#' 
+#' DA = find_differentiated_clusters(
+#'     Seu,
+#'     differential_function = differential_Seurat,
+#'     logFC.th = log2(1.5),
+#'     qval.th = 0.01,
+#'     by = "seurat_clusters",
+#'     limit = 5,
+#'     cluster_of_origin = "Omega",
+#'     min_frac_cell_assigned = 0.1,
+#'     verbose = TRUE,
+#'     test.use = "roc" # additional argument
+#' )
+#' }
+#' # Find differentiated clusters in SingleCellExperiment object using 
+#' # differential_ChromSCape function.
+#' if(requireNamespace("ChromSCape", quietly=TRUE)){
+#' data("scExp")
+#' scExp = ChromSCape::find_clusters_louvain_scExp(scExp, 
+#' resolution = 0.1)
+#' DA = find_differentiated_clusters(
+#'     scExp,
+#'     differential_function = differential_ChromSCape,
+#'     logFC.th = log2(5),
+#'     qval.th = 0.01,
+#'     by = "cell_cluster",
+#'     limit = 5,
+#'     cluster_of_origin = "Omega",
+#'     min_frac_cell_assigned = 0.1,
+#'     verbose = TRUE,
+#' )
+#' }
 find_differentiated_clusters <- function(object, ...) {
     UseMethod(generic = 'find_differentiated_clusters', object = object)
     
@@ -29,11 +106,27 @@ find_differentiated_clusters <- function(object, ...) {
 #' @export iterative_differential_clustering
 #'
 #' @examples
+#' # Clustering of Seurat scRNA object (Paired-Tag)
+#' if(requireNamespace("Seurat", quietly=TRUE)){
+#' 
+#' data("Seu", package = "IDclust")
+#' Seu = iterative_differential_clustering(Seu, saving = FALSE, plotting =FALSE,
+#' logFC.th = 0.2, qval.th = 0.1)
+#' 
+#' }
+#' 
+#' # Clustering of scExp scH3K27ac object (Paired-Tag)
+#' if(requireNamespace("ChromSCape", quietly=TRUE)){
+#' 
+#' data("scExp", package = "IDclust")
+#' scExp = iterative_differential_clustering(scExp,  saving = FALSE, plotting =FALSE,
+#' logFC.th = 0.5, qval.th = 0.01)
+#' 
+#' }
 iterative_differential_clustering <- function(object, ...) {
     UseMethod(generic = 'iterative_differential_clustering', object = object)
     
 }
-
 
 #' @details  Find significantly differential features between the given set
 #' of clusters (within the 'cell_cluster' column of the SingleCellExperiment).
@@ -48,6 +141,8 @@ iterative_differential_clustering <- function(object, ...) {
 #' SingleCellExperiment object and  parameters passed in ... and returns a 
 #' data.frame containing the significantly differential features for each 
 #' cluster.
+#' @param by A character specifying the name of the metadata column referencing
+#' the clusters.
 #' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
 #' minimum percentage of the total cells in the SingleCellExperiment object that
 #' needs to be assigned. If a lower proportion is assigned, all cells are 
@@ -77,29 +172,29 @@ iterative_differential_clustering <- function(object, ...) {
 #' @import dplyr
 #' @export 
 #' @rdname find_differentiated_clusters
-#' @method find_differentiated_clusters default
-#' @S3method find_differentiated_clusters default
+#' @exportS3Method  find_differentiated_clusters default
 find_differentiated_clusters.default <- function(
     object,
     differential_function = differential_ChromSCape,
+    by = "cell_cluster",
     min_frac_cell_assigned = 0.1,
     limit = 5,
     limit_by_proportion = NULL,
     cluster_of_origin = "Omega",
     verbose = TRUE,
     ...){
-    cluster_u = names(sort(table(object$cell_cluster)))
+    cluster_u = names(sort(table(object[[by]])))
     diffmat_n = data.frame(n_differential = rep(0,length(cluster_u)),
                            cluster_of_origin = cluster_of_origin,
                            subcluster = cluster_u,
                            true_subcluster = cluster_u)
     
-    res = differential_function(object, ...)
+    res = differential_function(object, by = by, ...)
     gc()
     n_cell_assigned = 0
     for(i in 1:(length(cluster_u))){
         cluster = cluster_u[i]
-        group_cells = colnames(object)[object$cell_cluster == cluster]
+        group_cells = colnames(object)[object[[by]] == cluster]
         res. = res[which(res$cluster == cluster),]
         
         diffmat_n$n_differential[i] = nrow(res.) 
@@ -157,7 +252,7 @@ find_differentiated_clusters.default <- function(
 #' perform a Chi-squared test to calculate p-values.   
 #' 
 #'
-#' @param object A SingleCellExperiment object 
+#' @param object A SingleCellExperiment object.
 #' @param output_dir The output directory in which to plot and save objects.
 #' @param plotting A logical specifying wether to save the plots or not.
 #' @param saving A logical specifying wether to save the data or not.
@@ -220,8 +315,7 @@ find_differentiated_clusters.default <- function(
 #' @import dplyr
 #' @export 
 #' @rdname iterative_differential_clustering
-#' @method iterative_differential_clustering default
-#' @S3method iterative_differential_clustering default
+#' @exportS3Method iterative_differential_clustering default
 #' 
 iterative_differential_clustering.default <- function(
     object,
@@ -272,6 +366,7 @@ iterative_differential_clustering.default <- function(
     DA = find_differentiated_clusters(
         object, 
         differential_function = differential_function,
+        by = "cell_cluster",
         min_frac_cell_assigned = min_frac_cell_assigned,
         limit = 0,
         limit_by_proportion = NULL,
@@ -366,6 +461,7 @@ iterative_differential_clustering.default <- function(
                     # Find differentiated clusters
                     DA = find_differentiated_clusters(object.,
                                                       differential_function = differential_function,
+                                                      by = "cell_cluster",
                                                       min_frac_cell_assigned = min_frac_cell_assigned,
                                                       limit = limit,
                                                       limit_by_proportion = limit_by_proportion,
@@ -439,6 +535,8 @@ iterative_differential_clustering.default <- function(
 #' SingleCellExperiment object and  parameters passed in ... and returns a 
 #' data.frame containing the significantly differential features for each 
 #' cluster. See [differential_edgeR_pseudobulk_LRT] for the default function.
+#' @param by A character specifying the name of the metadata column referencing
+#' the clusters.
 #' @param limit An integer specifying the minimum number of features required 
 #' for a subcluster to be called 'true' subcluster.
 #' @param cluster_of_origin A character specifying the name of the cluster of 
@@ -455,11 +553,11 @@ iterative_differential_clustering.default <- function(
 #' @return
 #' @export 
 #' @rdname find_differentiated_clusters
-#' @method find_differentiated_clusters Seurat
-#' @S3method find_differentiated_clusters Seurat
+#' @exportS3Method find_differentiated_clusters Seurat
 #' 
 find_differentiated_clusters.Seurat <- function(object,
                                                 differential_function = differential_edgeR_pseudobulk_LRT,
+                                                by = "cell_cluster",
                                                 limit = 5,
                                                 cluster_of_origin = "Omega",
                                                 min_frac_cell_assigned = 0.1,
@@ -478,17 +576,17 @@ find_differentiated_clusters.Seurat <- function(object,
     set.seed(47)
     
     # Starting list of clusters to re-cluster
-    cluster_u = unique(object$cell_cluster)
+    cluster_u = as.character(unique(object@meta.data[[by]]))
     diffmat_n = data.frame(n_differential = rep(0,length(cluster_u)),
                            cluster_of_origin = cluster_of_origin,
                            subcluster = cluster_u,
                            true_subcluster = cluster_u)
     
-    res = differential_function(object, ...)
+    res = differential_function(object, by = by, ...)
     
     n_cell_assigned = 0
     for(i in seq_along(cluster_u)){
-        group_cells = colnames(object)[which(object$cell_cluster %in% cluster_u[i])]
+        group_cells = colnames(object)[which(object@meta.data[[by]] %in% cluster_u[i])]
         res. = res[which(res$cluster == cluster_u[i]),]
         diffmat_n$n_differential[i] = nrow(res.)
         if(verbose) cat(cluster_u[i],"- Found",diffmat_n$n_differential[i], "differential regions.\n")
@@ -567,8 +665,7 @@ find_differentiated_clusters.Seurat <- function(object,
 #' @importFrom qs qsave
 #' @export 
 #' @rdname iterative_differential_clustering
-#' @method iterative_differential_clustering Seurat
-#' @S3method iterative_differential_clustering Seurat
+#' @exportS3Method iterative_differential_clustering Seurat
 #' 
 iterative_differential_clustering.Seurat <- function(
     object,
@@ -611,7 +708,7 @@ iterative_differential_clustering.Seurat <- function(
     
     # For the first partition, try to find very low level clusters (e.g. low
     # resolution, high number of neighbors)
-    object = Seurat::FindNeighbors(object, reduction = dim_red,  k.param = 50, dims = 1:n_dims, verbose = F)
+    object = Seurat::FindNeighbors(object, reduction = dim_red,  k.param = 50, dims = 1:n_dims, verbose = FALSE)
     object = Seurat::FindClusters(object, algorithm = 2, resolution = starting.resolution, random.seed = 47, verbose = FALSE)
     object$cell_cluster = object$seurat_clusters
     object$cell_cluster <- paste0("A",as.numeric(object$cell_cluster))
@@ -627,6 +724,7 @@ iterative_differential_clustering.Seurat <- function(
     DA = find_differentiated_clusters(
         object,
         differential_function = differential_function,
+        by = "cell_cluster",
         min_frac_cell_assigned = min_frac_cell_assigned,
         cluster_of_origin =  "Omega",
         limit = 0,
@@ -697,6 +795,7 @@ iterative_differential_clustering.Seurat <- function(
                     ## Differential analysis
                     DA = find_differentiated_clusters(object., 
                                                       differential_function = differential_function,
+                                                      by = "cell_cluster",
                                                       min_frac_cell_assigned = min_frac_cell_assigned, 
                                                       limit = limit,
                                                       cluster_of_origin =  partition_cluster_of_origin,

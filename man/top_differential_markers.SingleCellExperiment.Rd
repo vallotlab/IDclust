@@ -14,15 +14,23 @@ top_differential_markers.SingleCellExperiment(
 )
 }
 \arguments{
-\item{scExp}{}
+\item{scExp}{A SingleCellExperiment object}
 
-\item{IDC_DA_list}{}
+\item{IDC_DA_list}{A list of data.frame of  differential features at each
+clustering  iteration produced by \code{\link[=iterative_differential_clustering]{iterative_differential_clustering()}}
+("IDC_DA.qs").}
 
-\item{gene_col}{}
+\item{top}{An integer specifying the number of top features to retrieve per
+cluster.}
 
-\item{pseudogene_pattern}{}
+\item{gene_col}{A character specifying the column in which to retrieve the
+gene / feature name.}
 
-\item{distanceToTSS}{}
+\item{pseudogene_pattern}{A character specifying the pattern of 'pseudo-genes'
+to exclude from the top markers.}
+
+\item{distanceToTSS}{An integer specifying the maximum distance to consider
+a feature close enough to a gene.}
 }
 \value{
 

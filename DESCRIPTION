@@ -22,11 +22,11 @@ LazyData: false
 Suggests: 
     doParallel,
     parallel,
-    foreach,
     knitr,
     markdown,
     ChromSCape,
-    Seurat
+    Seurat,
+    testthat
 RoxygenNote: 7.1.2
 Roxygen: list(markdown = TRUE)
 Imports: 
@@ -39,6 +39,8 @@ Imports:
     SingleCellExperiment,
     SummarizedExperiment,
     edgeR,
-    igraph
+    igraph,
+    foreach,
+    SeuratObject,
 Depends: 
     R (>= 4.1)

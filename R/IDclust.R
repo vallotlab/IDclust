@@ -3,3 +3,768 @@
 #' @importFrom stats median model.matrix quantile
 NULL
 
+
+#' Find Differentiated Clusters
+#'
+#' @param object 
+#' @param ... 
+#'
+#' @return
+#' @rdname find_differentiated_clusters
+#' @export find_differentiated_clusters
+#'
+#' @examples
+find_differentiated_clusters <- function(object, ...) {
+    UseMethod(generic = 'find_differentiated_clusters', object = object)
+    
+}
+
+#' iterative_differential_clustering
+#'
+#' @param object 
+#' @param ... 
+#'
+#' @return
+#' @rdname iterative_differential_clustering
+#' @export iterative_differential_clustering
+#'
+#' @examples
+iterative_differential_clustering <- function(object, ...) {
+    UseMethod(generic = 'iterative_differential_clustering', object = object)
+    
+}
+
+
+#' @details  Find significantly differential features between the given set
+#' of clusters (within the 'cell_cluster' column of the SingleCellExperiment).
+#' For each cluster, if enough differences are found, mark the cluster as a 
+#' 'true' subcluster and gives it the alias 'cluster_of_origin:cluster'. 
+#' The function will use by default [ChromSCape::differential_activation()]
+#' function to define differential features.
+#' 
+#' @param object A SingleCellExperiment with 'cell_cluster' column filled with 
+#' cluster assignations.  
+#' @param differential_function A function that take in entry a 
+#' SingleCellExperiment object and  parameters passed in ... and returns a 
+#' data.frame containing the significantly differential features for each 
+#' cluster.
+#' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
+#' minimum percentage of the total cells in the SingleCellExperiment object that
+#' needs to be assigned. If a lower proportion is assigned, all cells are 
+#' assigned to the cluster of origin.
+#' @param limit An integer specifying the minimum number of features required 
+#' for a subcluster to be called 'true' subcluster.
+#' @param limit_by_proportion Optional. A data.frame containing 3 columns - 
+#' ncells, mean_n_differential, sd_n_differential - that reflect the number of 
+#' false positive expected for a given cluster size.
+#'  (See  [calculate_FDR_scEpigenomics]).
+#' @param cluster_of_origin A character specifying the name of the cluster of 
+#' origin that will be concatenated before the name of true subclusters. 
+#' @param verbose A logical specifying wether to print.
+#' @param ... Additional parameters passed to the differential_function. See 
+#' [differential_ChromSCape()] for more information on additional
+#' parameters for the default function.
+#'
+#' @seealso [differential_ChromSCape()]
+#' 
+#' @return A list containing :
+#'  * "diffmat_n" - A data.frame containing the number of differential regions
+#'  foun per cluster and the new assignations of the subclusters.
+#'  * "res" - A data.frame containing the differential analysis.
+#'  * "passing_min_pct_cell_assigned" - A boolean indicating if enough cells
+#'   were  assigned
+#' 
+#' @import dplyr
+#' @export 
+#' @rdname find_differentiated_clusters
+#' @method find_differentiated_clusters default
+#' @S3method find_differentiated_clusters default
+find_differentiated_clusters.default <- function(
+    object,
+    differential_function = differential_ChromSCape,
+    min_frac_cell_assigned = 0.1,
+    limit = 5,
+    limit_by_proportion = NULL,
+    cluster_of_origin = "Omega",
+    verbose = TRUE,
+    ...){
+    cluster_u = names(sort(table(object$cell_cluster)))
+    diffmat_n = data.frame(n_differential = rep(0,length(cluster_u)),
+                           cluster_of_origin = cluster_of_origin,
+                           subcluster = cluster_u,
+                           true_subcluster = cluster_u)
+    
+    res = differential_function(object, ...)
+    gc()
+    n_cell_assigned = 0
+    for(i in 1:(length(cluster_u))){
+        cluster = cluster_u[i]
+        group_cells = colnames(object)[object$cell_cluster == cluster]
+        res. = res[which(res$cluster == cluster),]
+        
+        diffmat_n$n_differential[i] = nrow(res.) 
+        
+        if(verbose) cat(cluster," - found", diffmat_n$n_differential[i], "enriched features.\n")
+        
+        if(is.null(limit_by_proportion)){
+            if(diffmat_n$n_differential[i] < limit){
+                if(verbose) cat(cluster, " cluster has less than", limit, "enriched features.\nAssigning the cells to cluster of origin.\n")
+                diffmat_n$true_subcluster[i] = cluster_of_origin
+            } else{
+                n_cell_assigned = n_cell_assigned + length(group_cells)
+                diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster)
+            }
+        } else{
+            index = which.min(abs(limit_by_proportion$ncells - length(group_cells)))
+            limit. = max(limit, 
+                         limit_by_proportion$mean_n_differential[index][1] + 2 * limit_by_proportion$sd_n_differential[index][1])
+            if(diffmat_n$n_differential[i] < limit.){
+                if(verbose) cat(cluster, " cluster has less than", limit., "enriched features.\nAssigning the cells to cluster of origin.\n")
+                diffmat_n$true_subcluster[i] = cluster_of_origin
+            } else{
+                n_cell_assigned = n_cell_assigned + length(group_cells)
+                diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster)
+            }
+        }
+    }
+    passing = TRUE
+    
+    if(verbose) cat("Finished finding differences - ", n_cell_assigned/ ncol(object), " fraction of cells were assigned.\n")
+    if((n_cell_assigned/ ncol(object)) < min_frac_cell_assigned){
+        if(verbose) cat("Not enough cells were assigned - not clustering.\n")
+        passing = FALSE
+    }
+    
+    out = list("diffmat_n" = diffmat_n, "res" = res, "passing_min_pct_cell_assigned" = passing)
+    return(out)
+}
+
+
+#' @description Main function of the IDclust package. Provided a 
+#' SingleCellExperiment pre-processed with ChromSCape, will find biologically 
+#' relevant clusters by iteratively re-clustering and re-processing clusters. 
+#' At each iteration, subclusters having enough significantly enriched features 
+#' compared to other subclusters are defined as 'true' subclusters. Others are 
+#' assigned to parent clusters. The algorithm will stop when no more 'true' 
+#' subclusters are found. 
+#' 
+#' This method ensure that each cluster found in this unsupervised way have
+#' significant biological differences, based on the user defined thresholds.
+#' 
+#' @details The default differential analysis used is the 
+#' [ChromSCape::differential_activation()] function. This function 
+#' compares the % of active cells in the cluster versus the rest of cells and 
+#' perform a Chi-squared test to calculate p-values.   
+#' 
+#'
+#' @param object A SingleCellExperiment object 
+#' @param output_dir The output directory in which to plot and save objects.
+#' @param plotting A logical specifying wether to save the plots or not.
+#' @param saving A logical specifying wether to save the data or not.
+#' @param limit An integer specifying the minimum number of significantly 
+#' enriched / depleted features required in order for a subcluster to be called
+#' a 'true' subcluster
+#' @param dim_red The name of the slot to save the dimensionality reduction at
+#' each step.
+#' @param vizualization_dim_red The name of the slot used for plotting. Must be
+#' a valid slot present in \code{reducedDimNames(object)}.
+#' @param processing_function A function that re-process the subset of clusters
+#' at each step. It msut take in entry a  SingleCellExperiment object, \code{dim_red}
+#'  and \code{n_dims} parameters and returns a SingleCellExperiment containing a cell
+#' embedding. See [processing_ChromSCape] for the default function.
+#' @param differential_function A function that take in entry a 
+#' SingleCellExperiment object and  parameters passed in ... and returns a 
+#' data.frame containing the significantly differential features for each 
+#' cluster.
+#' @param quantile.activation A numeric between 0 and 1 specifying the quantile
+#' of global activation to take as minimal percentage of activation for the 
+#' differential analysis. Increasing this value will decrease the number of 
+#' differential features.
+#' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
+#' minimum percentage of the total cells in the SingleCellExperiment object that
+#' needs to be assigned. If a lower proportion is assigned, all cells are 
+#' assigned to the cluster of origin.
+#' @param k An integer specifying the number of nearest neighbors to use for 
+#' the Louvain clustering at each iteration.
+#' @param resolution A numeric specifying the resolution to use for the Louvain
+#' clustering at each iteration.
+#' @param starting.resolution A numeric specifying the resolution to use for the 
+#' Louvain clustering of the first iteration. It is recommended to set it quite
+#' low in order to have few starting clusters.
+#' @param limit_by_proportion Optional. A data.frame containing 3 columns - 
+#' ncells, mean_n_differential, sd_n_differential - that reflect the number of 
+#' false positive expected for a given cluster size.
+#' @param n_dims An integer specifying the number of first dimensions to keep 
+#' in the dimensionality reduction step.
+#' @param nThreads  An integer specifying of threads to use
+#' for the calculation of the FDR.
+#' @param color Set of colors to use for the coloring of the clusters. This must
+#' contains enough colors for each cluster (minimum 20 colors, but 100 colors
+#' at least is recommended, based on the dataset).
+#' @param verbose A logical specifying wether to print.
+#'
+#' @param ... 
+#'
+#' @return The SingleCellExperiment object with the assignation of cells to clusters.
+#' If saving is true, also saves list of differential analyses, differential 
+#' analyses summaries and embeddings for each re-clustered cluster. If runFDR is 
+#' TRUE, also saves the list of FDR for each re-clusterd cluster.
+#' 
+#' 
+#' @importFrom  Matrix Matrix rowSums
+#' @importFrom qs qsave
+#' @importFrom  SummarizedExperiment assays 
+#' @importFrom  grDevices colors 
+#' @importFrom  SingleCellExperiment reducedDim  
+#' @import ggplot2
+#' @import dplyr
+#' @export 
+#' @rdname iterative_differential_clustering
+#' @method iterative_differential_clustering default
+#' @S3method iterative_differential_clustering default
+#' 
+iterative_differential_clustering.default <- function(
+    object,
+    output_dir = "./",
+    plotting = TRUE,
+    saving = TRUE,
+    n_dims = 10,
+    dim_red = "PCA",
+    vizualization_dim_red = "UMAP",
+    processing_function = processing_ChromSCape,
+    quantile.activation = 0.7,
+    differential_function = differential_ChromSCape,
+    min_frac_cell_assigned = 0.1,
+    limit = 5,
+    k = 100,
+    starting.resolution = 0.1,
+    resolution = 0.8,
+    limit_by_proportion = NULL,
+    color = NULL,
+    nThreads = 10,
+    verbose = TRUE,
+    ...
+){
+    set.seed(47)
+    
+    if(plotting == TRUE){
+        if(dir.exists(output_dir)) 
+            dir.create(file.path(output_dir, "iterations"), showWarnings = FALSE) else stop("output_dir is an invalid directory")
+    }
+    
+    # For the first partition, try to find very low level clusters (e.g. low
+    # resolution, high number of neighbors)
+    object = ChromSCape::find_clusters_louvain_scExp(object,
+                                                    k = 100,
+                                                    resolution = starting.resolution,
+                                                    use.dimred = "PCA")
+    object$cell_cluster = gsub("C","A", object$cell_cluster)
+    
+    # Calculate the average % cells activated in a feature
+    # and return a level of activation based on a given decile
+    binmat = Matrix::Matrix((SummarizedExperiment::assays(object)$counts > 0) + 0, sparse = TRUE)
+    min.pct.activation = quantile(Matrix::rowSums(binmat) / ncol(binmat), quantile.activation)
+    
+    # Find initial differences (even if there are none, the initial clusters
+    # are always considered as true clusters).
+    if(verbose) cat("Initial round of clustering - limit of differential genes set to 0",
+                    " for this first round only.\n")
+    DA = find_differentiated_clusters(
+        object, 
+        differential_function = differential_function,
+        min_frac_cell_assigned = min_frac_cell_assigned,
+        limit = 0,
+        limit_by_proportion = NULL,
+        cluster_of_origin = "Omega",
+        verbose = verbose,
+        ...)
+    
+    # Starting list of clusters to re-cluster
+    differential_summary_df = DA$diffmat_n
+    object$cell_cluster = differential_summary_df$true_subcluster[match(object$cell_cluster, differential_summary_df$subcluster)]
+    
+    
+    # Colors for the plot
+    if (is.null(color)){
+        color = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)]
+        color <- sample(color, 400)
+    } else {
+        stopifnot(is.character(color))
+        if(length(color) < 20) warning("IDclust::iterative_differential_clustering - ",
+                                       "The color vector might be too short.",
+                                       "Please precise more colors.")
+    }
+    object$cell_cluster_color = NULL
+    
+    # List of embeddings
+    list_embeddings = list(SingleCellExperiment::reducedDim(object, dim_red))
+    names(list_embeddings)[1] = paste(unique(object$cell_cluster), collapse = "_")
+    
+    # List of marker features
+    list_res = list(DA$res)
+    names(list_res)[1] = "Omega"
+    
+    
+    iteration = 0
+    gc()
+    
+    # Run IDC until no more clusters can be re-clustered into meaningful clusters
+    while(iteration < nrow(differential_summary_df)){
+        
+        if(plotting == TRUE){
+            # Plot each iteration of the algorithm
+            png(file.path(output_dir, "iterations", paste0("Iteration_",iteration,".png")), width = 1600, height = 1200, res = 200)
+            object. = object
+            object.$cell_cluster = gsub("Omega:","",object.$cell_cluster)
+            print(
+                ChromSCape::plot_reduced_dim_scExp(object, reduced_dim = vizualization_dim_red, color_by = "cell_cluster",
+                                                   downsample = 50000, size = 0.35, transparency = 0.75) +
+                    ggtitle(paste0("Initital Clustering")) + theme(legend.position = "none")
+            )
+            dev.off()
+        }
+        
+        iteration = iteration + 1
+        
+        if(verbose) cat("Doing iteration number ", iteration,"...\n")
+        
+        # Name of the cluster of origin
+        partition_cluster_of_origin = differential_summary_df$true_subcluster[iteration]
+        
+        # Make sure that we do not re-cluster a 'parent cluster',
+        # e.g. cells that were unassigned and therefore assigned to the parent
+        # cluster
+        if(!(partition_cluster_of_origin  %in% differential_summary_df$true_subcluster[duplicated(differential_summary_df$true_subcluster)])){
+            
+            # Letter assigned to the 'partition depth' (e.g. A, B, C...)
+            partition_depth = which(LETTERS == substr(gsub(".*:","",partition_cluster_of_origin),1,1)) + 1
+            
+            # Select only cells from the given cluster
+            object. = object[, which(object$cell_cluster %in%  partition_cluster_of_origin)]
+            
+            if(verbose) cat("Re-calculating PCA and subclustering for cluster", partition_cluster_of_origin,
+                            "with",ncol(object.),"cells.\n")
+            
+            # Re-cluster a cluster only if there are more than 100 cells
+            if(ncol(object.) > 100){
+                
+                # Re-processing sub-cluster
+                object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
+                
+                # Re-clustering sub-cluster
+                object. = ChromSCape::find_clusters_louvain_scExp(object., k = 50, resolution =  resolution,
+                                                                 use.dimred = dim_red)
+                object.$cell_cluster <- paste0(LETTERS[partition_depth],gsub("C", "", object.$cell_cluster))
+                
+                clusters = object.$cell_cluster 
+                cluster_u = unique(clusters)
+                
+                if(length(cluster_u) > 1 ){
+                    if(verbose) cat("Found", length(cluster_u),"subclusters.\n")
+                    if(verbose) print(table(clusters))
+                    
+                    # Find differentiated clusters
+                    DA = find_differentiated_clusters(object.,
+                                                      differential_function = differential_function,
+                                                      min_frac_cell_assigned = min_frac_cell_assigned,
+                                                      limit = limit,
+                                                      limit_by_proportion = limit_by_proportion,
+                                                      cluster_of_origin = partition_cluster_of_origin,
+                                                      verbose = verbose,
+                                                      ...)
+                    gc()
+                    
+                    # Retrieve DA results
+                    diffmat_n = DA$diffmat_n
+                    list_res[[partition_cluster_of_origin]] = DA$res
+                    list_embeddings[[partition_cluster_of_origin]] = SingleCellExperiment::reducedDim(object., "PCA")
+                    
+                    # If more than 'min_frac_cell_assigned' of the cells were assigned
+                    # to 'true' subclusters (with marker features)
+                    if(!isFALSE(DA$passing_min_pct_cell_assigned)){
+                        
+                        # Add the new sublclusters to the list of clusters
+                        differential_summary_df = rbind(differential_summary_df, diffmat_n)
+                        object.$cell_cluster = diffmat_n$true_subcluster[match(object.$cell_cluster, diffmat_n$subcluster)]
+                        object$cell_cluster[match(colnames(object.), colnames(object))] = object.$cell_cluster
+                        
+                        if(plotting == TRUE){
+                            png(file.path(output_dir, paste0(partition_cluster_of_origin,"_true.png")), width = 1400, height = 1200, res = 200)
+                            print(
+                                ChromSCape::plot_reduced_dim_scExp(object., color_by = "cell_cluster", reduced_dim = dim_red) + 
+                                    ggtitle(paste0(partition_cluster_of_origin))
+                            )
+                            dev.off()
+                        }
+                    } else{
+                        if(verbose) cat("Found 2 subcluster for", partition_cluster_of_origin," but with no difference. Maximum clustering reached...\n")
+                    }
+                } else{
+                    if(verbose) cat("Found only 1 subcluster for", partition_cluster_of_origin,". Maximum clustering reached...\n")
+                }
+            }
+            gc()
+        } else{
+            if(verbose) cat(partition_cluster_of_origin,"- This cluster was formed by 'unassigned' cells, not clustering it further...\n")
+        }
+    } 
+    
+    if(verbose) cat("\n\n\n##########################################################\nFinished !\nFound a total of", length(unique(object$cell_cluster)),"clusters after",iteration ,"iterations.",
+                    "\nThe average cluster size is ", floor(mean(table(object$cell_cluster)))," and the median is",floor(median(table(object$cell_cluster))),".",
+                    "\nThe number of initital clusters not subclustered is ",length(grep(":", unique(object$cell_cluster),invert = TRUE)),".",
+                    "\n##########################################################\n")
+    
+    ## Saving results
+    if(saving){
+        # List of differential features for each re-clustering
+        qs::qsave(list_res, file.path(output_dir, "IDC_DA.qs"))
+        
+        # List of embedding of each re-clustered cluster
+        qs::qsave(list_embeddings, file.path(output_dir, "IDC_embeddings.qs"))
+        
+        # List of summaries of the number of differential features for each re-clustering
+        qs::qsave(differential_summary_df, file.path(output_dir, "IDC_summary.qs"))
+        
+        # Final SingleCellExperiment with the clusters found by IDC 
+        qs::qsave(object, file.path(output_dir, "scExp_IDC.qs"))
+    }
+    
+    return(object)
+}
+
+
+#' @param object A Seurat object containing scRNA dataset with 'cell_cluster' 
+#' column.
+#' @param differential_function A function that take in entry a 
+#' SingleCellExperiment object and  parameters passed in ... and returns a 
+#' data.frame containing the significantly differential features for each 
+#' cluster. See [differential_edgeR_pseudobulk_LRT] for the default function.
+#' @param limit An integer specifying the minimum number of features required 
+#' for a subcluster to be called 'true' subcluster.
+#' @param cluster_of_origin A character specifying the name of the cluster of 
+#' origin that will be concatenated before the name of true subclusters. 
+#' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
+#' minimum percentage of the total cells in the SingleCellExperiment object that
+#' needs to be assigned. If a lower proportion is assigned, all cells are 
+#' assigned to the cluster of origin.
+#' @param verbose A logical specifying wether to print.
+#' @param ... Additional parameters passed to the differential_function. See 
+#' [differential_ChromSCape()] for more information on additional
+#' parameters for the default function.
+#' 
+#' @return
+#' @export 
+#' @rdname find_differentiated_clusters
+#' @method find_differentiated_clusters Seurat
+#' @S3method find_differentiated_clusters Seurat
+#' 
+find_differentiated_clusters.Seurat <- function(object,
+                                                differential_function = differential_edgeR_pseudobulk_LRT,
+                                                limit = 5,
+                                                cluster_of_origin = "Omega",
+                                                min_frac_cell_assigned = 0.1,
+                                                verbose = TRUE,
+                                                ...
+){
+    
+    # If Seurat is a SingleCellExperiment or else, try convert it to Seurat
+    if(!is(object, "Seurat")) {
+        object = Seurat::as.Seurat(object)
+        if(is.null(object$cell_cluster) & !is.null(object$cell_cluster)) 
+            object$cell_cluster = object$cell_cluster else stop("Need 'cell_cluster' or 'cell_cluster', column.")
+        Seurat::Idents(object) = object$cell_cluster
+    }
+    
+    set.seed(47)
+    
+    # Starting list of clusters to re-cluster
+    cluster_u = unique(object$cell_cluster)
+    diffmat_n = data.frame(n_differential = rep(0,length(cluster_u)),
+                           cluster_of_origin = cluster_of_origin,
+                           subcluster = cluster_u,
+                           true_subcluster = cluster_u)
+    
+    res = differential_function(object, ...)
+    
+    n_cell_assigned = 0
+    for(i in seq_along(cluster_u)){
+        group_cells = colnames(object)[which(object$cell_cluster %in% cluster_u[i])]
+        res. = res[which(res$cluster == cluster_u[i]),]
+        diffmat_n$n_differential[i] = nrow(res.)
+        if(verbose) cat(cluster_u[i],"- Found",diffmat_n$n_differential[i], "differential regions.\n")
+        if(diffmat_n$n_differential[i] < limit){
+            if(verbose) cat(cluster_u[i], " cluster has less than", limit, "enriched features.\nAssigning the cells to cluster of origin.\n")
+            diffmat_n$true_subcluster[i] = cluster_of_origin
+        } else{
+            n_cell_assigned = n_cell_assigned + length(group_cells)
+            diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster_u[i])
+        }
+    }
+    passing = TRUE
+    
+    if(verbose) cat("Finished finding differences - ", n_cell_assigned/ ncol(object), " fraction of cells were assigned.\n")
+    if((n_cell_assigned/ ncol(object)) < min_frac_cell_assigned){
+        if(verbose) cat("Not enough cells were assigned - not clustering.\n")
+        passing = FALSE
+    }
+    
+    out = list("diffmat_n" = diffmat_n, "res" = res, "passing_min_pct_cell_assigned" = passing)
+    return(out)
+}
+
+
+
+#' @param object A Seurat object preprocessed with Seurat.
+#' @param output_dir The output directory in which to plot and save objects.
+#' @param plotting A logical specifying wether to save the plots or not.
+#' @param saving A logical specifying wether to save the data or not.
+#' @param limit An integer specifying the minimum number of significantly 
+#' enriched / depleted features required in order for a subcluster to be called
+#' a 'true' subcluster
+#' @param dim_red The name of the slot to save the dimensionality reduction at
+#' each step in the  \code{Seurat::Reductions(object)}.
+#' @param vizualization_dim_red The name of the slot used for plotting. Must be
+#' a valid slot present in \code{Seurat::Reductions(object)}.
+#' @param processing_function A function that re-process the subset of clusters
+#' at each step. It msut take in entry a Seurat object, \code{dim_red}
+#'  and \code{n_dims} parameters and returns a Seurat containing a cell
+#' embedding. See [processing_Seurat] for the default function.
+#' @param differential_function A function that take in entry a 
+#' SingleCellExperiment object and  parameters passed in ... and returns a 
+#' data.frame containing the significantly differential features for each 
+#' cluster. See [differential_edgeR_pseudobulk_LRT] for the default function.
+#' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
+#' minimum percentage of the total cells in the SingleCellExperiment object that
+#' needs to be assigned. If a lower proportion is assigned, all cells are 
+#' assigned to the cluster of origin.
+#' @param k An integer specifying the number of nearest neighbors to use for 
+#' the Louvain clustering at each iteration.
+#' @param resolution A numeric specifying the resolution to use for the Louvain
+#' clustering at each iteration.
+#' @param starting.resolution A numeric specifying the resolution to use for the 
+#' Louvain clustering of the first iteration. It is recommended to set it quite
+#' low in order to have few starting clusters.
+#' @param n_dims An integer specifying the number of first dimensions to keep 
+#' in the dimensionality reduction step.
+#' @param nThreads  An integer specifying of threads to use
+#' for the calculation of the FDR.
+#' @param color Set of colors to use for the coloring of the clusters. This must
+#' contains enough colors for each cluster (minimum 20 colors, but 100 colors
+#' at least is recommended, based on the dataset).
+#' @param verbose A logical specifying wether to print.
+#' @param ... Additional parameters passed to the differential_function. See 
+#' [differential_edgeR_pseudobulk_LRT()] for more information on additional
+#' parameters for the default function.
+#'
+#' @return The Seurat object with the assignation of cells to clusters.
+#' If saving is true, also saves list of differential analyses, differential 
+#' analyses summaries and embeddings for each re-clustered cluster.
+#'
+#' 
+#' @import ggplot2
+#' @import dplyr
+#' @importFrom grDevices colors
+#' @importFrom qs qsave
+#' @export 
+#' @rdname iterative_differential_clustering
+#' @method iterative_differential_clustering Seurat
+#' @S3method iterative_differential_clustering Seurat
+#' 
+iterative_differential_clustering.Seurat <- function(
+    object,
+    output_dir = "./",
+    plotting = TRUE,
+    saving = TRUE,
+    n_dims = 50,
+    dim_red = "pca",
+    vizualization_dim_red = "umap",
+    processing_function = processing_Seurat,
+    differential_function = differential_edgeR_pseudobulk_LRT,
+    min_frac_cell_assigned = 0.1,
+    limit = 10,
+    k = 100,
+    resolution = 0.5,
+    starting.resolution = 0.1,
+    color = NULL,
+    nThreads = 10,
+    verbose = TRUE,
+    ...
+){
+    
+    set.seed(47)
+    
+    if(plotting == TRUE){
+        if(dir.exists(output_dir)) 
+            dir.create(file.path(output_dir, "iterations"), showWarnings = FALSE) else stop("output_dir is an invalid directory")
+    }
+    
+    # Colors for the plot
+    if (is.null(color)){
+        color = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)]
+        color <- sample(color, 400)
+    } else {
+        stopifnot(is.character(color))
+        if(length(color) < 20) warning("IDclust::iterative_differential_clustering_scRNA - ",
+                                       "The color vector might be too short.",
+                                       "Please precise more colors.")
+    }
+    
+    # For the first partition, try to find very low level clusters (e.g. low
+    # resolution, high number of neighbors)
+    object = Seurat::FindNeighbors(object, reduction = dim_red,  k.param = 50, dims = 1:n_dims, verbose = F)
+    object = Seurat::FindClusters(object, algorithm = 2, resolution = starting.resolution, random.seed = 47, verbose = FALSE)
+    object$cell_cluster = object$seurat_clusters
+    object$cell_cluster <- paste0("A",as.numeric(object$cell_cluster))
+    Seurat::Idents(object) = object$cell_cluster
+    
+    # Starting list of clusters to re-cluster
+    cluster_u = unique(object$cell_cluster)
+    
+    # Find initial differences (even if there are none, the initial clusters
+    # are always considered as true clusters).
+    if(verbose) cat("Initial round of clustering - limit of differential genes set to 0",
+                    " for this first round only.\n")
+    DA = find_differentiated_clusters(
+        object,
+        differential_function = differential_function,
+        min_frac_cell_assigned = min_frac_cell_assigned,
+        cluster_of_origin =  "Omega",
+        limit = 0,
+        verbose = verbose,
+        ...)
+    
+    # Starting list of clusters to re-cluster
+    differential_summary_df = DA$diffmat_n
+    object$cell_cluster = differential_summary_df$true_subcluster[match(object$cell_cluster, differential_summary_df$subcluster)]
+    
+    # List of embeddings
+    list_embeddings = list(object@reductions$pca@cell.embeddings )
+    names(list_embeddings)[1] = paste(unique(object$cell_cluster), collapse = "_")
+    
+    # List of differential analyses
+    list_res = list(DA$res)
+    names(list_res)[1] = "Omega"
+
+    
+    iteration = 0
+    gc()
+    
+    while(iteration < nrow(differential_summary_df)){
+        
+        if(plotting == TRUE){
+            # Plot initial
+            png(file.path(output_dir, "iterations", paste0("Iteration_",iteration,".png")), width = 1600, height = 1200, res = 200)
+            object. = object
+            object.$cell_cluster = gsub("Omega:","",object.$cell_cluster)
+            print(
+                Seurat::DimPlot(object, group.by =  "cell_cluster",  reduction = vizualization_dim_red, cols = color) 
+            )
+            dev.off()
+        }
+        iteration = iteration + 1
+        if(verbose) cat("Doing iteration number ", iteration,"...\n")
+        
+        
+        partition_cluster_of_origin = differential_summary_df$true_subcluster[iteration]
+        if(!(partition_cluster_of_origin  %in% differential_summary_df$true_subcluster[duplicated(differential_summary_df$true_subcluster)])){
+            
+            partition_depth = which(LETTERS == substr(gsub(".*:","",partition_cluster_of_origin),1,1)) + 1
+            
+            # Select first cluster
+            object. = object[, which(object$cell_cluster %in%  partition_cluster_of_origin)]
+            if(verbose) cat("Re-calculating PCA and subclustering for cluster", partition_cluster_of_origin,".\n")
+            
+            if(ncol(object.) > 100){
+                
+                # Re-processing sub-cluster
+                object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
+                
+                # Re-clustering sub-cluster
+                object. = Seurat::FindNeighbors(object., use.dimred = "pca", verbose = FALSE)
+                object. = Seurat::FindClusters(object., algorithm = 2, resolution = 0.1,  random.seed = 47, verbose = FALSE)
+                object.$cell_cluster = paste0(LETTERS[partition_depth], as.numeric(object.$seurat_clusters))
+                Seurat::Idents(object.) = object.$cell_cluster
+                
+
+                clusters = object.$cell_cluster 
+                cluster_u = unique(clusters)
+                
+                
+                if(length(cluster_u) > 1 ){
+                    if(verbose) cat("Found", length(cluster_u),"subclusters.\n")
+                    if(verbose) print(table(clusters))
+                    
+                    ## Differential analysis
+                    DA = find_differentiated_clusters(object., 
+                                                      differential_function = differential_function,
+                                                      min_frac_cell_assigned = min_frac_cell_assigned, 
+                                                      limit = limit,
+                                                      cluster_of_origin =  partition_cluster_of_origin,
+                                                      verbose = verbose,
+                                                      ...)
+                    
+                    # Retrieve DA results
+                    diffmat_n = DA$diffmat_n
+                    list_res[[partition_cluster_of_origin]] = DA$res
+                    list_embeddings[[partition_cluster_of_origin]] = object.@reductions$pca@cell.embeddings
+                    
+                    # If more than 'min_frac_cell_assigned' of the cells were assigned
+                    # to 'true' subclusters (with marker features)
+                    if(!isFALSE(DA$passing_min_pct_cell_assigned)){
+                        
+                        # Add the new sublclusters to the list of clusters
+                        differential_summary_df = rbind(differential_summary_df, diffmat_n)
+                        object.$cell_cluster = diffmat_n$true_subcluster[match(object.$cell_cluster, diffmat_n$subcluster)]
+                        object$cell_cluster[match(colnames(object.), colnames(object))] = object.$cell_cluster
+                        
+                        Seurat::Idents(object.) = object.$cell_cluster
+                        
+                        if(plotting == TRUE){
+                            png(file.path(output_dir, paste0(partition_cluster_of_origin,"_true.png")), width = 1400, height = 1200, res = 200)
+                            print(
+                                Seurat::DimPlot(object., reduction = dim_red) + ggtitle(paste0(partition_cluster_of_origin, " - true"))
+                            )
+                            dev.off()
+                        }
+                    } else{
+                        if(verbose) cat("Found 2 subcluster for",
+                                        partition_cluster_of_origin," but with no difference. Maximum clustering reached...\n")
+                    }
+                    
+                } else{
+                    if(verbose) cat("Found only 1 subcluster for",
+                                    partition_cluster_of_origin,". Maximum clustering reached...\n")
+                }
+            }
+            gc()
+            
+        } else{
+            if(verbose) cat(partition_cluster_of_origin,
+                            "- This cluster was formed by 'unassigned' cells, not clustering it further...\n")
+        }
+    }
+    
+    if(verbose) cat("\n\n\n##########################################################\nFinished !\nFound a total of", length(unique(object$cell_cluster)),"clusters after",iteration ,"iterations.",
+                    "\nThe average cluster size is ",floor(mean(table(object$cell_cluster)))," and the median is",floor(median(table(object$cell_cluster))),".",
+                    "\nThe number of initital clusters not subclustered is ",length(grep(":", unique(object$cell_cluster),invert = TRUE)),".",
+                    "\n##########################################################\n")
+    
+    
+    ## Saving results
+    if(saving){
+        # List of differential features for each re-clustering
+        qs::qsave(list_res, file.path(output_dir, "IDC_DA.qs"))
+        
+        # List of embedding of each re-clustered cluster
+        qs::qsave(list_embeddings, file.path(output_dir, "IDC_embeddings.qs"))
+        
+        # List of summaries of the number of differential features for each re-clustering
+        qs::qsave(differential_summary_df, file.path(output_dir, "IDC_summary.qs"))
+        
+        # Final SingleCellExperiment with the clusters found by IDC 
+        qs::qsave(object, file.path(output_dir, "Seu_IDC.qs"))
+    }
+    
+    return(object)
+}
+

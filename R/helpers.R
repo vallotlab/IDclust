@@ -1,6 +1,6 @@
 #' Create Pseudo-Bulk Matrice from scRNA clusters & replicates
 #'
-#' @param Seu A Seurat object containing scRNA dataset with 'cell_cluster' 
+#' @param Seu A Seurat object containing scRNA dataset with 'IDcluster' 
 #' column.
 #' @param by A character specifying the name of the metadata column referencing
 #' the clusters.
@@ -22,7 +22,7 @@
 #' mat <- create_pseudobulk_mat_Seu(Seu, by = "seurat_clusters")
 #' }
 create_pseudobulk_mat_Seu <- function(Seu,
-                                      by = "cell_cluster",
+                                      by = "IDcluster",
                                       biological_replicate_col = NULL,
                                       assay = "RNA"){
   cluster_u = unique(Seu@meta.data[[by]])
@@ -99,7 +99,7 @@ create_pseudobulk_mat_Seu <- function(Seu,
 #' }
 calculate_FDR_scEpigenomics <- function(scExp,
                                         differential_function = differential_ChromSCape,
-                                        by = "cell_cluster",
+                                        by = "IDcluster",
                                         limit = 5,
                                         qval.th = 0.01,
                                         logFC.th = log2(2),
@@ -126,7 +126,7 @@ calculate_FDR_scEpigenomics <- function(scExp,
   doParallel::registerDoParallel(myCluster)
   FDR_iterations = foreach::foreach(i = 1:iterations) %dopar% {
     set.seed(i * 47)
-    scExp$cell_cluster = sample(scExp$cell_cluster, length(scExp$cell_cluster), replace = FALSE)
+    scExp$IDcluster = sample(scExp$IDcluster, length(scExp$IDcluster), replace = FALSE)
     DA <- find_differentiated_clusters(object = scExp,
                                        differential_function = differential_function,
                                        by = by,

@@ -84,7 +84,7 @@ NULL
 #'     differential_function = differential_ChromSCape,
 #'     logFC.th = log2(5),
 #'     qval.th = 0.01,
-#'     by = "cell_cluster",
+#'     by = "IDcluster",
 #'     limit = 5,
 #'     cluster_of_origin = "Omega",
 #'     min_frac_cell_assigned = 0.1,
@@ -129,13 +129,13 @@ iterative_differential_clustering <- function(object, ...) {
 }
 
 #' @details  Find significantly differential features between the given set
-#' of clusters (within the 'cell_cluster' column of the SingleCellExperiment).
+#' of clusters (within the 'IDcluster' column of the SingleCellExperiment).
 #' For each cluster, if enough differences are found, mark the cluster as a 
 #' 'true' subcluster and gives it the alias 'cluster_of_origin:cluster'. 
 #' The function will use by default [ChromSCape::differential_activation()]
 #' function to define differential features.
 #' 
-#' @param object A SingleCellExperiment with 'cell_cluster' column filled with 
+#' @param object A SingleCellExperiment with 'IDcluster' column filled with 
 #' cluster assignations.  
 #' @param differential_function A function that take in entry a 
 #' SingleCellExperiment object and  parameters passed in ... and returns a 
@@ -182,7 +182,7 @@ iterative_differential_clustering <- function(object, ...) {
 find_differentiated_clusters.default <- function(
     object,
     differential_function = differential_ChromSCape,
-    by = "cell_cluster",
+    by = "IDcluster",
     logFC.th = log2(1.5),
     qval.th = 0.01,
     min_frac_cell_assigned = 0.1,
@@ -372,7 +372,7 @@ iterative_differential_clustering.default <- function(
                                                     k = starting.k,
                                                     resolution = starting.resolution,
                                                     use.dimred = "PCA")
-    object$cell_cluster = gsub("C","A", object$cell_cluster)
+    object$IDcluster = gsub("C","A", object$IDcluster)
     
     # Calculate the average % cells activated in a feature
     # and return a level of activation based on a given decile
@@ -386,7 +386,7 @@ iterative_differential_clustering.default <- function(
     DA = find_differentiated_clusters(
         object, 
         differential_function = differential_function,
-        by = "cell_cluster",
+        by = "IDcluster",
         logFC.th = logFC.th,
         qval.th = qval.th,
         min_frac_cell_assigned = min_frac_cell_assigned,
@@ -398,7 +398,7 @@ iterative_differential_clustering.default <- function(
     
     # Starting list of clusters to re-cluster
     differential_summary_df = DA$diffmat_n
-    object$cell_cluster = differential_summary_df$true_subcluster[match(object$cell_cluster, differential_summary_df$subcluster)]
+    object$IDcluster = differential_summary_df$true_subcluster[match(object$IDcluster, differential_summary_df$subcluster)]
     
     
     # Colors for the plot
@@ -415,7 +415,7 @@ iterative_differential_clustering.default <- function(
     
     # List of embeddings
     list_embeddings = list(SingleCellExperiment::reducedDim(object, dim_red))
-    names(list_embeddings)[1] = paste(unique(object$cell_cluster), collapse = "_")
+    names(list_embeddings)[1] = paste(unique(object$IDcluster), collapse = "_")
     
     # List of marker features
     list_res = list(DA$res)
@@ -432,9 +432,9 @@ iterative_differential_clustering.default <- function(
             # Plot each iteration of the algorithm
             png(file.path(output_dir, "iterations", paste0("Iteration_",iteration,".png")), width = 1600, height = 1200, res = 200)
             object. = object
-            object.$cell_cluster = gsub("Omega:","",object.$cell_cluster)
+            object.$IDcluster = gsub("Omega:","",object.$IDcluster)
             print(
-                ChromSCape::plot_reduced_dim_scExp(object, reduced_dim = vizualization_dim_red, color_by = "cell_cluster",
+                ChromSCape::plot_reduced_dim_scExp(object, reduced_dim = vizualization_dim_red, color_by = "IDcluster",
                                                    downsample = 50000, size = 0.35, transparency = 0.75) +
                     ggtitle(paste0("Initital Clustering")) + theme(legend.position = "none")
             )
@@ -457,7 +457,7 @@ iterative_differential_clustering.default <- function(
             partition_depth = which(LETTERS == substr(gsub(".*:","",partition_cluster_of_origin),1,1)) + 1
             
             # Select only cells from the given cluster
-            object. = object[, which(object$cell_cluster %in%  partition_cluster_of_origin)]
+            object. = object[, which(object$IDcluster %in%  partition_cluster_of_origin)]
             
             if(verbose) cat("Re-calculating PCA and subclustering for cluster", partition_cluster_of_origin,
                             "with",ncol(object.),"cells.\n")
@@ -471,9 +471,9 @@ iterative_differential_clustering.default <- function(
                 # Re-clustering sub-cluster
                 object. = ChromSCape::find_clusters_louvain_scExp(object., k = k, resolution =  resolution,
                                                                  use.dimred = dim_red)
-                object.$cell_cluster <- paste0(LETTERS[partition_depth],gsub("C", "", object.$cell_cluster))
+                object.$IDcluster <- paste0(LETTERS[partition_depth],gsub("C", "", object.$IDcluster))
                 
-                clusters = object.$cell_cluster 
+                clusters = object.$IDcluster 
                 cluster_u = unique(clusters)
                 
                 if(length(cluster_u) > 1 ){
@@ -483,7 +483,7 @@ iterative_differential_clustering.default <- function(
                     # Find differentiated clusters
                     DA = find_differentiated_clusters(object.,
                                                       differential_function = differential_function,
-                                                      by = "cell_cluster",
+                                                      by = "IDcluster",
                                                       logFC.th = logFC.th,
                                                       qval.th = qval.th,
                                                       min_frac_cell_assigned = min_frac_cell_assigned,
@@ -505,13 +505,13 @@ iterative_differential_clustering.default <- function(
                         
                         # Add the new sublclusters to the list of clusters
                         differential_summary_df = rbind(differential_summary_df, diffmat_n)
-                        object.$cell_cluster = diffmat_n$true_subcluster[match(object.$cell_cluster, diffmat_n$subcluster)]
-                        object$cell_cluster[match(colnames(object.), colnames(object))] = object.$cell_cluster
+                        object.$IDcluster = diffmat_n$true_subcluster[match(object.$IDcluster, diffmat_n$subcluster)]
+                        object$IDcluster[match(colnames(object.), colnames(object))] = object.$IDcluster
                         
                         if(plotting == TRUE){
                             png(file.path(output_dir, paste0(partition_cluster_of_origin,"_true.png")), width = 1400, height = 1200, res = 200)
                             print(
-                                ChromSCape::plot_reduced_dim_scExp(object., color_by = "cell_cluster", reduced_dim = dim_red) + 
+                                ChromSCape::plot_reduced_dim_scExp(object., color_by = "IDcluster", reduced_dim = dim_red) + 
                                     ggtitle(paste0(partition_cluster_of_origin))
                             )
                             dev.off()
@@ -529,9 +529,9 @@ iterative_differential_clustering.default <- function(
         }
     } 
     
-    if(verbose) cat("\n\n\n##########################################################\nFinished !\nFound a total of", length(unique(object$cell_cluster)),"clusters after",iteration ,"iterations.",
-                    "\nThe average cluster size is ", floor(mean(table(object$cell_cluster)))," and the median is",floor(median(table(object$cell_cluster))),".",
-                    "\nThe number of initital clusters not subclustered is ",length(grep(":", unique(object$cell_cluster),invert = TRUE)),".",
+    if(verbose) cat("\n\n\n##########################################################\nFinished !\nFound a total of", length(unique(object$IDcluster)),"clusters after",iteration ,"iterations.",
+                    "\nThe average cluster size is ", floor(mean(table(object$IDcluster)))," and the median is",floor(median(table(object$IDcluster))),".",
+                    "\nThe number of initital clusters not subclustered is ",length(grep(":", unique(object$IDcluster),invert = TRUE)),".",
                     "\n##########################################################\n")
     
     ## Saving results
@@ -553,7 +553,7 @@ iterative_differential_clustering.default <- function(
 }
 
 
-#' @param object A Seurat object containing scRNA dataset with 'cell_cluster' 
+#' @param object A Seurat object containing scRNA dataset with 'IDcluster' 
 #' column.
 #' @param differential_function A function that take in entry a 
 #' SingleCellExperiment object and  parameters passed in ... and returns a 
@@ -587,7 +587,7 @@ iterative_differential_clustering.default <- function(
 #' 
 find_differentiated_clusters.Seurat <- function(object,
                                                 differential_function = differential_edgeR_pseudobulk_LRT,
-                                                by = "cell_cluster",
+                                                by = "IDcluster",
                                                 logFC.th = log2(1.5),
                                                 qval.th = 0.01,
                                                 limit = 5,
@@ -600,9 +600,9 @@ find_differentiated_clusters.Seurat <- function(object,
     # If Seurat is a SingleCellExperiment or else, try convert it to Seurat
     if(!is(object, "Seurat")) {
         object = Seurat::as.Seurat(object)
-        if(is.null(object$cell_cluster) & !is.null(object$cell_cluster)) 
-            object$cell_cluster = object$cell_cluster else stop("Need 'cell_cluster' or 'cell_cluster', column.")
-        Seurat::Idents(object) = object$cell_cluster
+        if(is.null(object$IDcluster) & !is.null(object$IDcluster)) 
+            object$IDcluster = object$IDcluster else stop("Need 'IDcluster' or 'IDcluster', column.")
+        Seurat::Idents(object) = object$IDcluster
     }
     
     set.seed(47)
@@ -755,12 +755,12 @@ iterative_differential_clustering.Seurat <- function(
     # resolution, high number of neighbors)
     object = Seurat::FindNeighbors(object, reduction = dim_red,  k.param = starting.k, dims = 1:n_dims, verbose = FALSE)
     object = Seurat::FindClusters(object, algorithm = 2, resolution = starting.resolution, random.seed = 47, verbose = FALSE)
-    object$cell_cluster = object$seurat_clusters
-    object$cell_cluster <- paste0("A",as.numeric(object$cell_cluster))
-    Seurat::Idents(object) = object$cell_cluster
+    object$IDcluster = object$seurat_clusters
+    object$IDcluster <- paste0("A",as.numeric(object$IDcluster))
+    Seurat::Idents(object) = object$IDcluster
     
     # Starting list of clusters to re-cluster
-    cluster_u = unique(object$cell_cluster)
+    cluster_u = unique(object$IDcluster)
     
     # Find initial differences (even if there are none, the initial clusters
     # are always considered as true clusters).
@@ -769,7 +769,7 @@ iterative_differential_clustering.Seurat <- function(
     DA = find_differentiated_clusters(
         object,
         differential_function = differential_function,
-        by = "cell_cluster",
+        by = "IDcluster",
         logFC.th = logFC.th,
         qval.th = qval.th,
         min_frac_cell_assigned = min_frac_cell_assigned,
@@ -780,11 +780,11 @@ iterative_differential_clustering.Seurat <- function(
     
     # Starting list of clusters to re-cluster
     differential_summary_df = DA$diffmat_n
-    object$cell_cluster = differential_summary_df$true_subcluster[match(object$cell_cluster, differential_summary_df$subcluster)]
+    object$IDcluster = differential_summary_df$true_subcluster[match(object$IDcluster, differential_summary_df$subcluster)]
     
     # List of embeddings
     list_embeddings = list(object@reductions$pca@cell.embeddings )
-    names(list_embeddings)[1] = paste(unique(object$cell_cluster), collapse = "_")
+    names(list_embeddings)[1] = paste(unique(object$IDcluster), collapse = "_")
     
     # List of differential analyses
     list_res = list(DA$res)
@@ -800,9 +800,9 @@ iterative_differential_clustering.Seurat <- function(
             # Plot initial
             png(file.path(output_dir, "iterations", paste0("Iteration_",iteration,".png")), width = 1600, height = 1200, res = 200)
             object. = object
-            object.$cell_cluster = gsub("Omega:","",object.$cell_cluster)
+            object.$IDcluster = gsub("Omega:","",object.$IDcluster)
             print(
-                Seurat::DimPlot(object, group.by =  "cell_cluster",  reduction = vizualization_dim_red, cols = color) 
+                Seurat::DimPlot(object, group.by =  "IDcluster",  reduction = vizualization_dim_red, cols = color) 
             )
             dev.off()
         }
@@ -816,7 +816,7 @@ iterative_differential_clustering.Seurat <- function(
             partition_depth = which(LETTERS == substr(gsub(".*:","",partition_cluster_of_origin),1,1)) + 1
             
             # Select first cluster
-            object. = object[, which(object$cell_cluster %in%  partition_cluster_of_origin)]
+            object. = object[, which(object$IDcluster %in%  partition_cluster_of_origin)]
             if(verbose) cat("Re-calculating PCA and subclustering for cluster", partition_cluster_of_origin,".\n")
             
             if(ncol(object.) > 100){
@@ -825,14 +825,14 @@ iterative_differential_clustering.Seurat <- function(
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
                 
                 # Re-clustering sub-cluster
-                object. = Seurat::FindNeighbors(object., use.dimred = dim_red, k.param = k, verbose = FALSE)
+                object. = Seurat::FindNeighbors(object., reduction = dim_red, k.param = k, verbose = FALSE)
                 object. = Seurat::FindClusters(object., algorithm = 2,   resolution = resolution,
-                                               dims = 1:n_dims, random.seed = 47, verbose = FALSE)
-                object.$cell_cluster = paste0(LETTERS[partition_depth], as.numeric(object.$seurat_clusters))
-                Seurat::Idents(object.) = object.$cell_cluster
+                                               random.seed = 47, verbose = FALSE)
+                object.$IDcluster = paste0(LETTERS[partition_depth], as.numeric(object.$seurat_clusters))
+                Seurat::Idents(object.) = object.$IDcluster
                 
 
-                clusters = object.$cell_cluster 
+                clusters = object.$IDcluster 
                 cluster_u = unique(clusters)
                 
                 
@@ -843,7 +843,7 @@ iterative_differential_clustering.Seurat <- function(
                     ## Differential analysis
                     DA = find_differentiated_clusters(object., 
                                                       differential_function = differential_function,
-                                                      by = "cell_cluster",
+                                                      by = "IDcluster",
                                                       logFC.th = logFC.th,
                                                       qval.th = qval.th,
                                                       min_frac_cell_assigned = min_frac_cell_assigned, 
@@ -863,10 +863,10 @@ iterative_differential_clustering.Seurat <- function(
                         
                         # Add the new sublclusters to the list of clusters
                         differential_summary_df = rbind(differential_summary_df, diffmat_n)
-                        object.$cell_cluster = diffmat_n$true_subcluster[match(object.$cell_cluster, diffmat_n$subcluster)]
-                        object$cell_cluster[match(colnames(object.), colnames(object))] = object.$cell_cluster
+                        object.$IDcluster = diffmat_n$true_subcluster[match(object.$IDcluster, diffmat_n$subcluster)]
+                        object$IDcluster[match(colnames(object.), colnames(object))] = object.$IDcluster
                         
-                        Seurat::Idents(object.) = object.$cell_cluster
+                        Seurat::Idents(object.) = object.$IDcluster
                         
                         if(plotting == TRUE){
                             png(file.path(output_dir, paste0(partition_cluster_of_origin,"_true.png")), width = 1400, height = 1200, res = 200)
@@ -893,9 +893,9 @@ iterative_differential_clustering.Seurat <- function(
         }
     }
     
-    if(verbose) cat("\n\n\n##########################################################\nFinished !\nFound a total of", length(unique(object$cell_cluster)),"clusters after",iteration ,"iterations.",
-                    "\nThe average cluster size is ",floor(mean(table(object$cell_cluster)))," and the median is",floor(median(table(object$cell_cluster))),".",
-                    "\nThe number of initital clusters not subclustered is ",length(grep(":", unique(object$cell_cluster),invert = TRUE)),".",
+    if(verbose) cat("\n\n\n##########################################################\nFinished !\nFound a total of", length(unique(object$IDcluster)),"clusters after",iteration ,"iterations.",
+                    "\nThe average cluster size is ",floor(mean(table(object$IDcluster)))," and the median is",floor(median(table(object$IDcluster))),".",
+                    "\nThe number of initital clusters not subclustered is ",length(grep(":", unique(object$IDcluster),invert = TRUE)),".",
                     "\n##########################################################\n")
     
     

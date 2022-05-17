@@ -27,7 +27,7 @@
 #' DA <- differential_Seurat(Seu)
 #' }
 differential_Seurat <- function(object,
-                                by = "cell_cluster",
+                                by = "IDcluster",
                                 logFC.th = log2(1.5),
                                 qval.th = 0.01,
                                 min.pct = 0.1,
@@ -83,7 +83,7 @@ differential_Seurat <- function(object,
 #' DA <- differential_edgeR_pseudobulk_LRT(Seu)
 #' }
 differential_edgeR_pseudobulk_LRT <- function(object,
-                                              by = "cell_cluster",
+                                              by = "IDcluster",
                                               assay = "RNA",
                                               biological_replicate_col = NULL,
                                               logFC.th = log2(1.5),
@@ -174,7 +174,7 @@ differential_edgeR_pseudobulk_LRT <- function(object,
 #' }
 differential_ChromSCape <- function(
     object,
-    by = "cell_cluster",
+    by = "IDcluster",
     logFC.th = log2(1.5),
     qval.th = 0.01,
     min.pct = 0.01

@@ -1,2 +1,14 @@
 url: https://vallotlab.github.io/IDclust/
 
+
+title: IDclust
+
+template:
+  params:
+    bootswatch: flatly
+    
+navbar:
+  title: "IDclust"
+  left:
+    - text: "Tutorial - Seurat"
+      href: articles/scRNA.html

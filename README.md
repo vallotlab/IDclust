@@ -53,7 +53,6 @@ Seu <- iterative_differential_clustering(
 ```
 
 ## Plotting network
-## scEpigenomics 
 
 ```
 plot_cluster_network(Seu)

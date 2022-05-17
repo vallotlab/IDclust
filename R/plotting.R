@@ -16,7 +16,7 @@
 #' 
 #' plot_cluster_network(
 #'     object = Seu,
-#'     differential_summary_df = IDC_summary_scRNA,
+#'     IDC_summary = IDC_summary_scRNA,
 #'     color_by = "cell_cluster",
 #'     cluster_col = "cell_cluster",
 #'     colors = NULL,
@@ -30,7 +30,7 @@
 #' # object (Paired-Tag)
 #' plot_cluster_network(
 #'     object = Seu,
-#'     differential_summary_df = IDC_summary_scRNA,
+#'     IDC_summary = IDC_summary_scRNA,
 #'     color_by = "Erbb4", # a gene contained in the Seu object
 #'     threshold_to_define_feature_active = 2,
 #'     assay = "RNA",
@@ -52,13 +52,12 @@
 #' 
 #' plot_cluster_network(
 #'     object = scExp,
-#'     differential_summary_df = IDC_summary_scEpigenomics,
+#'     IDC_summary = IDC_summary_scEpigenomics,
 #'     color_by = "cell_cluster",
 #'     cluster_col = "cell_cluster",
 #'     colors = NULL,
 #'     node_size_factor = 7.5,
 #'     edge_size_factor = 1,
-#'      
 #'     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
 #'                                                          flip.y = FALSE)
 #' )
@@ -67,7 +66,7 @@
 #' # object (Paired-Tag)
 #' plot_cluster_network(
 #'     object = scExp,
-#'     differential_summary_df = IDC_summary_scEpigenomics,
+#'     IDC_summary = IDC_summary_scEpigenomics,
 #'     color_by = "Tcf4", # a gene contained in the scExp object
 #'     threshold_to_define_feature_active = 1,
 #'     gene_col = "Gene",
@@ -89,7 +88,7 @@ plot_cluster_network <- function(object, ...) {
 #'
 #' @param object A SingleCellExperiment object clustered with
 #'  [iterative_differential_clustering()].
-#' @param differential_summary_df Optional. A data.frame of differential
+#' @param IDC_summary Optional. A data.frame of differential
 #' analyses summary outputed by [iterative_differential_clustering()] when 
 #' saving option is TRUE. Use to determine the width of the edges based on the
 #' number of differential features of the given marker.
@@ -107,6 +106,7 @@ plot_cluster_network <- function(object, ...) {
 #' @param max_distanceToTSS If color_by is a gene, the maximum distance to TSS
 #' to consider a gene  linked to a region. Used only if "color_by" is a gene 
 #' name.
+#' @param legend A logical indicating whether to plot the legend or not.
 #' @param ... Additional parameters passed to the plot function.
 #'
 #' @return A hierarchical network of cluster assignation:
@@ -124,7 +124,7 @@ plot_cluster_network <- function(object, ...) {
 #' 
 plot_cluster_network.default <- function(
     object,
-    differential_summary_df,
+    IDC_summary,
     color_by = "cell_cluster",
     cluster_col = "cell_cluster",
     colors = NULL,
@@ -134,6 +134,7 @@ plot_cluster_network.default <- function(
     max_distanceToTSS = 1000,
     gene_col = "Gene",
     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE, flip.y = FALSE),
+    legend = TRUE,
     ...
 ){
     categ = TRUE
@@ -144,8 +145,11 @@ plot_cluster_network.default <- function(
     }
     
     object[[cluster_col]] = gsub("Omega:","", object[[cluster_col]])
-    differential_summary_df$true_subcluster = gsub("Omega:","", differential_summary_df$true_subcluster)
-    differential_summary_df$cluster_of_origin = gsub("Omega:","", differential_summary_df$cluster_of_origin)
+    if(!is.null(IDC_summary)){
+        IDC_summary$true_subcluster = gsub("Omega:","", IDC_summary$true_subcluster)
+        IDC_summary$cluster_of_origin = gsub("Omega:","", IDC_summary$cluster_of_origin)
+    }
+
     if(is.null(colors)) 
         colors = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)]
     
@@ -238,7 +242,7 @@ plot_cluster_network.default <- function(
             prop.base_clust[[i]][match(names(tab), names(empty))] = as.numeric(tab)
             prop.base_clust[[i]] = as.numeric(prop.base_clust[[i]])
             # } 
-            if(i != "Omega") df$ndiff[df$name == i] = differential_summary_df$n_differential[which(differential_summary_df$true_subcluster == i)][1]
+            if(i != "Omega") df$ndiff[df$name == i] = IDC_summary$n_differential[which(IDC_summary$true_subcluster == i)][1]
             if(level != (ncol(repartition)-1)) adj.mat[i, unique(repartition[,level + 1 ][which(repartition[,level] == i)])] = 1
         }
         
@@ -252,6 +256,7 @@ plot_cluster_network.default <- function(
     edges_ids =  igraph::get.edges(g, es = 1:(nrow(df)-1))
     
     layout = function_layout(g)
+    if(legend) par(mar = c(9, 0, 4, 8) + 0.1)
     plot(g,
          layout = layout,
          vertex.shape = c("pie"),             # One of “none”, “circle”, “square”, “csquare”, “rectangle” “crectangle”, “vrectangle”, “pie”, “raster”, or “sphere”
@@ -277,40 +282,73 @@ plot_cluster_network.default <- function(
     )
     
     if(legend){
-        
+        par(mar = c(5, 4, 4, 2) + 0.1)
         sizes = c(50, 100, 200, 500, 1000)
         sizes. = node_size_factor * sqrt(50 * sizes / nrow(repartition))
         
-        legend("topleft",
-               title = color_by,
+        legend(x = 0.5,
+               y = -1.25,
+               ncol = 6,
+               xjust = 0.5,
+               box.lty=0,
                legend=unique(color_df[,1]),
                pch=20,
-               col=as.vector(unique(color_df[,2])))
-        legend("left",
+               pt.cex = 4,
+               y.intersp = 2,
+               col=as.vector(unique(color_df[,2])),
+               xpd = TRUE)
+
+        legend(x = 1.5,
+               y =1.35,
                title = "#Ncells",
                legend=as.character(sizes),
                box.lty=0,
                pch=1,
                cex = 1,
                pt.cex = sizes./10,
-               y.intersp = c(1.35),
+               y.intersp = 1.5,
                x.intersp = 2,
-               col="black")
+               col="black",
+               xpd = TRUE)
+
         
+        text(c(1.5,1.5)  + 0.35, c(0.2,-0.05),
+             labels = c("Final", "Transient"))
         
-        if(!is.null(differential_summary_df)){
+        circle. <- function (r, x0, y0,  ...){
+            t <- seq(0, 2 * pi, by = 0.01)
+            x <- r * cos(t) + x0
+            y <- r * sin(t) + y0
+            lines(x, y, ...)
+        }
+        circle.(r = 0.1,
+               x0 =  1.5,
+               y0 = 0.2,
+               lty = 1, 
+               col = "black",
+               xpd =TRUE)
+        circle.(r = 0.1,
+                x0 = 1.5,
+                y0 =  -0.05,
+                lty = 2, 
+                col = "black",
+                xpd =TRUE)
+        
+        if(!is.null(IDC_summary)){
             sizes = c(5,10,20,50,100)
             sizes. = edge_size_factor * log2(sizes+1)
-            legend("bottomleft",
+            legend(x = 1.5,
+                   y = -0.35,
                    title = "#Nmarkers",
                    legend=as.character(sizes),
                    box.lty=0,
                    lty = 1,
                    cex = 1,
-                   lwd = sizes.,
+                   lwd = 1.5*sizes.,
                    col = "grey65",
                    y.intersp = c(1.35),
-                   x.intersp = 2
+                   x.intersp = 2,
+                   xpd = TRUE
                    )
         }
     }
@@ -322,7 +360,7 @@ plot_cluster_network.default <- function(
 #' Plot Iterative Differential Clustering network
 #'
 #' @param object A Seurat object clustered with [iterative_differential_clustering()]
-#' @param differential_summary_df Optional. A data.frame of differential
+#' @param IDC_summary Optional. A data.frame of differential
 #' analyses summary outputed by [iterative_differential_clustering()] when 
 #' saving option is TRUE. Use to determine the width of the edges based on the
 #' number of differential features of the given marker.
@@ -341,6 +379,7 @@ plot_cluster_network.default <- function(
 #' specifying the threshold above which a gene is considered as active in any 
 #' given cell.
 #' @param assay If color_by is a gene, the assay in which to retrieve the counts.
+#' @param legend A logical indicating whether to plot the legend or not.
 #' @param ... Additional parameters passed to the plot function.
 #' @return A hierarchical network of cluster assignation:
 #' * Size of nodes reflects the number of cells
@@ -357,7 +396,7 @@ plot_cluster_network.default <- function(
 #' 
 plot_cluster_network.Seurat <- function(
     object,
-    differential_summary_df,
+    IDC_summary = NULL,
     color_by = "cell_cluster",
     cluster_col = "cell_cluster",
     colors = NULL,
@@ -366,6 +405,7 @@ plot_cluster_network.Seurat <- function(
     threshold_to_define_feature_active = 2,
     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE, flip.y = FALSE),
     assay = "RNA",
+    legend = TRUE,
     ...
 ){
     categ = TRUE
@@ -375,8 +415,12 @@ plot_cluster_network.Seurat <- function(
     }
     
     object@meta.data[,cluster_col] = gsub("Omega:","", object@meta.data[,cluster_col])
-    differential_summary_df$true_subcluster = gsub("Omega:","", differential_summary_df$true_subcluster)
-    differential_summary_df$cluster_of_origin = gsub("Omega:","", differential_summary_df$cluster_of_origin)
+    
+    if(!is.null(IDC_summary)){
+        IDC_summary$true_subcluster = gsub("Omega:","", IDC_summary$true_subcluster)
+        IDC_summary$cluster_of_origin = gsub("Omega:","", IDC_summary$cluster_of_origin)
+    }
+
     if(is.null(colors)) 
         colors = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)]
     
@@ -457,7 +501,11 @@ plot_cluster_network.Seurat <- function(
             prop.base_clust[[i]][match(names(tab), names(empty))] = as.numeric(tab)
             prop.base_clust[[i]] = as.numeric(prop.base_clust[[i]])
             # } 
-            if(i != "Omega") df$ndiff[df$name == i] = differential_summary_df$n_differential[which(differential_summary_df$true_subcluster == i)][1]
+            if(!is.null(IDC_summary)) {
+                if(i != "Omega") df$ndiff[df$name == i] = IDC_summary$n_differential[which(IDC_summary$true_subcluster == i)][1]
+            } else {
+                if(i != "Omega") df$ndiff[df$name == i] = 20
+            }
             if(level != (ncol(repartition)-1)) adj.mat[i, unique(repartition[,level + 1 ][which(repartition[,level] == i)])] = 1
         }
         
@@ -470,6 +518,7 @@ plot_cluster_network.Seurat <- function(
     
     edges_ids =  igraph::get.edges(g, es = 1:(nrow(df)-1))
     
+    if(legend) par(mar = c(9, 0, 4, 8) + 0.1)
     layout = function_layout(g)
     plot(g,
          layout = layout,
@@ -495,6 +544,77 @@ plot_cluster_network.Seurat <- function(
          ...
     )
     
+    if(legend){
+        par(mar = c(5, 4, 4, 2) + 0.1)
+        sizes = c(50, 100, 200, 500, 1000)
+        sizes. = node_size_factor * sqrt(50 * sizes / nrow(repartition))
+        
+        legend(x = 0.5,
+               y = -1.25,
+               ncol = 6,
+               box.lty=0,
+               legend=unique(color_df[,1]),
+               pch=20,
+               xjust = 0.5,
+               pt.cex = 4,
+               y.intersp = 2,
+               col=as.vector(unique(color_df[,2])),
+               xpd = TRUE)
+        
+        legend(x = 1.5,
+               y =1.35,
+               title = "#Ncells",
+               legend=as.character(sizes),
+               box.lty=0,
+               pch=1,
+               cex = 1,
+               pt.cex = sizes./10,
+               y.intersp = 1.5,
+               x.intersp = 2,
+               col="black",
+               xpd = TRUE)
+        
+        
+        text(c(1.5,1.5)  + 0.35, c(0.2,-0.05),
+             labels = c("Final", "Transient"))
+        
+        circle. <- function (r, x0, y0,  ...){
+            t <- seq(0, 2 * pi, by = 0.01)
+            x <- r * cos(t) + x0
+            y <- r * sin(t) + y0
+            lines(x, y, ...)
+        }
+        circle.(r = 0.1,
+                x0 =  1.5,
+                y0 = 0.2,
+                lty = 1, 
+                col = "black",
+                xpd =TRUE)
+        circle.(r = 0.1,
+                x0 = 1.5,
+                y0 =  -0.05,
+                lty = 2, 
+                col = "black",
+                xpd =TRUE)
+        
+        if(!is.null(IDC_summary)){
+            sizes = c(5,10,20,50,100)
+            sizes. = edge_size_factor * log2(sizes+1)
+            legend(x = 1.5,
+                   y = -0.35,
+                   title = "#Nmarkers",
+                   legend=as.character(sizes),
+                   box.lty=0,
+                   lty = 1,
+                   cex = 1,
+                   lwd = 1.5*sizes.,
+                   col = "grey65",
+                   y.intersp = c(1.35),
+                   x.intersp = 2,
+                   xpd = TRUE
+            )
+        }
+    }
     
     return(color_df)
 }

@@ -143,6 +143,12 @@ iterative_differential_clustering <- function(object, ...) {
 #' cluster.
 #' @param by A character specifying the name of the metadata column referencing
 #' the clusters.
+#' @param logFC.th  A numeric specifying the log2 fold change of activation 
+#' above/below which a feature is considered as significantly differential 
+#' passed to the differential_function.
+#' @param qval.th A numeric specifying the adjusted p-value below
+#' which a feature is considered as significantly differential passed to the
+#' differential_function.
 #' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
 #' minimum percentage of the total cells in the SingleCellExperiment object that
 #' needs to be assigned. If a lower proportion is assigned, all cells are 
@@ -177,6 +183,8 @@ find_differentiated_clusters.default <- function(
     object,
     differential_function = differential_ChromSCape,
     by = "cell_cluster",
+    logFC.th = log2(1.5),
+    qval.th = 0.01,
     min_frac_cell_assigned = 0.1,
     limit = 5,
     limit_by_proportion = NULL,
@@ -271,6 +279,12 @@ find_differentiated_clusters.default <- function(
 #' SingleCellExperiment object and  parameters passed in ... and returns a 
 #' data.frame containing the significantly differential features for each 
 #' cluster.
+#' @param logFC.th  A numeric specifying the log2 fold change of activation 
+#' above/below which a feature is considered as significantly differential 
+#' passed to the differential_function.
+#' @param qval.th A numeric specifying the adjusted p-value below
+#' which a feature is considered as significantly differential passed to the
+#' differential_function.
 #' @param quantile.activation A numeric between 0 and 1 specifying the quantile
 #' of global activation to take as minimal percentage of activation for the 
 #' differential analysis. Increasing this value will decrease the number of 
@@ -279,13 +293,16 @@ find_differentiated_clusters.default <- function(
 #' minimum percentage of the total cells in the SingleCellExperiment object that
 #' needs to be assigned. If a lower proportion is assigned, all cells are 
 #' assigned to the cluster of origin.
-#' @param k An integer specifying the number of nearest neighbors to use for 
-#' the Louvain clustering at each iteration.
-#' @param resolution A numeric specifying the resolution to use for the Louvain
-#' clustering at each iteration.
 #' @param starting.resolution A numeric specifying the resolution to use for the 
 #' Louvain clustering of the first iteration. It is recommended to set it quite
 #' low in order to have few starting clusters.
+#' @param starting.k An integer specifying the number of nearest neighbors to
+#'  use for  the Louvain clustering of the first iteration. It is recommended 
+#'  to set it quite high in order to have few starting clusters
+#' @param resolution A numeric specifying the resolution to use for the Louvain
+#' clustering at each iteration.
+#' @param k An integer specifying the number of nearest neighbors to use for 
+#' the Louvain clustering at each iteration.
 #' @param limit_by_proportion Optional. A data.frame containing 3 columns - 
 #' ncells, mean_n_differential, sd_n_differential - that reflect the number of 
 #' false positive expected for a given cluster size.
@@ -328,6 +345,8 @@ iterative_differential_clustering.default <- function(
     processing_function = processing_ChromSCape,
     quantile.activation = 0.7,
     differential_function = differential_ChromSCape,
+    logFC.th = log2(1.5),
+    qval.th = 0.01,
     min_frac_cell_assigned = 0.1,
     limit = 5,
     starting.k = 100,
@@ -368,6 +387,8 @@ iterative_differential_clustering.default <- function(
         object, 
         differential_function = differential_function,
         by = "cell_cluster",
+        logFC.th = logFC.th,
+        qval.th = qval.th,
         min_frac_cell_assigned = min_frac_cell_assigned,
         limit = 0,
         limit_by_proportion = NULL,
@@ -463,6 +484,8 @@ iterative_differential_clustering.default <- function(
                     DA = find_differentiated_clusters(object.,
                                                       differential_function = differential_function,
                                                       by = "cell_cluster",
+                                                      logFC.th = logFC.th,
+                                                      qval.th = qval.th,
                                                       min_frac_cell_assigned = min_frac_cell_assigned,
                                                       limit = limit,
                                                       limit_by_proportion = limit_by_proportion,
@@ -538,6 +561,12 @@ iterative_differential_clustering.default <- function(
 #' cluster. See [differential_edgeR_pseudobulk_LRT] for the default function.
 #' @param by A character specifying the name of the metadata column referencing
 #' the clusters.
+#' @param logFC.th  A numeric specifying the log2 fold change of activation 
+#' above/below which a feature is considered as significantly differential 
+#' passed to the differential_function.
+#' @param qval.th A numeric specifying the adjusted p-value below
+#' which a feature is considered as significantly differential passed to the
+#' differential_function.
 #' @param limit An integer specifying the minimum number of features required 
 #' for a subcluster to be called 'true' subcluster.
 #' @param cluster_of_origin A character specifying the name of the cluster of 
@@ -559,6 +588,8 @@ iterative_differential_clustering.default <- function(
 find_differentiated_clusters.Seurat <- function(object,
                                                 differential_function = differential_edgeR_pseudobulk_LRT,
                                                 by = "cell_cluster",
+                                                logFC.th = log2(1.5),
+                                                qval.th = 0.01,
                                                 limit = 5,
                                                 cluster_of_origin = "Omega",
                                                 min_frac_cell_assigned = 0.1,
@@ -583,7 +614,11 @@ find_differentiated_clusters.Seurat <- function(object,
                            subcluster = cluster_u,
                            true_subcluster = cluster_u)
     
-    res = differential_function(object, by = by, ...)
+    res = differential_function(object,
+                                by = by,
+                                logFC.th = logFC.th,
+                                qval.th = qval.th,
+                                ...)
     
     n_cell_assigned = 0
     for(i in seq_along(cluster_u)){
@@ -632,6 +667,12 @@ find_differentiated_clusters.Seurat <- function(object,
 #' SingleCellExperiment object and  parameters passed in ... and returns a 
 #' data.frame containing the significantly differential features for each 
 #' cluster. See [differential_edgeR_pseudobulk_LRT] for the default function.
+#' @param logFC.th  A numeric specifying the log2 fold change of activation 
+#' above/below which a feature is considered as significantly differential 
+#' passed to the differential_function.
+#' @param qval.th A numeric specifying the adjusted p-value below
+#' which a feature is considered as significantly differential passed to the
+#' differential_function.
 #' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
 #' minimum percentage of the total cells in the SingleCellExperiment object that
 #' needs to be assigned. If a lower proportion is assigned, all cells are 
@@ -678,6 +719,8 @@ iterative_differential_clustering.Seurat <- function(
     vizualization_dim_red = "umap",
     processing_function = processing_Seurat,
     differential_function = differential_edgeR_pseudobulk_LRT,
+    logFC.th = log2(1.5),
+    qval.th = 0.01,
     min_frac_cell_assigned = 0.1,
     limit = 10,
     starting.resolution = 0.1,
@@ -727,6 +770,8 @@ iterative_differential_clustering.Seurat <- function(
         object,
         differential_function = differential_function,
         by = "cell_cluster",
+        logFC.th = logFC.th,
+        qval.th = qval.th,
         min_frac_cell_assigned = min_frac_cell_assigned,
         cluster_of_origin =  "Omega",
         limit = 0,
@@ -799,6 +844,8 @@ iterative_differential_clustering.Seurat <- function(
                     DA = find_differentiated_clusters(object., 
                                                       differential_function = differential_function,
                                                       by = "cell_cluster",
+                                                      logFC.th = logFC.th,
+                                                      qval.th = qval.th,
                                                       min_frac_cell_assigned = min_frac_cell_assigned, 
                                                       limit = limit,
                                                       cluster_of_origin =  partition_cluster_of_origin,

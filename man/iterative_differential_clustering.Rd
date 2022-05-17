@@ -19,6 +19,8 @@ iterative_differential_clustering(object, ...)
   processing_function = processing_ChromSCape,
   quantile.activation = 0.7,
   differential_function = differential_ChromSCape,
+  logFC.th = log2(1.5),
+  qval.th = 0.01,
   min_frac_cell_assigned = 0.1,
   limit = 5,
   starting.k = 100,
@@ -42,6 +44,8 @@ iterative_differential_clustering(object, ...)
   vizualization_dim_red = "umap",
   processing_function = processing_Seurat,
   differential_function = differential_edgeR_pseudobulk_LRT,
+  logFC.th = log2(1.5),
+  qval.th = 0.01,
   min_frac_cell_assigned = 0.1,
   limit = 10,
   starting.resolution = 0.1,
@@ -91,6 +95,14 @@ SingleCellExperiment object and  parameters passed in ... and returns a
 data.frame containing the significantly differential features for each
 cluster. See \link{differential_edgeR_pseudobulk_LRT} for the default function.}
 
+\item{logFC.th}{A numeric specifying the log2 fold change of activation
+above/below which a feature is considered as significantly differential
+passed to the differential_function.}
+
+\item{qval.th}{A numeric specifying the adjusted p-value below
+which a feature is considered as significantly differential passed to the
+differential_function.}
+
 \item{min_frac_cell_assigned}{A numeric between 0 and 1 specifying the
 minimum percentage of the total cells in the SingleCellExperiment object that
 needs to be assigned. If a lower proportion is assigned, all cells are
@@ -99,6 +111,10 @@ assigned to the cluster of origin.}
 \item{limit}{An integer specifying the minimum number of significantly
 enriched / depleted features required in order for a subcluster to be called
 a 'true' subcluster}
+
+\item{starting.k}{An integer specifying the number of nearest neighbors to
+use for  the Louvain clustering of the first iteration. It is recommended
+to set it quite high in order to have few starting clusters}
 
 \item{starting.resolution}{A numeric specifying the resolution to use for the
 Louvain clustering of the first iteration. It is recommended to set it quite

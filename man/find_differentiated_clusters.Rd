@@ -12,6 +12,8 @@ find_differentiated_clusters(object, ...)
   object,
   differential_function = differential_ChromSCape,
   by = "cell_cluster",
+  logFC.th = log2(1.5),
+  qval.th = 0.01,
   min_frac_cell_assigned = 0.1,
   limit = 5,
   limit_by_proportion = NULL,
@@ -24,6 +26,8 @@ find_differentiated_clusters(object, ...)
   object,
   differential_function = differential_edgeR_pseudobulk_LRT,
   by = "cell_cluster",
+  logFC.th = log2(1.5),
+  qval.th = 0.01,
   limit = 5,
   cluster_of_origin = "Omega",
   min_frac_cell_assigned = 0.1,
@@ -46,6 +50,14 @@ cluster. See \link{differential_edgeR_pseudobulk_LRT} for the default function.}
 
 \item{by}{A character specifying the name of the metadata column referencing
 the clusters.}
+
+\item{logFC.th}{A numeric specifying the log2 fold change of activation
+above/below which a feature is considered as significantly differential
+passed to the differential_function.}
+
+\item{qval.th}{A numeric specifying the adjusted p-value below
+which a feature is considered as significantly differential passed to the
+differential_function.}
 
 \item{min_frac_cell_assigned}{A numeric between 0 and 1 specifying the
 minimum percentage of the total cells in the SingleCellExperiment object that

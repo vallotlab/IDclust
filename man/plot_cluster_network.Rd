@@ -10,7 +10,7 @@ plot_cluster_network(object, ...)
 
 \method{plot_cluster_network}{default}(
   object,
-  differential_summary_df,
+  IDC_summary,
   color_by = "cell_cluster",
   cluster_col = "cell_cluster",
   colors = NULL,
@@ -21,12 +21,13 @@ plot_cluster_network(object, ...)
   gene_col = "Gene",
   function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
     flip.y = FALSE),
+  legend = TRUE,
   ...
 )
 
 \method{plot_cluster_network}{Seurat}(
   object,
-  differential_summary_df,
+  IDC_summary = NULL,
   color_by = "cell_cluster",
   cluster_col = "cell_cluster",
   colors = NULL,
@@ -36,6 +37,7 @@ plot_cluster_network(object, ...)
   function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
     flip.y = FALSE),
   assay = "RNA",
+  legend = TRUE,
   ...
 )
 }
@@ -44,7 +46,7 @@ plot_cluster_network(object, ...)
 
 \item{...}{Additional parameters passed to the plot function.}
 
-\item{differential_summary_df}{Optional. A data.frame of differential
+\item{IDC_summary}{Optional. A data.frame of differential
 analyses summary outputed by \code{\link[=iterative_differential_clustering]{iterative_differential_clustering()}} when
 saving option is TRUE. Use to determine the width of the edges based on the
 number of differential features of the given marker.}
@@ -76,6 +78,8 @@ name.}
 the rowData of the object}
 
 \item{function_layout}{A function of g for the layout of the graph.}
+
+\item{legend}{A logical indicating whether to plot the legend or not.}
 
 \item{assay}{If color_by is a gene, the assay in which to retrieve the counts.}
 }
@@ -112,7 +116,7 @@ data("IDC_summary_scRNA", package = "IDclust")
 
 plot_cluster_network(
     object = Seu,
-    differential_summary_df = IDC_summary_scRNA,
+    IDC_summary = IDC_summary_scRNA,
     color_by = "cell_cluster",
     cluster_col = "cell_cluster",
     colors = NULL,
@@ -126,7 +130,7 @@ plot_cluster_network(
 # object (Paired-Tag)
 plot_cluster_network(
     object = Seu,
-    differential_summary_df = IDC_summary_scRNA,
+    IDC_summary = IDC_summary_scRNA,
     color_by = "Erbb4", # a gene contained in the Seu object
     threshold_to_define_feature_active = 2,
     assay = "RNA",
@@ -148,13 +152,12 @@ data("IDC_summary_scEpigenomics", package = "IDclust")
 
 plot_cluster_network(
     object = scExp,
-    differential_summary_df = IDC_summary_scEpigenomics,
+    IDC_summary = IDC_summary_scEpigenomics,
     color_by = "cell_cluster",
     cluster_col = "cell_cluster",
     colors = NULL,
     node_size_factor = 7.5,
     edge_size_factor = 1,
-     
     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
                                                          flip.y = FALSE)
 )
@@ -163,7 +166,7 @@ plot_cluster_network(
 # object (Paired-Tag)
 plot_cluster_network(
     object = scExp,
-    differential_summary_df = IDC_summary_scEpigenomics,
+    IDC_summary = IDC_summary_scEpigenomics,
     color_by = "Tcf4", # a gene contained in the scExp object
     threshold_to_define_feature_active = 1,
     gene_col = "Gene",

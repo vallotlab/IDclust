@@ -22,3 +22,7 @@ A Seurat object with the dimensionality reduction filled
 Runs Seurat PCA with 10 PC and by removing the first
 component. See \code{\link[ChromSCape:preprocessing_filtering_and_reduction]{ChromSCape::preprocessing_filtering_and_reduction()}}
 }
+\examples{
+data(Seu)
+
+}

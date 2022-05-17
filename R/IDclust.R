@@ -330,9 +330,10 @@ iterative_differential_clustering.default <- function(
     differential_function = differential_ChromSCape,
     min_frac_cell_assigned = 0.1,
     limit = 5,
-    k = 100,
+    starting.k = 100,
     starting.resolution = 0.1,
     resolution = 0.8,
+    k = 50,
     limit_by_proportion = NULL,
     color = NULL,
     nThreads = 10,
@@ -349,7 +350,7 @@ iterative_differential_clustering.default <- function(
     # For the first partition, try to find very low level clusters (e.g. low
     # resolution, high number of neighbors)
     object = ChromSCape::find_clusters_louvain_scExp(object,
-                                                    k = 100,
+                                                    k = starting.k,
                                                     resolution = starting.resolution,
                                                     use.dimred = "PCA")
     object$cell_cluster = gsub("C","A", object$cell_cluster)
@@ -447,7 +448,7 @@ iterative_differential_clustering.default <- function(
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
                 
                 # Re-clustering sub-cluster
-                object. = ChromSCape::find_clusters_louvain_scExp(object., k = 50, resolution =  resolution,
+                object. = ChromSCape::find_clusters_louvain_scExp(object., k = k, resolution =  resolution,
                                                                  use.dimred = dim_red)
                 object.$cell_cluster <- paste0(LETTERS[partition_depth],gsub("C", "", object.$cell_cluster))
                 
@@ -679,9 +680,10 @@ iterative_differential_clustering.Seurat <- function(
     differential_function = differential_edgeR_pseudobulk_LRT,
     min_frac_cell_assigned = 0.1,
     limit = 10,
-    k = 100,
-    resolution = 0.5,
     starting.resolution = 0.1,
+    starting.k = 100,
+    resolution = 0.8,
+    k = 100,
     color = NULL,
     nThreads = 10,
     verbose = TRUE,
@@ -708,7 +710,7 @@ iterative_differential_clustering.Seurat <- function(
     
     # For the first partition, try to find very low level clusters (e.g. low
     # resolution, high number of neighbors)
-    object = Seurat::FindNeighbors(object, reduction = dim_red,  k.param = 50, dims = 1:n_dims, verbose = FALSE)
+    object = Seurat::FindNeighbors(object, reduction = dim_red,  k.param = starting.k, dims = 1:n_dims, verbose = FALSE)
     object = Seurat::FindClusters(object, algorithm = 2, resolution = starting.resolution, random.seed = 47, verbose = FALSE)
     object$cell_cluster = object$seurat_clusters
     object$cell_cluster <- paste0("A",as.numeric(object$cell_cluster))
@@ -778,8 +780,9 @@ iterative_differential_clustering.Seurat <- function(
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
                 
                 # Re-clustering sub-cluster
-                object. = Seurat::FindNeighbors(object., use.dimred = "pca", verbose = FALSE)
-                object. = Seurat::FindClusters(object., algorithm = 2, resolution = 0.1,  random.seed = 47, verbose = FALSE)
+                object. = Seurat::FindNeighbors(object., use.dimred = dim_red, k.param = k, verbose = FALSE)
+                object. = Seurat::FindClusters(object., algorithm = 2,   resolution = resolution,
+                                               dims = 1:n_dims, random.seed = 47, verbose = FALSE)
                 object.$cell_cluster = paste0(LETTERS[partition_depth], as.numeric(object.$seurat_clusters))
                 Seurat::Idents(object.) = object.$cell_cluster
                 

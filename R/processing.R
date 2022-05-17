@@ -12,6 +12,8 @@
 #' @export
 #'
 #' @examples
+#' data(Seu)
+#' 
 processing_Seurat <- function(Seu, n_dims = 50, dim_red = "pca"){
   Seu = Seurat::FindVariableFeatures(Seu, selection.method = "vst", verbose = FALSE)
   Seu = Seurat::ScaleData(Seu, verbose = FALSE)

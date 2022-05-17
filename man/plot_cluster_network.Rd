@@ -16,6 +16,9 @@ plot_cluster_network(object, ...)
   colors = NULL,
   node_size_factor = 7.5,
   edge_size_factor = 1,
+  threshold_to_define_feature_active = 1,
+  max_distanceToTSS = 1000,
+  gene_col = "Gene",
   function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
     flip.y = FALSE),
   ...
@@ -29,8 +32,10 @@ plot_cluster_network(object, ...)
   colors = NULL,
   node_size_factor = 7.5,
   edge_size_factor = 1,
+  threshold_to_define_feature_active = 2,
   function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
     flip.y = FALSE),
+  assay = "RNA",
   ...
 )
 }
@@ -59,7 +64,20 @@ the nodes.}
 \item{edge_size_factor}{A numeric specifying a multiplicator of the
 size of the edges.}
 
+\item{threshold_to_define_feature_active}{If color_by is a gene, an integer
+specifying the threshold above which a gene is considered as active in any
+given cell.}
+
+\item{max_distanceToTSS}{If color_by is a gene, the maximum distance to TSS
+to consider a gene  linked to a region. Used only if "color_by" is a gene
+name.}
+
+\item{gene_col}{If color_by is a gene, a character specifying the column in
+the rowData of the object}
+
 \item{function_layout}{A function of g for the layout of the graph.}
+
+\item{assay}{If color_by is a gene, the assay in which to retrieve the counts.}
 }
 \value{
 
@@ -104,6 +122,22 @@ plot_cluster_network(
                                                          flip.y = FALSE)
 )
 
+# Plotting proportion of cells activating a specific gene in  Seurat scRNA 
+# object (Paired-Tag)
+plot_cluster_network(
+    object = Seu,
+    differential_summary_df = IDC_summary_scRNA,
+    color_by = "Erbb4", # a gene contained in the Seu object
+    threshold_to_define_feature_active = 2,
+    assay = "RNA",
+    cluster_col = "cell_cluster",
+    colors = NULL,
+    node_size_factor = 7.5,
+    edge_size_factor = 1,
+    function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
+                                                         flip.y = FALSE)
+)
+
 }
 
 # Clustering of scExp scH3K27ac object (Paired-Tag)
@@ -120,10 +154,27 @@ plot_cluster_network(
     colors = NULL,
     node_size_factor = 7.5,
     edge_size_factor = 1,
+     
     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
                                                          flip.y = FALSE)
 )
 
+# Plotting proportion of cells activating a specific gene in  scExp scH3K27ac 
+# object (Paired-Tag)
+plot_cluster_network(
+    object = scExp,
+    differential_summary_df = IDC_summary_scEpigenomics,
+    color_by = "Tcf4", # a gene contained in the scExp object
+    threshold_to_define_feature_active = 1,
+    gene_col = "Gene",
+    max_distanceToTSS = 1000,
+    cluster_col = "cell_cluster",
+    colors = NULL,
+    node_size_factor = 7.5,
+    edge_size_factor = 1,
+    function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
+                                                         flip.y = FALSE)
+)
 
 }
 }

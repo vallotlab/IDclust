@@ -21,9 +21,10 @@ iterative_differential_clustering(object, ...)
   differential_function = differential_ChromSCape,
   min_frac_cell_assigned = 0.1,
   limit = 5,
-  k = 100,
+  starting.k = 100,
   starting.resolution = 0.1,
   resolution = 0.8,
+  k = 50,
   limit_by_proportion = NULL,
   color = NULL,
   nThreads = 10,
@@ -43,9 +44,10 @@ iterative_differential_clustering(object, ...)
   differential_function = differential_edgeR_pseudobulk_LRT,
   min_frac_cell_assigned = 0.1,
   limit = 10,
-  k = 100,
-  resolution = 0.5,
   starting.resolution = 0.1,
+  starting.k = 100,
+  resolution = 0.8,
+  k = 100,
   color = NULL,
   nThreads = 10,
   verbose = TRUE,
@@ -98,15 +100,15 @@ assigned to the cluster of origin.}
 enriched / depleted features required in order for a subcluster to be called
 a 'true' subcluster}
 
-\item{k}{An integer specifying the number of nearest neighbors to use for
-the Louvain clustering at each iteration.}
-
 \item{starting.resolution}{A numeric specifying the resolution to use for the
 Louvain clustering of the first iteration. It is recommended to set it quite
 low in order to have few starting clusters.}
 
 \item{resolution}{A numeric specifying the resolution to use for the Louvain
 clustering at each iteration.}
+
+\item{k}{An integer specifying the number of nearest neighbors to use for
+the Louvain clustering at each iteration.}
 
 \item{limit_by_proportion}{Optional. A data.frame containing 3 columns -
 ncells, mean_n_differential, sd_n_differential - that reflect the number of

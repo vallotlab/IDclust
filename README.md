@@ -36,17 +36,15 @@ devtools::install_github("vallotlab/ChromSCape")
 library(IDclust)
 library(Seurat)
 
-data("Seu")
+data("Seu") # for SingleCellExperiment - data("scExp")
 Seu <- iterative_differential_clustering(
-    Seu,
+    Seu, # for SingleCellExperiment - scExp,
     output_dir = "./",
     plotting = TRUE,
     saving = TRUE,
     n_dims = 50,
     dim_red = "pca",
     vizualization_dim_red = "umap",
-    processing_function = processing_Seurat,
-    differential_function = differential_edgeR_pseudobulk_LRT,
     logFC.th = log2(1.5),
     qval.th = 0.01
     )
@@ -55,7 +53,7 @@ Seu <- iterative_differential_clustering(
 ## Plotting network
 
 ```
-plot_cluster_network(Seu)
+plot_cluster_network(Seu) # for SingleCellExperiment - scExp
 ```
 
 ![alt text](https://github.com/vallotlab/IDclust/blob/master/inst/www/network.png?raw=true)

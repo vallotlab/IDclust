@@ -30,7 +30,7 @@ devtools::install_github("vallotlab/ChromSCape")
 
 # Usage
 
-## scRNA 
+## Running Iterative Differential Clustering 
 
 ```
 library(IDclust)
@@ -50,34 +50,13 @@ Seu <- iterative_differential_clustering(
     logFC.th = log2(1.5),
     qval.th = 0.01
     )
-
-plot_cluster_network(Seu)
-
 ```
 
+## Plotting network
 ## scEpigenomics 
 
 ```
-library(IDclust)
-library(ChromSCape)
-
-data("scExp")
-scExp = iterative_differential_clustering(
-    scExp,
-    output_dir = "./",
-    plotting = TRUE,
-    saving = TRUE,
-    n_dims = 10,
-    dim_red = "PCA",
-    vizualization_dim_red = "UMAP",
-    processing_function = processing_ChromSCape,
-    quantile.activation = 0.7,
-    differential_function = differential_ChromSCape,
-    logFC.th = log2(1.5),
-    qval.th = 0.01,
-    )
-    
-plot_cluster_network(scExp)
+plot_cluster_network(Seu)
 ```
 
 ![alt text](https://github.com/vallotlab/IDclust/blob/master/inst/www/network.png?raw=true)

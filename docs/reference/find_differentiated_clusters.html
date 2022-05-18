@@ -12,8 +12,8 @@
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
 
@@ -79,13 +79,7 @@
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../articles/scRNA.html">Tutorial - Seurat</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -244,134 +238,83 @@ function to define differential features.</p>
     <div class='dont-index'><p><code><a href='differential_ChromSCape.html'>differential_ChromSCape()</a></code></p></div>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><span class='r-in'><span class='kw'>if</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/ns-load.html'>requireNamespace</a></span><span class='op'>(</span><span class='st'>"Seurat"</span>, quietly<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span><span class='op'>{</span></span>
-<span class='r-in'><span class='co'># Find differentiated clusters in Seurat object using </span></span>
-<span class='r-in'><span class='co'># edgeR_pseudobulk_LRT function</span></span>
-<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"Seu"</span><span class='op'>)</span></span>
-<span class='r-in'></span>
-<span class='r-in'><span class='va'>DA</span> <span class='op'>=</span> <span class='fu'>find_differentiated_clusters</span><span class='op'>(</span></span>
-<span class='r-in'>    <span class='va'>Seu</span>,</span>
-<span class='r-in'>    differential_function <span class='op'>=</span> <span class='va'>differential_edgeR_pseudobulk_LRT</span>,</span>
-<span class='r-in'>    logFC.th <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log2</a></span><span class='op'>(</span><span class='fl'>1.5</span><span class='op'>)</span>,</span>
-<span class='r-in'>    qval.th <span class='op'>=</span> <span class='fl'>0.01</span>,</span>
-<span class='r-in'>    by <span class='op'>=</span> <span class='st'>"seurat_clusters"</span>,</span>
-<span class='r-in'>    limit <span class='op'>=</span> <span class='fl'>5</span>,</span>
-<span class='r-in'>    cluster_of_origin <span class='op'>=</span> <span class='st'>"Omega"</span>,</span>
-<span class='r-in'>    min_frac_cell_assigned <span class='op'>=</span> <span class='fl'>0.1</span>,</span>
-<span class='r-in'>    verbose <span class='op'>=</span> <span class='cn'>TRUE</span></span>
-<span class='r-in'><span class='op'>)</span></span>
-<span class='r-in'></span>
-<span class='r-in'><span class='co'># Summary of differential genes per cluster</span></span>
-<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span><span class='op'>(</span><span class='va'>DA</span><span class='op'>$</span><span class='va'>diffmat_n</span><span class='op'>)</span></span>
-<span class='r-in'></span>
-<span class='r-in'><span class='co'># Differential analysis</span></span>
-<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span><span class='op'>(</span><span class='va'>DA</span><span class='op'>$</span><span class='va'>res</span><span class='op'>)</span></span>
-<span class='r-in'></span>
-<span class='r-in'><span class='co'># Did the clustering pass the minimum percent of cell assigned threshold ?</span></span>
-<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>DA</span><span class='op'>$</span><span class='va'>passing_min_pct_cell_assigned</span><span class='op'>)</span></span>
-<span class='r-in'></span>
-<span class='r-in'><span class='co'># Find differentiated clusters in Seurat object using Seurat function</span></span>
-<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"Seu"</span><span class='op'>)</span></span>
-<span class='r-in'></span>
-<span class='r-in'><span class='va'>DA</span> <span class='op'>=</span> <span class='fu'>find_differentiated_clusters</span><span class='op'>(</span></span>
-<span class='r-in'>    <span class='va'>Seu</span>,</span>
-<span class='r-in'>    differential_function <span class='op'>=</span> <span class='va'>differential_Seurat</span>,</span>
-<span class='r-in'>    logFC.th <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log2</a></span><span class='op'>(</span><span class='fl'>1.5</span><span class='op'>)</span>,</span>
-<span class='r-in'>    qval.th <span class='op'>=</span> <span class='fl'>0.01</span>,</span>
-<span class='r-in'>    by <span class='op'>=</span> <span class='st'>"seurat_clusters"</span>,</span>
-<span class='r-in'>    limit <span class='op'>=</span> <span class='fl'>5</span>,</span>
-<span class='r-in'>    cluster_of_origin <span class='op'>=</span> <span class='st'>"Omega"</span>,</span>
-<span class='r-in'>    min_frac_cell_assigned <span class='op'>=</span> <span class='fl'>0.1</span>,</span>
-<span class='r-in'>    verbose <span class='op'>=</span> <span class='cn'>TRUE</span></span>
-<span class='r-in'><span class='op'>)</span></span>
-<span class='r-in'></span>
-<span class='r-in'><span class='co'># Find differentiated clusters in Seurat object using Seurat function, </span></span>
-<span class='r-in'><span class='co'># passing additional arguments to differential_Seurat and thus </span></span>
-<span class='r-in'><span class='co'># Seurat::FindAllMarkers funtion.</span></span>
-<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"Seu"</span><span class='op'>)</span></span>
-<span class='r-in'></span>
-<span class='r-in'><span class='va'>DA</span> <span class='op'>=</span> <span class='fu'>find_differentiated_clusters</span><span class='op'>(</span></span>
-<span class='r-in'>    <span class='va'>Seu</span>,</span>
-<span class='r-in'>    differential_function <span class='op'>=</span> <span class='va'>differential_Seurat</span>,</span>
-<span class='r-in'>    logFC.th <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log2</a></span><span class='op'>(</span><span class='fl'>1.5</span><span class='op'>)</span>,</span>
-<span class='r-in'>    qval.th <span class='op'>=</span> <span class='fl'>0.01</span>,</span>
-<span class='r-in'>    by <span class='op'>=</span> <span class='st'>"seurat_clusters"</span>,</span>
-<span class='r-in'>    limit <span class='op'>=</span> <span class='fl'>5</span>,</span>
-<span class='r-in'>    cluster_of_origin <span class='op'>=</span> <span class='st'>"Omega"</span>,</span>
-<span class='r-in'>    min_frac_cell_assigned <span class='op'>=</span> <span class='fl'>0.1</span>,</span>
-<span class='r-in'>    verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,</span>
-<span class='r-in'>    test.use <span class='op'>=</span> <span class='st'>"roc"</span> <span class='co'># additional argument</span></span>
-<span class='r-in'><span class='op'>)</span></span>
-<span class='r-in'><span class='op'>}</span></span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 5 - Found 12 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 0 - Found 4 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 0  cluster has less than 5 enriched features.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> Assigning the cells to cluster of origin.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 1 - Found 22 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 4 - Found 14 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 2 - Found 6 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 3 - Found 35 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> Finished finding differences -  0.489  fraction of cells were assigned.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> [1] TRUE</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> Calculating cluster 0</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> Calculating cluster 1</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> Calculating cluster 2</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> Calculating cluster 3</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> Calculating cluster 4</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> Calculating cluster 5</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 5 - Found 28 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 0 - Found 20 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 1 - Found 78 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 4 - Found 35 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 2 - Found 40 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 3 - Found 80 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> Finished finding differences -  1  fraction of cells were assigned.</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> Calculating cluster 0</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> Calculating cluster 1</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> Calculating cluster 2</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> Calculating cluster 3</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> Calculating cluster 4</span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> Calculating cluster 5</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 5 - Found 12 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 0 - Found 6 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 1 - Found 18 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 4 - Found 17 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 2 - Found 9 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> 3 - Found 13 differential regions.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> Finished finding differences -  1  fraction of cells were assigned.</span>
-<span class='r-in'><span class='co'># Find differentiated clusters in SingleCellExperiment object using </span></span>
-<span class='r-in'><span class='co'># differential_ChromSCape function.</span></span>
-<span class='r-in'><span class='kw'>if</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/ns-load.html'>requireNamespace</a></span><span class='op'>(</span><span class='st'>"ChromSCape"</span>, quietly<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span><span class='op'>{</span></span>
-<span class='r-in'><span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"scExp"</span><span class='op'>)</span></span>
-<span class='r-in'><span class='va'>scExp</span> <span class='op'>=</span> <span class='fu'>ChromSCape</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ChromSCape/man/find_clusters_louvain_scExp.html'>find_clusters_louvain_scExp</a></span><span class='op'>(</span><span class='va'>scExp</span>, </span>
-<span class='r-in'>resolution <span class='op'>=</span> <span class='fl'>0.1</span><span class='op'>)</span></span>
-<span class='r-in'><span class='va'>DA</span> <span class='op'>=</span> <span class='fu'>find_differentiated_clusters</span><span class='op'>(</span></span>
-<span class='r-in'>    <span class='va'>scExp</span>,</span>
-<span class='r-in'>    differential_function <span class='op'>=</span> <span class='va'>differential_ChromSCape</span>,</span>
-<span class='r-in'>    logFC.th <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log2</a></span><span class='op'>(</span><span class='fl'>5</span><span class='op'>)</span>,</span>
-<span class='r-in'>    qval.th <span class='op'>=</span> <span class='fl'>0.01</span>,</span>
-<span class='r-in'>    by <span class='op'>=</span> <span class='st'>"cell_cluster"</span>,</span>
-<span class='r-in'>    limit <span class='op'>=</span> <span class='fl'>5</span>,</span>
-<span class='r-in'>    cluster_of_origin <span class='op'>=</span> <span class='st'>"Omega"</span>,</span>
-<span class='r-in'>    min_frac_cell_assigned <span class='op'>=</span> <span class='fl'>0.1</span>,</span>
-<span class='r-in'>    verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,</span>
-<span class='r-in'><span class='op'>)</span></span>
-<span class='r-in'><span class='op'>}</span></span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> </span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> </span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> </span>
-<span class='r-msg co'><span class='r-pr'>#&gt;</span> </span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> ChromSCape::differential_activation - Calculating differential activation for C1 .</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> ChromSCape::differential_activation - Calculating differential activation for C2 .</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> ChromSCape::differential_activation - Calculating differential activation for C3 .</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> ChromSCape::differential_activation - Calculating differential activation for C4 .</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> ChromSCape::differential_activation - Calculating differential activation for C5 .</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> C2  - found 759 enriched features.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> C4  - found 320 enriched features.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> C5  - found 469 enriched features.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> C3  - found 722 enriched features.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> C1  - found 750 enriched features.</span>
-<span class='r-out co'><span class='r-pr'>#&gt;</span> Finished finding differences -  1  fraction of cells were assigned.</span>
+    <pre class="examples"><span class='kw'>if</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/ns-load.html'>requireNamespace</a></span><span class='op'>(</span><span class='st'>"Seurat"</span>, quietly<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span><span class='op'>{</span>
+<span class='co'># Find differentiated clusters in Seurat object using </span>
+<span class='co'># edgeR_pseudobulk_LRT function</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"Seu"</span><span class='op'>)</span>
+
+<span class='va'>DA</span> <span class='op'>=</span> <span class='fu'>find_differentiated_clusters</span><span class='op'>(</span>
+    <span class='va'>Seu</span>,
+    differential_function <span class='op'>=</span> <span class='va'>differential_edgeR_pseudobulk_LRT</span>,
+    logFC.th <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log2</a></span><span class='op'>(</span><span class='fl'>1.5</span><span class='op'>)</span>,
+    qval.th <span class='op'>=</span> <span class='fl'>0.01</span>,
+    by <span class='op'>=</span> <span class='st'>"seurat_clusters"</span>,
+    limit <span class='op'>=</span> <span class='fl'>5</span>,
+    cluster_of_origin <span class='op'>=</span> <span class='st'>"Omega"</span>,
+    min_frac_cell_assigned <span class='op'>=</span> <span class='fl'>0.1</span>,
+    verbose <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span>
+
+<span class='co'># Summary of differential genes per cluster</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span><span class='op'>(</span><span class='va'>DA</span><span class='op'>$</span><span class='va'>diffmat_n</span><span class='op'>)</span>
+
+<span class='co'># Differential analysis</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/head.html'>head</a></span><span class='op'>(</span><span class='va'>DA</span><span class='op'>$</span><span class='va'>res</span><span class='op'>)</span>
+
+<span class='co'># Did the clustering pass the minimum percent of cell assigned threshold ?</span>
+<span class='fu'><a href='https://rdrr.io/r/base/print.html'>print</a></span><span class='op'>(</span><span class='va'>DA</span><span class='op'>$</span><span class='va'>passing_min_pct_cell_assigned</span><span class='op'>)</span>
+
+<span class='co'># Find differentiated clusters in Seurat object using Seurat function</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"Seu"</span><span class='op'>)</span>
+
+<span class='va'>DA</span> <span class='op'>=</span> <span class='fu'>find_differentiated_clusters</span><span class='op'>(</span>
+    <span class='va'>Seu</span>,
+    differential_function <span class='op'>=</span> <span class='va'>differential_Seurat</span>,
+    logFC.th <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log2</a></span><span class='op'>(</span><span class='fl'>1.5</span><span class='op'>)</span>,
+    qval.th <span class='op'>=</span> <span class='fl'>0.01</span>,
+    by <span class='op'>=</span> <span class='st'>"seurat_clusters"</span>,
+    limit <span class='op'>=</span> <span class='fl'>5</span>,
+    cluster_of_origin <span class='op'>=</span> <span class='st'>"Omega"</span>,
+    min_frac_cell_assigned <span class='op'>=</span> <span class='fl'>0.1</span>,
+    verbose <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span>
+
+<span class='co'># Find differentiated clusters in Seurat object using Seurat function, </span>
+<span class='co'># passing additional arguments to differential_Seurat and thus </span>
+<span class='co'># Seurat::FindAllMarkers funtion.</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"Seu"</span><span class='op'>)</span>
+
+<span class='va'>DA</span> <span class='op'>=</span> <span class='fu'>find_differentiated_clusters</span><span class='op'>(</span>
+    <span class='va'>Seu</span>,
+    differential_function <span class='op'>=</span> <span class='va'>differential_Seurat</span>,
+    logFC.th <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log2</a></span><span class='op'>(</span><span class='fl'>1.5</span><span class='op'>)</span>,
+    qval.th <span class='op'>=</span> <span class='fl'>0.01</span>,
+    by <span class='op'>=</span> <span class='st'>"seurat_clusters"</span>,
+    limit <span class='op'>=</span> <span class='fl'>5</span>,
+    cluster_of_origin <span class='op'>=</span> <span class='st'>"Omega"</span>,
+    min_frac_cell_assigned <span class='op'>=</span> <span class='fl'>0.1</span>,
+    verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
+    test.use <span class='op'>=</span> <span class='st'>"roc"</span> <span class='co'># additional argument</span>
+<span class='op'>)</span>
+<span class='op'>}</span>
+<span class='co'># Find differentiated clusters in SingleCellExperiment object using </span>
+<span class='co'># differential_ChromSCape function.</span>
+<span class='kw'>if</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/ns-load.html'>requireNamespace</a></span><span class='op'>(</span><span class='st'>"ChromSCape"</span>, quietly<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span><span class='op'>)</span><span class='op'>{</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"scExp"</span><span class='op'>)</span>
+<span class='va'>scExp</span> <span class='op'>=</span> <span class='fu'>ChromSCape</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/ChromSCape/man/find_clusters_louvain_scExp.html'>find_clusters_louvain_scExp</a></span><span class='op'>(</span><span class='va'>scExp</span>, 
+resolution <span class='op'>=</span> <span class='fl'>0.1</span><span class='op'>)</span>
+<span class='va'>DA</span> <span class='op'>=</span> <span class='fu'>find_differentiated_clusters</span><span class='op'>(</span>
+    <span class='va'>scExp</span>,
+    differential_function <span class='op'>=</span> <span class='va'>differential_ChromSCape</span>,
+    logFC.th <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/Log.html'>log2</a></span><span class='op'>(</span><span class='fl'>5</span><span class='op'>)</span>,
+    qval.th <span class='op'>=</span> <span class='fl'>0.01</span>,
+    by <span class='op'>=</span> <span class='st'>"cell_cluster"</span>,
+    limit <span class='op'>=</span> <span class='fl'>5</span>,
+    cluster_of_origin <span class='op'>=</span> <span class='st'>"Omega"</span>,
+    min_frac_cell_assigned <span class='op'>=</span> <span class='fl'>0.1</span>,
+    verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
+<span class='op'>)</span>
+<span class='op'>}</span>
 </pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

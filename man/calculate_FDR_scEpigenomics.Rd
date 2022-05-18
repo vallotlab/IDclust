@@ -7,7 +7,7 @@
 calculate_FDR_scEpigenomics(
   scExp,
   differential_function = differential_ChromSCape,
-  by = "cell_cluster",
+  by = "IDcluster",
   limit = 5,
   qval.th = 0.01,
   logFC.th = log2(2),

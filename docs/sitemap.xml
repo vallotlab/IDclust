@@ -1,54 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://vallotlab.github.io/IDclust//index.html</loc>
+    <loc>/404.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/IDC_summary_scEpigenomics.html</loc>
+    <loc>/articles/Hackability.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/IDC_summary_scRNA.html</loc>
+    <loc>/articles/index.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/Seu.html</loc>
+    <loc>/articles/scEpigenomics.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/calculate_FDR_scEpigenomics.html</loc>
+    <loc>/articles/scRNA.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/create_pseudobulk_mat_Seu.html</loc>
+    <loc>/authors.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/differential_ChromSCape.html</loc>
+    <loc>/index.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/differential_Seurat.html</loc>
+    <loc>/reference/IDC_summary_scEpigenomics.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/differential_edgeR_pseudobulk_LRT.html</loc>
+    <loc>/reference/IDC_summary_scRNA.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/find_differentiated_clusters.html</loc>
+    <loc>/reference/Seu.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/iterative_differential_clustering.html</loc>
+    <loc>/reference/calculate_FDR_scEpigenomics.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/plot_cluster_network.html</loc>
+    <loc>/reference/create_pseudobulk_mat_Seu.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/processing_ChromSCape.html</loc>
+    <loc>/reference/differential_ChromSCape.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/processing_Seurat.html</loc>
+    <loc>/reference/differential_Seurat.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/scExp.html</loc>
+    <loc>/reference/differential_edgeR_pseudobulk_LRT.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//reference/top_differential_markers.SingleCellExperiment.html</loc>
+    <loc>/reference/find_differentiated_clusters.html</loc>
   </url>
   <url>
-    <loc>https://vallotlab.github.io/IDclust//articles/scRNA.html</loc>
+    <loc>/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>/reference/iterative_differential_clustering.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot_cluster_network.html</loc>
+  </url>
+  <url>
+    <loc>/reference/processing_ChromSCape.html</loc>
+  </url>
+  <url>
+    <loc>/reference/processing_Seurat.html</loc>
+  </url>
+  <url>
+    <loc>/reference/scExp.html</loc>
+  </url>
+  <url>
+    <loc>/reference/top_differential_markers.SingleCellExperiment.html</loc>
   </url>
 </urlset>

@@ -6,7 +6,7 @@
 \usage{
 differential_edgeR_pseudobulk_LRT(
   object,
-  by = "cell_cluster",
+  by = "IDcluster",
   assay = "RNA",
   biological_replicate_col = NULL,
   logFC.th = log2(1.5),

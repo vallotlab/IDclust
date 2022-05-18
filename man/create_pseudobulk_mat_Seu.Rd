@@ -6,13 +6,13 @@
 \usage{
 create_pseudobulk_mat_Seu(
   Seu,
-  by = "cell_cluster",
+  by = "IDcluster",
   biological_replicate_col = NULL,
   assay = "RNA"
 )
 }
 \arguments{
-\item{Seu}{A Seurat object containing scRNA dataset with 'cell_cluster'
+\item{Seu}{A Seurat object containing scRNA dataset with 'IDcluster'
 column.}
 
 \item{by}{A character specifying the name of the metadata column referencing

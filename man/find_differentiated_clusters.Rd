@@ -11,7 +11,7 @@ find_differentiated_clusters(object, ...)
 \method{find_differentiated_clusters}{default}(
   object,
   differential_function = differential_ChromSCape,
-  by = "cell_cluster",
+  by = "IDcluster",
   logFC.th = log2(1.5),
   qval.th = 0.01,
   min_frac_cell_assigned = 0.1,
@@ -25,7 +25,7 @@ find_differentiated_clusters(object, ...)
 \method{find_differentiated_clusters}{Seurat}(
   object,
   differential_function = differential_edgeR_pseudobulk_LRT,
-  by = "cell_cluster",
+  by = "IDcluster",
   logFC.th = log2(1.5),
   qval.th = 0.01,
   limit = 5,
@@ -36,7 +36,7 @@ find_differentiated_clusters(object, ...)
 )
 }
 \arguments{
-\item{object}{A Seurat object containing scRNA dataset with 'cell_cluster'
+\item{object}{A Seurat object containing scRNA dataset with 'IDcluster'
 column.}
 
 \item{...}{Additional parameters passed to the differential_function. See
@@ -96,7 +96,7 @@ Find Differentiated Clusters
 }
 \details{
 Find significantly differential features between the given set
-of clusters (within the 'cell_cluster' column of the SingleCellExperiment).
+of clusters (within the 'IDcluster' column of the SingleCellExperiment).
 For each cluster, if enough differences are found, mark the cluster as a
 'true' subcluster and gives it the alias 'cluster_of_origin:cluster'.
 The function will use by default \code{\link[ChromSCape:differential_activation]{ChromSCape::differential_activation()}}
@@ -173,7 +173,7 @@ DA = find_differentiated_clusters(
     differential_function = differential_ChromSCape,
     logFC.th = log2(5),
     qval.th = 0.01,
-    by = "cell_cluster",
+    by = "IDcluster",
     limit = 5,
     cluster_of_origin = "Omega",
     min_frac_cell_assigned = 0.1,

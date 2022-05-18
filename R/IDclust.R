@@ -368,11 +368,11 @@ iterative_differential_clustering.default <- function(
     
     # For the first partition, try to find very low level clusters (e.g. low
     # resolution, high number of neighbors)
-    object = ChromSCape::find_clusters_louvain_scExp(object,
+    object. = ChromSCape::find_clusters_louvain_scExp(object,
                                                     k = starting.k,
                                                     resolution = starting.resolution,
                                                     use.dimred = "PCA")
-    object$IDcluster = gsub("C","A", object$IDcluster)
+    object$IDcluster = gsub("C","A", object.$cell_cluster)
     
     # Calculate the average % cells activated in a feature
     # and return a level of activation based on a given decile
@@ -469,9 +469,9 @@ iterative_differential_clustering.default <- function(
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
                 
                 # Re-clustering sub-cluster
-                object. = ChromSCape::find_clusters_louvain_scExp(object., k = k, resolution =  resolution,
+                object.. = ChromSCape::find_clusters_louvain_scExp(object., k = k, resolution =  resolution,
                                                                  use.dimred = dim_red)
-                object.$IDcluster <- paste0(LETTERS[partition_depth],gsub("C", "", object.$IDcluster))
+                object.$IDcluster <- paste0(LETTERS[partition_depth],gsub("C", "", object..$cell_cluster))
                 
                 clusters = object.$IDcluster 
                 cluster_u = unique(clusters)
@@ -783,7 +783,7 @@ iterative_differential_clustering.Seurat <- function(
     object$IDcluster = differential_summary_df$true_subcluster[match(object$IDcluster, differential_summary_df$subcluster)]
     
     # List of embeddings
-    list_embeddings = list(object@reductions$pca@cell.embeddings )
+    list_embeddings = list(object@reductions[[dim_red]]@cell.embeddings )
     names(list_embeddings)[1] = paste(unique(object$IDcluster), collapse = "_")
     
     # List of differential analyses
@@ -855,7 +855,7 @@ iterative_differential_clustering.Seurat <- function(
                     # Retrieve DA results
                     diffmat_n = DA$diffmat_n
                     list_res[[partition_cluster_of_origin]] = DA$res
-                    list_embeddings[[partition_cluster_of_origin]] = object.@reductions$pca@cell.embeddings
+                    list_embeddings[[partition_cluster_of_origin]] = object.@reductions[[dim_red]]@cell.embeddings
                     
                     # If more than 'min_frac_cell_assigned' of the cells were assigned
                     # to 'true' subclusters (with marker features)

@@ -6,7 +6,7 @@
 \usage{
 differential_ChromSCape(
   object,
-  by = "cell_cluster",
+  by = "IDcluster",
   logFC.th = log2(1.5),
   qval.th = 0.01,
   min.pct = 0.01

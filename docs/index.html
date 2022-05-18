@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Iterative Differential Clustering for single-cell • IDclust</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,19 +33,37 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">IDclust</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.00</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.99.00</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="articles/scRNA.html">Tutorial - Seurat</a>
+  <a href="reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="articles/Hackability.html">Hacking IDclust</a>
+    </li>
+    <li>
+      <a href="articles/scEpigenomics.html">Tutorial for scEpigenomics object (SingleCellExperiment)</a>
+    </li>
+    <li>
+      <a href="articles/scRNA.html">Tutorial for Seurat object (scRNA)</a>
+    </li>
+  </ul>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/vallotlab/IDclust/">
+  <a href="https://github.com/vallotlab/IDclust/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -61,61 +81,65 @@
       </header><div class="row">
   <div class="contents col-md-9">
 
-<div id="idclust" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#idclust" class="anchor"></a>IDclust</h1></div>
+<div class="section level1">
+<div class="page-header"><h1 id="idclust">IDclust<a class="anchor" aria-label="anchor" href="#idclust"></a>
+</h1></div>
 <p>IDclust is an unsupervised method for clustering single-cell datasets (scRNA, scEpigenome). The cells are iteratively re-processed and re-clustered. Subclusters are created provided they are significantly different from each other.</p>
-<p><img src="https://github.com/vallotlab/IDclust/blob/master/inst/www/scheme.png?raw=true" alt="alt text"></p>
+<div class="figure">
+<img src="https://github.com/vallotlab/IDclust/blob/master/inst/www/scheme.png?raw=true" alt=""><p class="caption">alt text</p>
 </div>
-<div id="installation" class="section level1">
-<h1 class="hasAnchor">
-<a href="#installation" class="anchor"></a>Installation</h1>
+</div>
+<div class="section level1">
+<h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h1>
 <p>Install package</p>
-<pre><code>if (!require("devtools"))
-    {
-      install.packages("devtools", dep=TRUE)
-        if(!require("devtools")) stop("Package not found")
-    }
+<pre><code><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://devtools.r-lib.org/" class="external-link">"devtools"</a></span><span class="op">)</span><span class="op">)</span>
+    <span class="op">{</span>
+      <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span>, dep<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
+        <span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://devtools.r-lib.org/" class="external-link">"devtools"</a></span><span class="op">)</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"Package not found"</span><span class="op">)</span>
+    <span class="op">}</span>
 
-devtools::install_github("vallotlab/IDclust")</code></pre>
-<div id="for-scrna-use" class="section level2">
-<h2 class="hasAnchor">
-<a href="#for-scrna-use" class="anchor"></a>For scRNA use</h2>
-<pre><code>install.packages("Seurat")</code></pre>
+<span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/remote-reexports.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"vallotlab/IDclust"</span><span class="op">)</span></code></pre>
+<div class="section level2">
+<h2 id="for-scrna-use">For scRNA use<a class="anchor" aria-label="anchor" href="#for-scrna-use"></a>
+</h2>
+<pre><code><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"Seurat"</span><span class="op">)</span></code></pre>
 </div>
-<div id="for-scepigenomics-use" class="section level2">
-<h2 class="hasAnchor">
-<a href="#for-scepigenomics-use" class="anchor"></a>For scEpigenomics use</h2>
-<pre><code>devtools::install_github("vallotlab/ChromSCape")</code></pre>
+<div class="section level2">
+<h2 id="for-scepigenomics-use">For scEpigenomics use<a class="anchor" aria-label="anchor" href="#for-scepigenomics-use"></a>
+</h2>
+<pre><code><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/remote-reexports.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"vallotlab/ChromSCape"</span><span class="op">)</span></code></pre>
 </div>
 </div>
-<div id="usage" class="section level1">
-<h1 class="hasAnchor">
-<a href="#usage" class="anchor"></a>Usage</h1>
-<div id="running-iterative-differential-clustering" class="section level2">
-<h2 class="hasAnchor">
-<a href="#running-iterative-differential-clustering" class="anchor"></a>Running Iterative Differential Clustering</h2>
-<pre><code><a href="https://github.com/vallotlab/IDclust">library(IDclust)
-library(Seurat)
+<div class="section level1">
+<h1 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+</h1>
+<div class="section level2">
+<h2 id="running-iterative-differential-clustering">Running Iterative Differential Clustering<a class="anchor" aria-label="anchor" href="#running-iterative-differential-clustering"></a>
+</h2>
+<pre><code><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/vallotlab/IDclust" class="external-link">IDclust</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span>
 
-data("Seu") # for SingleCellExperiment - data("scExp")
-Seu &lt;- iterative_differential_clustering(
-    Seu, # for SingleCellExperiment - scExp,
-    output_dir = "./",
-    plotting = TRUE,
-    saving = TRUE,
-    n_dims = 50,
-    dim_red = "pca",
-    vizualization_dim_red = "umap",
-    logFC.th = log2(1.5),
-    qval.th = 0.01
-    )</a></code></pre>
+<span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"Seu"</span><span class="op">)</span> <span class="co"># for SingleCellExperiment - data("scExp")</span>
+<span class="va">Seu</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/iterative_differential_clustering.html">iterative_differential_clustering</a></span><span class="op">(</span>
+    <span class="va">Seu</span>, <span class="co"># for SingleCellExperiment - scExp,</span>
+    output_dir <span class="op">=</span> <span class="st">"./"</span>,
+    plotting <span class="op">=</span> <span class="cn">TRUE</span>,
+    saving <span class="op">=</span> <span class="cn">TRUE</span>,
+    n_dims <span class="op">=</span> <span class="fl">50</span>,
+    dim_red <span class="op">=</span> <span class="st">"pca"</span>,
+    vizualization_dim_red <span class="op">=</span> <span class="st">"umap"</span>,
+    logFC.th <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log2</a></span><span class="op">(</span><span class="fl">1.5</span><span class="op">)</span>,
+    qval.th <span class="op">=</span> <span class="fl">0.01</span>
+    <span class="op">)</span></code></pre>
 </div>
-<div id="plotting-network" class="section level2">
-<h2 class="hasAnchor">
-<a href="#plotting-network" class="anchor"></a>Plotting network</h2>
-<pre><code>plot_cluster_network(Seu) # for SingleCellExperiment - scExp</code></pre>
-<p><img src="https://github.com/vallotlab/IDclust/blob/master/inst/www/network.png?raw=true" alt="alt text"></p>
+<div class="section level2">
+<h2 id="plotting-network">Plotting network<a class="anchor" aria-label="anchor" href="#plotting-network"></a>
+</h2>
+<pre><code><span class="fu"><a href="reference/plot_cluster_network.html">plot_cluster_network</a></span><span class="op">(</span><span class="va">Seu</span><span class="op">)</span> <span class="co"># for SingleCellExperiment - scExp</span></code></pre>
+<div class="figure">
+<img src="https://github.com/vallotlab/IDclust/blob/master/inst/www/network.png?raw=true" alt=""><p class="caption">alt text</p>
+</div>
 </div>
 </div>
 
@@ -123,38 +147,50 @@ Seu &lt;- iterative_differential_clustering(
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Browse source code at <br><a href="https://github.com/vallotlab/IDclust/">https://​github.com/​vallotlab/​IDclust/​</a>
-</li>
-<li>Report a bug at <br><a href="https://github.com/vallotlab/IDclust/issues">https://​github.com/​vallotlab/​IDclust/​issues</a>
-</li>
+<li><a href="https://github.com/vallotlab/IDclust/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/vallotlab/IDclust/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li><a href="https://www.r-project.org/Licenses/GPL-3">GPL-3</a></li>
+<li><a href="https://www.r-project.org/Licenses/GPL-3" class="external-link">GPL-3</a></li>
 </ul>
 </div>
+
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
+<ul class="list-unstyled">
+<li><a href="authors.html#citation">Citing IDclust</a></li>
+</ul>
+</div>
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Pacome Prompsy <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0003-4375-7583" target="orcid.widget" aria-label="ORCID"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li>Celine Vallot <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-1601-2359" target="orcid.widget" aria-label="ORCID"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<li>Pacome Prompsy <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0003-4375-7583" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<li>Celine Vallot <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-1601-2359" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
 </ul>
 </div>
+
+
 
   </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Pacome Prompsy, Celine Vallot.</p>
+  <p></p>
+<p>Developed by Pacome Prompsy, Celine Vallot.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
 </div>
 
       </footer>
@@ -162,6 +198,8 @@ Seu &lt;- iterative_differential_clustering(
 
   
 
+
+  
 
   </body>
 </html>

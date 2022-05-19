@@ -110,7 +110,8 @@ find_differentiated_clusters <- function(object, ...) {
 #' if(requireNamespace("Seurat", quietly=TRUE)){
 #' 
 #' data("Seu", package = "IDclust")
-#' Seu = iterative_differential_clustering(Seu, saving = FALSE, plotting =FALSE,
+#' set.seed(47)
+#' Seu = iterative_differential_clustering(Seu,  output_dir = "~/Tests/Seu", saving = T, plotting =FALSE,
 #' logFC.th = 0.2, qval.th = 0.1)
 #' 
 #' }
@@ -119,7 +120,8 @@ find_differentiated_clusters <- function(object, ...) {
 #' if(requireNamespace("ChromSCape", quietly=TRUE)){
 #' 
 #' data("scExp", package = "IDclust")
-#' scExp = iterative_differential_clustering(scExp,  saving = FALSE, plotting =FALSE,
+#' set.seed(47)
+#' scExp = iterative_differential_clustering(scExp,  output_dir = "~/Tests/scExp", saving = T, plotting =FALSE,
 #' logFC.th = 0.5, qval.th = 0.01)
 #' 
 #' }

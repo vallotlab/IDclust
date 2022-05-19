@@ -35,7 +35,24 @@
 #' @format IDC_summary_scRNA - A data.frame obtained by 
 #' [iterative_differential_clustering()].
 #' 
-"IDC_summary_scRNA"
+"IDC_DA_scRNA"
+
+#' A list of data.frame containing the differential markers for scRNA dataset
+#' (Paired-Tag - scRNA) 
+#' @description A list of differential markers for scRNA
+#'
+#' @usage data("IDC_DA_scRNA")
+#' 
+#' @references  
+#' Joint profiling of histone modifications and transcriptome in single cells
+#' from mouse brain, Chenxu Zhu, Yanxiao Zhang,  Yang Eric Li, Jacinta Lucero,
+#' . Margarita Behrens, Bing Ren, Nature Methods, 2021
+#' \href{https://doi.org/10.1038/s41592-021-01060-3}{Paired-Tag}
+#' 
+#' @format IDC_DA_scRNA - A data.frame obtained by 
+#' [iterative_differential_clustering()].
+#' 
+"IDC_DA_scRNA"
 
 
 #' A SingleCellExperiment object containing the scH3K27ac part of Paired-Tag 
@@ -77,3 +94,21 @@
 #' [iterative_differential_clustering()].
 #' 
 "IDC_summary_scEpigenomics"
+
+
+#' A list of data.frame containing the differential markers for scEpigenomics dataset
+#' (Paired-Tag - scEpigenomics) 
+#' @description A list of differential markers for scEpigenomics
+#'
+#' @usage data("IDC_DA_scEpigenomics")
+#' 
+#' @references  
+#' Joint profiling of histone modifications and transcriptome in single cells
+#' from mouse brain, Chenxu Zhu, Yanxiao Zhang,  Yang Eric Li, Jacinta Lucero,
+#' . Margarita Behrens, Bing Ren, Nature Methods, 2021
+#' \href{https://doi.org/10.1038/s41592-021-01060-3}{Paired-Tag}
+#' 
+#' @format IDC_DA_scEpigenomics - A data.frame obtained by 
+#' [iterative_differential_clustering()].
+#' 
+"IDC_DA_scEpigenomics"

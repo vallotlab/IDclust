@@ -3,6 +3,8 @@ title: "Tutorial for Seurat object (scRNA)"
 author: "Pacome Prompsy"
 date: "5/17/2022"
 output: html_document
+pkgdown:
+  as_is: true
 ---
 
 ```{r setup, include=FALSE}

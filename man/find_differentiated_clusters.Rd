@@ -18,6 +18,7 @@ find_differentiated_clusters(object, ...)
   limit = 5,
   limit_by_proportion = NULL,
   cluster_of_origin = "Omega",
+  min_cluster_size = 30,
   verbose = TRUE,
   ...
 )
@@ -74,6 +75,9 @@ false positive expected for a given cluster size.
 
 \item{cluster_of_origin}{A character specifying the name of the cluster of
 origin that will be concatenated before the name of true subclusters.}
+
+\item{min_cluster_size}{An integer specifying the minimum number of cells
+in a cluster to consider it as a 'true' subcluster.}
 
 \item{verbose}{A logical specifying wether to print.}
 }

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tutorial for scEpigenomics object (SingleCellExperiment) • IDclust</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
@@ -19,8 +19,6 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
-    
-
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -33,19 +31,43 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">IDclust</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.99.00</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.99.00</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="../articles/scRNA.html">Tutorial - Seurat</a>
+  <a href="../index.html">
+    <span class="fas fa-home fa-lg"></span>
+     
+  </a>
+</li>
+<li>
+  <a href="../reference/index.html">Reference</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="../articles/Hackability.html">Hacking IDclust</a>
+    </li>
+    <li>
+      <a href="../articles/scEpigenomics.html">Tutorial for scEpigenomics object (SingleCellExperiment)</a>
+    </li>
+    <li>
+      <a href="../articles/scRNA.html">Tutorial for Seurat object (scRNA)</a>
+    </li>
+  </ul>
 </li>
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/vallotlab/IDclust/" class="external-link">
+  <a href="https://github.com/vallotlab/IDclust/">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -60,192 +82,174 @@
 
       
 
-      </header><div class="row">
+      </header><script src="scEpigenomics_files/header-attrs-2.14/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>Tutorial for scEpigenomics object
-(SingleCellExperiment)</h1>
-                        <h4 data-toc-skip class="author">Pacome
-Prompsy</h4>
+      <h1 data-toc-skip>Tutorial for scEpigenomics object (SingleCellExperiment)</h1>
+                        <h4 class="author">Pacome Prompsy</h4>
             
-            <h4 data-toc-skip class="date">5/17/2022</h4>
+            <h4 class="date">5/17/2022</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/vallotlab/IDclust/blob/HEAD/vignettes/scEpigenomics.Rmd" class="external-link"><code>vignettes/scEpigenomics.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/vallotlab/IDclust/blob/master/vignettes/scEpigenomics.Rmd"><code>vignettes/scEpigenomics.Rmd</code></a></small>
       <div class="hidden name"><code>scEpigenomics.Rmd</code></div>
 
     </div>
 
     
     
-<p>In this article, we will show how to run IDclust on a Seurat object
-of a single- cell RNA dataset of the mouse brain from “Joint profiling
-of histone modifications and transcriptome in single cells from mouse
-brain,Chenxu Zhu, Yanxiao Zhang, Yang Eric Li, Jacinta Lucero, .
-Margarita Behrens, Bing Ren, Nature Methods, 2021 Paired-Tag”</p>
-<div class="section level2">
-<h2 id="classical-analysis-of-scrna-dataset-with-seurat">Classical analysis of scRNA dataset with Seurat<a class="anchor" aria-label="anchor" href="#classical-analysis-of-scrna-dataset-with-seurat"></a>
-</h2>
+<p>In this article, we will show how to run IDclust on a SingleCellExperiment object of a single- cell RNA dataset of the mouse brain from “Joint profiling of histone modifications and transcriptome in single cells from mouse brain,Chenxu Zhu, Yanxiao Zhang, Yang Eric Li, Jacinta Lucero, . Margarita Behrens, Bing Ren, Nature Methods, 2021 Paired-Tag”</p>
+<div id="classical-analysis-of-scrna-dataset-with-chromscape" class="section level1">
+<h1 class="hasAnchor">
+<a href="#classical-analysis-of-scrna-dataset-with-chromscape" class="anchor"></a>Classical analysis of scRNA dataset with ChromSCape</h1>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/vallotlab/IDclust" class="external-link">IDclust</a></span><span class="op">)</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/vallotlab/ChromSCape" class="external-link">ChromSCape</a></span><span class="op">)</span></code></pre></div>
-<div class="section level3">
-<h3 id="data">Data<a class="anchor" aria-label="anchor" href="#data"></a>
-</h3>
-<p>Download, extract &amp; format scRNA of the mouse brain (Zhu et al.,
-2021) from the GEO portal.</p>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/vallotlab/IDclust">IDclust</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/vallotlab/ChromSCape">ChromSCape</a></span><span class="op">)</span></code></pre></div>
+<div id="data" class="section level2">
+<h2 class="hasAnchor">
+<a href="#data" class="anchor"></a>Data</h2>
+<p>Download, extract &amp; format scRNA of the mouse brain (Zhu et al., 2021) from the GEO portal.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">47</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">47</span><span class="op">)</span>
 <span class="co"># Download dataset</span>
-<span class="va">temp</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span>
-<span class="va">tempdir</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">"https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE152020&amp;format=file&amp;file=GSE152020%5FPaired%2DTag%5FH3K27ac%5FDNA%5Ffiltered%5Fmatrix%2Etar%2Egz"</span>,
+<span class="va">temp</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span><span class="op">(</span><span class="op">)</span>
+<span class="va">tempdir</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempdir</a></span><span class="op">(</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/download.file.html">download.file</a></span><span class="op">(</span><span class="st">"https://www.ncbi.nlm.nih.gov/geo/download/?acc=GSE152020&amp;format=file&amp;file=GSE152020%5FPaired%2DTag%5FH3K27ac%5FDNA%5Ffiltered%5Fmatrix%2Etar%2Egz"</span>,
     <span class="va">temp</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/untar.html" class="external-link">untar</a></span><span class="op">(</span><span class="va">temp</span>, exdir <span class="op">=</span> <span class="va">tempdir</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/untar.html">untar</a></span><span class="op">(</span><span class="va">temp</span>, exdir <span class="op">=</span> <span class="va">tempdir</span><span class="op">)</span>
 
 <span class="co"># Download metadata</span>
-<span class="va">annot</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span><span class="st">"http://catlas.org/pairedTag/cellbrowser/Paired-tag/meta.tsv"</span>, <span class="va">annot</span>,
+<span class="va">annot</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempfile</a></span><span class="op">(</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/download.file.html">download.file</a></span><span class="op">(</span><span class="st">"http://catlas.org/pairedTag/cellbrowser/Paired-tag/meta.tsv"</span>, <span class="va">annot</span>,
     quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="va">metadata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="va">annot</span>, sep <span class="op">=</span> <span class="st">"\t"</span>, header <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">metadata</span><span class="op">)</span> <span class="op">=</span> <span class="va">metadata</span><span class="op">$</span><span class="va">Cell_ID</span>
-<span class="va">metadata</span> <span class="op">=</span> <span class="va">metadata</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">metadata</span><span class="op">$</span><span class="va">Target</span> <span class="op">==</span> <span class="st">"H3K27ac"</span><span class="op">)</span>, <span class="op">]</span>
+<span class="va">metadata</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="va">annot</span>, sep <span class="op">=</span> <span class="st">"\t"</span>, header <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span><span class="op">(</span><span class="va">metadata</span><span class="op">)</span> <span class="op">=</span> <span class="va">metadata</span><span class="op">$</span><span class="va">Cell_ID</span>
+<span class="va">metadata</span> <span class="op">=</span> <span class="va">metadata</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html">which</a></span><span class="op">(</span><span class="va">metadata</span><span class="op">$</span><span class="va">Target</span> <span class="op">==</span> <span class="st">"H3K27ac"</span><span class="op">)</span>, <span class="op">]</span>
 
-<span class="va">features</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">tempdir</span>, <span class="st">"04.Paired-Tag_H3K27ac_DNA_filtered_matrix"</span>,
+<span class="va">features</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">tempdir</span>, <span class="st">"04.Paired-Tag_H3K27ac_DNA_filtered_matrix"</span>,
     <span class="st">"bins.tsv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">NULL</span>, header <span class="op">=</span> <span class="cn">F</span>, sep <span class="op">=</span> <span class="st">"\t"</span><span class="op">)</span><span class="op">[</span>, <span class="fl">1</span>, drop <span class="op">=</span> <span class="cn">F</span><span class="op">]</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.table</a></span><span class="op">(</span><span class="va">features</span>, file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">tempdir</span>, <span class="st">"04.Paired-Tag_H3K27ac_DNA_filtered_matrix"</span>,
+<span class="fu"><a href="https://rdrr.io/r/utils/write.table.html">write.table</a></span><span class="op">(</span><span class="va">features</span>, file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">tempdir</span>, <span class="st">"04.Paired-Tag_H3K27ac_DNA_filtered_matrix"</span>,
     <span class="st">"features.tsv"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">F</span>, col.names <span class="op">=</span> <span class="cn">F</span>, quote <span class="op">=</span> <span class="cn">F</span><span class="op">)</span>
 
-<span class="co"># Create Seurat object</span>
-<span class="va">out</span> <span class="op">=</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/read_sparse_matrix.html" class="external-link">read_sparse_matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">tempdir</span>, <span class="st">"04.Paired-Tag_H3K27ac_DNA_filtered_matrix"</span><span class="op">)</span><span class="op">)</span>
-<span class="va">out</span><span class="op">$</span><span class="va">datamatrix</span> <span class="op">=</span> <span class="va">out</span><span class="op">$</span><span class="va">datamatrix</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">metadata</span><span class="op">$</span><span class="va">Cell_ID</span>, <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span><span class="st">".*_"</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">out</span><span class="op">$</span><span class="va">datamatrix</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>
-<span class="va">scExp</span> <span class="op">=</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/create_scExp.html" class="external-link">create_scExp</a></span><span class="op">(</span><span class="va">out</span><span class="op">$</span><span class="va">datamatrix</span>, <span class="va">out</span><span class="op">$</span><span class="va">annot_raw</span><span class="op">)</span>
-<span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">scExp</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu">SingleCellExperiment</span><span class="fu">::</span><span class="fu">colData</span><span class="op">(</span><span class="va">scExp</span><span class="op">)</span>,
+<span class="co"># Create SingleCellExperiment object</span>
+<span class="va">out</span> <span class="op">=</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/read_sparse_matrix.html">read_sparse_matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">tempdir</span>, <span class="st">"04.Paired-Tag_H3K27ac_DNA_filtered_matrix"</span><span class="op">)</span><span class="op">)</span>
+<span class="va">out</span><span class="op">$</span><span class="va">datamatrix</span> <span class="op">=</span> <span class="va">out</span><span class="op">$</span><span class="va">datamatrix</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/match.html">match</a></span><span class="op">(</span><span class="va">metadata</span><span class="op">$</span><span class="va">Cell_ID</span>, <span class="fu"><a href="https://rdrr.io/r/base/grep.html">gsub</a></span><span class="op">(</span><span class="st">".*_"</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">out</span><span class="op">$</span><span class="va">datamatrix</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>
+<span class="va">scExp</span> <span class="op">=</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/create_scExp.html">create_scExp</a></span><span class="op">(</span><span class="va">out</span><span class="op">$</span><span class="va">datamatrix</span>, <span class="va">out</span><span class="op">$</span><span class="va">annot_raw</span><span class="op">)</span>
+<span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html">colData</a></span><span class="op">(</span><span class="va">scExp</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span><span class="op">(</span><span class="fu">SingleCellExperiment</span><span class="fu">::</span><span class="fu">colData</span><span class="op">(</span><span class="va">scExp</span><span class="op">)</span>,
     <span class="va">metadata</span><span class="op">)</span>
 
 <span class="co"># Subsample cells</span>
-<span class="va">scExp</span> <span class="op">=</span> <span class="va">scExp</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">scExp</span><span class="op">)</span>, <span class="fl">5000</span>, replace <span class="op">=</span> <span class="cn">F</span><span class="op">)</span><span class="op">]</span></code></pre></div>
+<span class="va">scExp</span> <span class="op">=</span> <span class="va">scExp</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/sample.html">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html">ncol</a></span><span class="op">(</span><span class="va">scExp</span><span class="op">)</span>, <span class="fl">5000</span>, replace <span class="op">=</span> <span class="cn">F</span><span class="op">)</span><span class="op">]</span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="seurat-analysis">Seurat Analysis<a class="anchor" aria-label="anchor" href="#seurat-analysis"></a>
-</h3>
-<p>We then run a classical Seurat normalization and dimensionality
-reduction. We can plot the UMAP and color by the cell type.</p>
+<div id="chromscape-analysis" class="section level2">
+<h2 class="hasAnchor">
+<a href="#chromscape-analysis" class="anchor"></a>ChromSCape Analysis</h2>
+<p>We then run a ChromSCape LSI normalization and dimensionality reduction. We can plot the UMAP and color by the cell type.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># From Seurat tutorial -</span>
-<span class="co"># https://satijalab.org/seurat/articles/pbmc3k_tutorial.html</span>
-<span class="va">scExp</span> <span class="op">&lt;-</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/find_top_features.html" class="external-link">find_top_features</a></span><span class="op">(</span><span class="va">scExp</span>, n <span class="op">=</span> <span class="fl">1e+05</span>, keep_others <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
-<span class="va">scExp</span> <span class="op">&lt;-</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/feature_annotation_scExp.html" class="external-link">feature_annotation_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, ref <span class="op">=</span> <span class="st">"mm10"</span><span class="op">)</span>
-<span class="va">scExp</span> <span class="op">&lt;-</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/normalize_scExp.html" class="external-link">normalize_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, type <span class="op">=</span> <span class="st">"TFIDF"</span><span class="op">)</span>
-<span class="va">scExp</span> <span class="op">&lt;-</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/reduce_dims_scExp.html" class="external-link">reduce_dims_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, dimension_reductions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"PCA"</span>, <span class="st">"UMAP"</span><span class="op">)</span>,
+<code class="sourceCode R"><span class="va">scExp</span> <span class="op">&lt;-</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/find_top_features.html">find_top_features</a></span><span class="op">(</span><span class="va">scExp</span>, n <span class="op">=</span> <span class="fl">1e+05</span>, keep_others <span class="op">=</span> <span class="cn">FALSE</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
+<span class="va">scExp</span> <span class="op">&lt;-</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/feature_annotation_scExp.html">feature_annotation_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, ref <span class="op">=</span> <span class="st">"mm10"</span><span class="op">)</span>
+<span class="va">scExp</span> <span class="op">&lt;-</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/normalize_scExp.html">normalize_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, type <span class="op">=</span> <span class="st">"TFIDF"</span><span class="op">)</span>
+<span class="va">scExp</span> <span class="op">&lt;-</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/reduce_dims_scExp.html">reduce_dims_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, dimension_reductions <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"PCA"</span>, <span class="st">"UMAP"</span><span class="op">)</span>,
     n <span class="op">=</span> <span class="fl">10</span>, remove_PC <span class="op">=</span> <span class="st">"Component_1"</span>, verbose <span class="op">=</span> <span class="cn">F</span><span class="op">)</span>
 
-<span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/plot_reduced_dim_scExp.html" class="external-link">plot_reduced_dim_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, color_by <span class="op">=</span> <span class="st">"Annotation"</span>, reduced_dim <span class="op">=</span> <span class="st">"UMAP"</span><span class="op">)</span></code></pre></div>
-<p><img src="scEpigenomics_files/figure-html/unnamed-chunk-3-1.png" width="700">
-## Classical Louvain clustering</p>
+<span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/plot_reduced_dim_scExp.html">plot_reduced_dim_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, color_by <span class="op">=</span> <span class="st">"Annotation"</span>, reduced_dim <span class="op">=</span> <span class="st">"UMAP"</span><span class="op">)</span></code></pre></div>
+<p><img src="scEpigenomics_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
+</div>
+<div id="classical-louvain-clustering" class="section level2">
+<h2 class="hasAnchor">
+<a href="#classical-louvain-clustering" class="anchor"></a>Classical Louvain clustering</h2>
 <p>We can run a classical Louvain clustering to see the clusters.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">scExp</span> <span class="op">&lt;-</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/find_clusters_louvain_scExp.html" class="external-link">find_clusters_louvain_scExp</a></span><span class="op">(</span><span class="va">scExp</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">scExp</span> <span class="op">&lt;-</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/find_clusters_louvain_scExp.html">find_clusters_louvain_scExp</a></span><span class="op">(</span><span class="va">scExp</span><span class="op">)</span>
 
-<span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/plot_reduced_dim_scExp.html" class="external-link">plot_reduced_dim_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, color_by <span class="op">=</span> <span class="st">"cell_cluster"</span>, reduced_dim <span class="op">=</span> <span class="st">"UMAP"</span><span class="op">)</span></code></pre></div>
+<span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/plot_reduced_dim_scExp.html">plot_reduced_dim_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, color_by <span class="op">=</span> <span class="st">"cell_cluster"</span>, reduced_dim <span class="op">=</span> <span class="st">"UMAP"</span><span class="op">)</span></code></pre></div>
 <p><img src="scEpigenomics_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
 </div>
 </div>
-<div class="section level2">
-<h2 id="iterative-differential-clustering">Iterative Differential Clustering<a class="anchor" aria-label="anchor" href="#iterative-differential-clustering"></a>
-</h2>
-<p>We can now run the Iterative Differential Clustering, that will
-re-process and re-cluster each cluster iteratively and find subclusters
-with significant differences between each other.</p>
-<p>By default for a Seurat object the <em>processing_Seurat</em>
-function is used for re-processing and the
-<em>differential_edgeR_pseudobulk_LRT</em> is used to find significant
-marker genes.</p>
+<div id="iterative-differential-clustering" class="section level1">
+<h1 class="hasAnchor">
+<a href="#iterative-differential-clustering" class="anchor"></a>Iterative Differential Clustering</h1>
+<p>We can now run the Iterative Differential Clustering, that will re-process and re-cluster each cluster iteratively and find subclusters with significant differences between each other.</p>
+<p>By default for a SingleCellExperiment object the <em>processing_ChromSCape</em> function is used for re-processing and the <em>differential_ChromSCape</em> function is used to find significant marker genes.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">47</span><span class="op">)</span>
-<span class="va">output_dir</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">47</span><span class="op">)</span>
+<span class="va">output_dir</span> <span class="op">=</span> <span class="st">"~/Tests/IDC_scExp/"</span>
+<span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.exists</a></span><span class="op">(</span><span class="va">output_dir</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span><span class="va">output_dir</span><span class="op">)</span>
 <span class="va">scExp</span> <span class="op">=</span> <span class="fu"><a href="../reference/iterative_differential_clustering.html">iterative_differential_clustering</a></span><span class="op">(</span><span class="va">scExp</span>, output_dir <span class="op">=</span> <span class="va">output_dir</span>, plotting <span class="op">=</span> <span class="cn">FALSE</span>,
     saving <span class="op">=</span> <span class="cn">TRUE</span>, n_dims <span class="op">=</span> <span class="fl">10</span>, dim_red <span class="op">=</span> <span class="st">"PCA"</span>, vizualization_dim_red <span class="op">=</span> <span class="st">"UMAP"</span>,
     processing_function <span class="op">=</span> <span class="va">processing_ChromSCape</span>, differential_function <span class="op">=</span> <span class="va">differential_ChromSCape</span>,
-    logFC.th <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log2</a></span><span class="op">(</span><span class="fl">1.5</span><span class="op">)</span>, qval.th <span class="op">=</span> <span class="fl">0.01</span>, quantile.activation <span class="op">=</span> <span class="fl">0.7</span>, min_frac_cell_assigned <span class="op">=</span> <span class="fl">0.1</span>,
+    logFC.th <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log2</a></span><span class="op">(</span><span class="fl">1.5</span><span class="op">)</span>, qval.th <span class="op">=</span> <span class="fl">0.01</span>, quantile.activation <span class="op">=</span> <span class="fl">0.7</span>, min_frac_cell_assigned <span class="op">=</span> <span class="fl">0.1</span>,
     limit <span class="op">=</span> <span class="fl">5</span>, limit_by_proportion <span class="op">=</span> <span class="cn">NULL</span>, starting.resolution <span class="op">=</span> <span class="fl">0.1</span>, starting.k <span class="op">=</span> <span class="fl">100</span>,
     resolution <span class="op">=</span> <span class="fl">0.8</span>, k <span class="op">=</span> <span class="fl">100</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
-<pre><code><span class="co">## ChromSCape::differential_activation - Calculating differential activation for A1 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for A2 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for B1 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for B2 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for B3 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for B4 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for B5 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for B1 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for B2 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for B3 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for B4 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for B5 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C1 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C2 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C1 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C2 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C3 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C1 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C2 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C3 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C1 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C2 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C1 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C2 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C3 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for C4 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for D1 .</span>
-<span class="co">## ChromSCape::differential_activation - Calculating differential activation for D2 .</span></code></pre>
-<p>We can now read in the output ‘IDC_summary’ object and plot the
-cluster hierarchies compared to the author clusters. On this plot, each
-node is a cluster. The colors represent the distribution of author
-cluster within each cluster. Link between nodes represent a hierarchy in
-the iteration. The width of the edges is proportional to the number of
-genes found.</p>
+<pre><code>## ChromSCape::differential_activation - Calculating differential activation for A1 .
+## ChromSCape::differential_activation - Calculating differential activation for A2 .
+## ChromSCape::differential_activation - Calculating differential activation for B1 .
+## ChromSCape::differential_activation - Calculating differential activation for B2 .
+## ChromSCape::differential_activation - Calculating differential activation for B3 .
+## ChromSCape::differential_activation - Calculating differential activation for B4 .
+## ChromSCape::differential_activation - Calculating differential activation for B5 .
+## ChromSCape::differential_activation - Calculating differential activation for B1 .
+## ChromSCape::differential_activation - Calculating differential activation for B2 .
+## ChromSCape::differential_activation - Calculating differential activation for B3 .
+## ChromSCape::differential_activation - Calculating differential activation for B4 .
+## ChromSCape::differential_activation - Calculating differential activation for B5 .
+## ChromSCape::differential_activation - Calculating differential activation for C1 .
+## ChromSCape::differential_activation - Calculating differential activation for C2 .
+## ChromSCape::differential_activation - Calculating differential activation for C1 .
+## ChromSCape::differential_activation - Calculating differential activation for C2 .
+## ChromSCape::differential_activation - Calculating differential activation for C3 .
+## ChromSCape::differential_activation - Calculating differential activation for C1 .
+## ChromSCape::differential_activation - Calculating differential activation for C2 .
+## ChromSCape::differential_activation - Calculating differential activation for C3 .
+## ChromSCape::differential_activation - Calculating differential activation for C1 .
+## ChromSCape::differential_activation - Calculating differential activation for C2 .
+## ChromSCape::differential_activation - Calculating differential activation for C1 .
+## ChromSCape::differential_activation - Calculating differential activation for C2 .
+## ChromSCape::differential_activation - Calculating differential activation for C3 .
+## ChromSCape::differential_activation - Calculating differential activation for C4 .
+## ChromSCape::differential_activation - Calculating differential activation for D1 .
+## ChromSCape::differential_activation - Calculating differential activation for D2 .</code></pre>
+<p>We can now read in the output ‘IDC_summary’ object and plot the cluster hierarchies compared to the author clusters. On this plot, each node is a cluster. The colors represent the distribution of author cluster within each cluster. Link between nodes represent a hierarchy in the iteration. The width of the edges is proportional to the number of genes found.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">IDC_summary</span> <span class="op">=</span> <span class="fu">qs</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/qs/man/qread.html" class="external-link">qread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">output_dir</span>, <span class="st">"IDC_summary.qs"</span><span class="op">)</span><span class="op">)</span>
-<span class="fu"><a href="../reference/plot_cluster_network.html">plot_cluster_network</a></span><span class="op">(</span><span class="va">scExp</span>, IDC_summary <span class="op">=</span> <span class="va">IDC_summary</span>, color_by <span class="op">=</span> <span class="st">"Annotation"</span>, legend <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
-<p><img src="scEpigenomics_files/figure-html/unnamed-chunk-6-1.png" width="768"></p>
-<pre><code><span class="co">##     Annotation Annotation_color</span>
-<span class="co">## 1   Astro_Myoc        deeppink2</span>
-<span class="co">## 2   Astro_Nnat   paleturquoise4</span>
-<span class="co">## 3          CA1          tomato4</span>
-<span class="co">## 4         CA23            gold3</span>
-<span class="co">## 5          CGE           violet</span>
-<span class="co">## 6           CT    palegoldenrod</span>
-<span class="co">## 7           DG  darkolivegreen4</span>
-<span class="co">## 8  Endothelial          salmon1</span>
-<span class="co">## 9    Ependymal    mediumpurple2</span>
-<span class="co">## 10         L23            plum3</span>
-<span class="co">## 11          L4    darkseagreen3</span>
-<span class="co">## 12          L5     mediumorchid</span>
-<span class="co">## 13          L6           azure4</span>
-<span class="co">## 14   Microglia      aquamarine2</span>
-<span class="co">## 15          NP          orchid3</span>
-<span class="co">## 16  Oligo_MFOL        peachpuff</span>
-<span class="co">## 17   Oligo_MOL       steelblue2</span>
-<span class="co">## 18         OPC       chocolate4</span>
-<span class="co">## 19          PT            snow2</span>
-<span class="co">## 20       Pvalb           ivory4</span>
-<span class="co">## 21         Sst     deepskyblue3</span>
-<span class="co">## 22   Subiculum     lightyellow2</span></code></pre>
-<p>A ‘IDcluster’ column was added to the Seurat object, which we can now
-project the cluster found this way on the UMAP.</p>
+<code class="sourceCode R"><span class="va">IDC_summary</span> <span class="op">=</span> <span class="fu">qs</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/qs/man/qread.html">qread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">output_dir</span>, <span class="st">"IDC_summary.qs"</span><span class="op">)</span><span class="op">)</span>
+<span class="fu"><a href="../reference/plot_cluster_network.html">plot_cluster_network</a></span><span class="op">(</span><span class="va">scExp</span>, IDC_summary <span class="op">=</span> <span class="va">IDC_summary</span>, color_by <span class="op">=</span> <span class="st">"Annotation"</span>, node_size_factor <span class="op">=</span> <span class="fl">4</span>,
+    legend <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
+<p><img src="scEpigenomics_files/figure-html/unnamed-chunk-6-1.png" width="960"></p>
+<pre><code>##     Annotation Annotation_color
+## 1   Astro_Myoc        deeppink2
+## 2   Astro_Nnat   paleturquoise4
+## 3          CA1          tomato4
+## 4         CA23            gold3
+## 5          CGE           violet
+## 6           CT    palegoldenrod
+## 7           DG  darkolivegreen4
+## 8  Endothelial          salmon1
+## 9    Ependymal    mediumpurple2
+## 10         L23            plum3
+## 11          L4    darkseagreen3
+## 12          L5     mediumorchid
+## 13          L6           azure4
+## 14   Microglia      aquamarine2
+## 15          NP          orchid3
+## 16  Oligo_MFOL        peachpuff
+## 17   Oligo_MOL       steelblue2
+## 18         OPC       chocolate4
+## 19          PT            snow2
+## 20       Pvalb           ivory4
+## 21         Sst     deepskyblue3
+## 22   Subiculum     lightyellow2</code></pre>
+<p>A ‘IDcluster’ column was added to the SingleCellExperiment object, which we can now project the cluster found this way on the UMAP.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/plot_reduced_dim_scExp.html" class="external-link">plot_reduced_dim_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, reduced_dim <span class="op">=</span> <span class="st">"UMAP"</span>, color_by <span class="op">=</span> <span class="st">"IDcluster"</span>,
+<code class="sourceCode R"><span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/plot_reduced_dim_scExp.html">plot_reduced_dim_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, reduced_dim <span class="op">=</span> <span class="st">"UMAP"</span>, color_by <span class="op">=</span> <span class="st">"IDcluster"</span>,
     annotate_clusters <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></code></pre></div>
 <p><img src="scEpigenomics_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
-<p>We can also plot particular marker genes in the cluster network by
-changing the ‘color_by’ parameter to a gene present in the Seurat
-object.</p>
+<p>We can also plot particular marker genes in the cluster network by changing the ‘color_by’ parameter to a gene present in the SingleCellExperiment object.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_cluster_network.html">plot_cluster_network</a></span><span class="op">(</span><span class="va">scExp</span>, IDC_summary <span class="op">=</span> <span class="va">IDC_summary</span>, color_by <span class="op">=</span> <span class="st">"Foxg1"</span>, threshold_to_define_feature_active <span class="op">=</span> <span class="fl">2</span>,
     legend <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
-<p><img src="scEpigenomics_files/figure-html/unnamed-chunk-8-1.png" width="768"></p>
-<pre><code><span class="co">##      Foxg1 Foxg1_color</span>
-<span class="co">## 1   Active         red</span>
-<span class="co">## 2 Inactive      grey85</span></code></pre>
+<p><img src="scEpigenomics_files/figure-html/unnamed-chunk-8-1.png" width="960"></p>
+<pre><code>##      Foxg1 Foxg1_color
+## 1   Active         red
+## 2 Inactive      grey85</code></pre>
 </div>
   </div>
 
@@ -260,13 +264,11 @@ object.</p>
 
 
       <footer><div class="copyright">
-  <p></p>
-<p>Developed by Pacome Prompsy, Celine Vallot.</p>
+  <p>Developed by Pacome Prompsy, Celine Vallot.</p>
 </div>
 
 <div class="pkgdown">
-  <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
@@ -274,8 +276,6 @@ object.</p>
 
   
 
-
-  
 
   </body>
 </html>

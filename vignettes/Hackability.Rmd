@@ -118,14 +118,15 @@ We now define the differential function that will use 'top_markers' function
 from 'monocle3' package.  
 
 We start by studying the 'differential_Seurat' function. It takes in 
-entry 3 mandatory arguments:   
-* 'Seurat' - A Seurat object 
-* 'by' - A character specifying the column of clusters to compare
-* logFC.th - the log2 FoldChange threshold above which a gene is considered as
-significantly differential
-* qval.th - the adjusted p.value threshold below which a gene is considered as
-significantly differential
+entry 3 mandatory arguments:  
 
+* 'Seurat' - A Seurat object  
+* 'by' - A character specifying the column of clusters to compare  
+* logFC.th - the log2 FoldChange threshold above which a gene is considered as
+significantly differential  
+* qval.th - the adjusted p.value threshold below which a gene is considered as
+significantly differential  
+  
   
 The function returns a data.frame containing the marker genes for each cluster.
 It contains a 'cluster' column, a 'gene' column.
@@ -147,7 +148,8 @@ differential_monocle3 <- function(Seu, by = "IDcluster", logFC.th = log2(1.5), q
   res <- monocle3::top_markers(
     cds,
     group_cells_by = by,
-    genes_to_test_per_group = 200
+    genes_to_test_per_group = 200,
+    verbose = FALSE
   )
   
   # Rename the column concerning gene and cluster
@@ -183,14 +185,16 @@ and n_dims arguments are correctly set.
   
 We first pre-process our object with our custom function :
 
-```{r}
+```{r }
 data("Seu")
 Seu_monocle = processing_monocle3(Seu, n_dims = 100, dim_red = "PCA")
 ```
 
 ```{r}
 set.seed(47)
-output_dir = tempdir()
+output_dir = "~/Tests/IDC_monocle/"
+if(!dir.exists(output_dir)) dir.create(output_dir)
+
 Seu_monocle = iterative_differential_clustering(
     Seu_monocle,
     output_dir = output_dir,
@@ -217,10 +221,11 @@ Seurat::DimPlot(Seu, reduction = "umap", group.by = "IDcluster")
 We can also plot the cluster network using the summary and tghe 
 
 
-```{r , fig.width = 8, fig.height = 9}
+# ```{r , fig.width = 10, fig.height = 10}
 IDC_summary = qs::qread(file.path(output_dir, "IDC_summary.qs"))
 plot_cluster_network(Seu, 
                      IDC_summary = IDC_summary,
                      color_by = "IDcluster", 
+                     node_size_factor = 4,
                      legend = FALSE)
 ```

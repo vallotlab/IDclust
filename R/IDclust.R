@@ -161,6 +161,8 @@ iterative_differential_clustering <- function(object, ...) {
 #'  (See  [calculate_FDR_scEpigenomics]).
 #' @param cluster_of_origin A character specifying the name of the cluster of 
 #' origin that will be concatenated before the name of true subclusters. 
+#' @param min_cluster_size An integer specifying the minimum number of cells
+#' in a cluster to consider it as a 'true' subcluster.
 #' @param verbose A logical specifying wether to print.
 #' @param ... Additional parameters passed to the differential_function. See 
 #' [differential_ChromSCape()] for more information on additional
@@ -189,6 +191,7 @@ find_differentiated_clusters.default <- function(
     limit = 5,
     limit_by_proportion = NULL,
     cluster_of_origin = "Omega",
+    min_cluster_size = 30,
     verbose = TRUE,
     ...){
     cluster_u = names(sort(table(object[[by]])))
@@ -203,31 +206,37 @@ find_differentiated_clusters.default <- function(
     for(i in 1:(length(cluster_u))){
         cluster = cluster_u[i]
         group_cells = colnames(object)[object[[by]] == cluster]
-        res. = res[which(res$cluster == cluster),]
-        
-        diffmat_n$n_differential[i] = nrow(res.) 
-        
-        if(verbose) cat(cluster," - found", diffmat_n$n_differential[i], "enriched features.\n")
-        
-        if(is.null(limit_by_proportion)){
-            if(diffmat_n$n_differential[i] < limit){
-                if(verbose) cat(cluster, " cluster has less than", limit, "enriched features.\nAssigning the cells to cluster of origin.\n")
-                diffmat_n$true_subcluster[i] = cluster_of_origin
+        if(length(group_cells)  >= min_cluster_size){
+            
+            res. = res[which(res$cluster == cluster),]
+            
+            diffmat_n$n_differential[i] = nrow(res.) 
+            
+            if(verbose) cat(cluster," - found", diffmat_n$n_differential[i], "enriched features.\n")
+            
+            if(is.null(limit_by_proportion)){
+                if(diffmat_n$n_differential[i] < limit){
+                    if(verbose) cat(cluster, " cluster has less than", limit, "enriched features.\nAssigning the cells to cluster of origin.\n")
+                    diffmat_n$true_subcluster[i] = cluster_of_origin
+                } else{
+                    n_cell_assigned = n_cell_assigned + length(group_cells)
+                    diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster)
+                }
             } else{
-                n_cell_assigned = n_cell_assigned + length(group_cells)
-                diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster)
+                index = which.min(abs(limit_by_proportion$ncells - length(group_cells)))
+                limit. = max(limit, 
+                             limit_by_proportion$mean_n_differential[index][1] + 2 * limit_by_proportion$sd_n_differential[index][1])
+                if(diffmat_n$n_differential[i] < limit.){
+                    if(verbose) cat(cluster, " cluster has less than", limit., "enriched features.\nAssigning the cells to cluster of origin.\n")
+                    diffmat_n$true_subcluster[i] = cluster_of_origin
+                } else{
+                    n_cell_assigned = n_cell_assigned + length(group_cells)
+                    diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster)
+                }
             }
         } else{
-            index = which.min(abs(limit_by_proportion$ncells - length(group_cells)))
-            limit. = max(limit, 
-                         limit_by_proportion$mean_n_differential[index][1] + 2 * limit_by_proportion$sd_n_differential[index][1])
-            if(diffmat_n$n_differential[i] < limit.){
-                if(verbose) cat(cluster, " cluster has less than", limit., "enriched features.\nAssigning the cells to cluster of origin.\n")
-                diffmat_n$true_subcluster[i] = cluster_of_origin
-            } else{
-                n_cell_assigned = n_cell_assigned + length(group_cells)
-                diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster)
-            }
+            if(verbose) cat(cluster, " cluster has less than", min_cluster_size, " cells. \nAssigning the cells to cluster of origin.\n")
+            diffmat_n$true_subcluster[i] = cluster_of_origin
         }
     }
     passing = TRUE
@@ -369,9 +378,9 @@ iterative_differential_clustering.default <- function(
     # For the first partition, try to find very low level clusters (e.g. low
     # resolution, high number of neighbors)
     object. = ChromSCape::find_clusters_louvain_scExp(object,
-                                                    k = starting.k,
-                                                    resolution = starting.resolution,
-                                                    use.dimred = "PCA")
+                                                      k = starting.k,
+                                                      resolution = starting.resolution,
+                                                      use.dimred = "PCA")
     object$IDcluster = gsub("C","A", object.$cell_cluster)
     
     # Calculate the average % cells activated in a feature
@@ -470,7 +479,7 @@ iterative_differential_clustering.default <- function(
                 
                 # Re-clustering sub-cluster
                 object.. = ChromSCape::find_clusters_louvain_scExp(object., k = k, resolution =  resolution,
-                                                                 use.dimred = dim_red)
+                                                                   use.dimred = dim_red)
                 object.$IDcluster <- paste0(LETTERS[partition_depth],gsub("C", "", object..$cell_cluster))
                 
                 clusters = object.$IDcluster 
@@ -623,15 +632,21 @@ find_differentiated_clusters.Seurat <- function(object,
     n_cell_assigned = 0
     for(i in seq_along(cluster_u)){
         group_cells = colnames(object)[which(object@meta.data[[by]] %in% cluster_u[i])]
-        res. = res[which(res$cluster == cluster_u[i]),]
-        diffmat_n$n_differential[i] = nrow(res.)
-        if(verbose) cat(cluster_u[i],"- Found",diffmat_n$n_differential[i], "differential regions.\n")
-        if(diffmat_n$n_differential[i] < limit){
-            if(verbose) cat(cluster_u[i], " cluster has less than", limit, "enriched features.\nAssigning the cells to cluster of origin.\n")
-            diffmat_n$true_subcluster[i] = cluster_of_origin
-        } else{
-            n_cell_assigned = n_cell_assigned + length(group_cells)
-            diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster_u[i])
+        
+        if(length(group_cells)  >= min_cluster_size){
+            
+            res. = res[which(res$cluster == cluster_u[i]),]
+            diffmat_n$n_differential[i] = nrow(res.)
+            if(verbose) cat(cluster_u[i],"- Found",diffmat_n$n_differential[i], "differential regions.\n")
+            if(diffmat_n$n_differential[i] < limit){
+                if(verbose) cat(cluster_u[i], " cluster has less than", limit, "enriched features.\nAssigning the cells to cluster of origin.\n")
+                diffmat_n$true_subcluster[i] = cluster_of_origin
+            } else{
+                n_cell_assigned = n_cell_assigned + length(group_cells)
+                diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster_u[i])
+            }
+        } else {
+            
         }
     }
     passing = TRUE
@@ -789,7 +804,7 @@ iterative_differential_clustering.Seurat <- function(
     # List of differential analyses
     list_res = list(DA$res)
     names(list_res)[1] = "Omega"
-
+    
     
     iteration = 0
     gc()
@@ -831,7 +846,7 @@ iterative_differential_clustering.Seurat <- function(
                 object.$IDcluster = paste0(LETTERS[partition_depth], as.numeric(object.$seurat_clusters))
                 Seurat::Idents(object.) = object.$IDcluster
                 
-
+                
                 clusters = object.$IDcluster 
                 cluster_u = unique(clusters)
                 

@@ -1,9 +1,9 @@
-pandoc: 2.17.1.1
-pkgdown: 2.0.3
+pandoc: 2.14.0.3
+pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
   Hackability: Hackability.html
   scEpigenomics: scEpigenomics.html
   scRNA: scRNA.html
-last_built: 2022-05-18T15:45Z
+last_built: 2022-05-19T08:54Z
 

@@ -12,22 +12,22 @@ knitr::opts_chunk$set(
 options(timeout = max(1000, getOption("timeout")))
 ```
 
-In this article, we will show how to run IDclust on a Seurat object of a single-
+In this article, we will show how to run IDclust on a SingleCellExperiment object of a single-
 cell RNA dataset of the mouse brain from "Joint profiling of histone modifications and transcriptome in single cells from mouse brain,Chenxu Zhu, Yanxiao Zhang, Yang Eric Li, Jacinta Lucero, . Margarita Behrens,
 Bing Ren, Nature Methods, 2021 Paired-Tag"  
 
-# Classical analysis of scRNA dataset with Seurat
-
+# Classical analysis of scRNA dataset with ChromSCape
+  
 ```{r}
 library(IDclust)
 library(ChromSCape)
 ```
-
+  
 ## Data
-
+  
 Download, extract & format scRNA of the mouse brain (Zhu et al., 2021) from the 
-GEO portal.  
-
+GEO portal.   
+  
 ```{r}
 set.seed(47)
 # Download dataset
@@ -48,7 +48,7 @@ features = read.table(file.path(tempdir, "04.Paired-Tag_H3K27ac_DNA_filtered_mat
 write.table(features, file = file.path(tempdir, "04.Paired-Tag_H3K27ac_DNA_filtered_matrix", "features.tsv"),
                 row.names = F, col.names = F, quote = F)
 
-# Create Seurat object
+# Create SingleCellExperiment object
 out = ChromSCape::read_sparse_matrix(file.path(tempdir, "04.Paired-Tag_H3K27ac_DNA_filtered_matrix"))
 out$datamatrix = out$datamatrix[, match(metadata$Cell_ID, gsub(".*_", "", colnames(out$datamatrix)))]
 scExp = ChromSCape::create_scExp(out$datamatrix, out$annot_raw)
@@ -58,14 +58,13 @@ SummarizedExperiment::colData(scExp) = cbind(SingleCellExperiment::colData(scExp
 scExp = scExp[,sample(ncol(scExp), 5000, replace = F)]
 ```
 
-## Seurat Analysis
-
-We then run a classical Seurat normalization and dimensionality reduction. We
+## ChromSCape Analysis
+  
+We then run a ChromSCape LSI normalization and dimensionality reduction. We
 can plot the UMAP and color by the cell type.  
-
+  
 ```{r}
 
-# From Seurat tutorial - https://satijalab.org/seurat/articles/pbmc3k_tutorial.html
 scExp <- ChromSCape::find_top_features(scExp,n = 100000, keep_others = FALSE, verbose = FALSE)
 scExp <- ChromSCape::feature_annotation_scExp(scExp, ref = "mm10")
 scExp <- ChromSCape::normalize_scExp(scExp, type = "TFIDF")
@@ -73,29 +72,31 @@ scExp <- ChromSCape::reduce_dims_scExp(scExp, dimension_reductions = c("PCA", "U
 
 ChromSCape::plot_reduced_dim_scExp(scExp, color_by = "Annotation", reduced_dim = "UMAP")
 ```
+  
 ## Classical Louvain clustering
-
-We can run a classical Louvain clustering to see the clusters.
-
+  
+We can run a classical Louvain clustering to see the clusters.  
+  
 ```{r}
 scExp <- ChromSCape::find_clusters_louvain_scExp(scExp)
 
 ChromSCape::plot_reduced_dim_scExp(scExp, color_by = "cell_cluster", reduced_dim = "UMAP")
 ```
-
+  
 # Iterative Differential Clustering
 
 We can now run the Iterative Differential Clustering, that will re-process and
 re-cluster each cluster iteratively and find subclusters with significant 
 differences between each other.  
-
-By default for a Seurat object the *processing_Seurat* function is used for 
-re-processing and the *differential_edgeR_pseudobulk_LRT* is used to find 
+  
+By default for a SingleCellExperiment object the *processing_ChromSCape* function is used for 
+re-processing and the *differential_ChromSCape* function is used to find 
 significant marker genes.  
-
+  
 ```{r, message = FALSE}
 set.seed(47)
-output_dir = tempdir()
+output_dir = "~/Tests/IDC_scExp/"
+if(!dir.exists(output_dir)) dir.create(output_dir)
 scExp = iterative_differential_clustering(
     scExp,
     output_dir = output_dir,
@@ -124,28 +125,29 @@ We can now read in the output 'IDC_summary' object and plot the cluster
 hierarchies compared to the author clusters. On this plot, each node is a
 cluster. The colors represent the distribution of author cluster within each
 cluster. Link between nodes represent a hierarchy in the iteration. The width
-of the edges is proportional to the number of genes found.
-
-```{r, fig.width = 8, fig.height = 9}
+of the edges is proportional to the number of genes found.  
+  
+```{r, fig.width = 10, fig.height = 10}
 IDC_summary = qs::qread(file.path(output_dir, "IDC_summary.qs"))
 plot_cluster_network(scExp, 
                      IDC_summary = IDC_summary,
                      color_by = "Annotation",
+                     node_size_factor = 4,
                      legend = FALSE)
 ```
 
-A 'IDcluster' column was added to the Seurat object, which we can now project
-the cluster found this way on the UMAP.
-
+A 'IDcluster' column was added to the SingleCellExperiment object, which we can now project
+the cluster found this way on the UMAP.  
+  
 ```{r}
 ChromSCape::plot_reduced_dim_scExp(scExp, reduced_dim = "UMAP", color_by = "IDcluster", annotate_clusters = F)
 ```
   
 We can also plot particular marker genes in the cluster network by changing
-the 'color_by' parameter to a gene present in the Seurat object.
+the 'color_by' parameter to a gene present in the SingleCellExperiment object.
   
 
-```{r , fig.width = 8, fig.height = 9}
+```{r, fig.width = 10, fig.height = 10}
 plot_cluster_network(scExp, 
                      IDC_summary = IDC_summary,
                      color_by = "Foxg1", 

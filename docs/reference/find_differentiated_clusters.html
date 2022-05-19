@@ -148,6 +148,7 @@
   limit <span class='op'>=</span> <span class='fl'>5</span>,
   limit_by_proportion <span class='op'>=</span> <span class='cn'>NULL</span>,
   cluster_of_origin <span class='op'>=</span> <span class='st'>"Omega"</span>,
+  min_cluster_size <span class='op'>=</span> <span class='fl'>30</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   <span class='va'>...</span>
 <span class='op'>)</span>
@@ -162,6 +163,7 @@
   limit <span class='op'>=</span> <span class='fl'>5</span>,
   cluster_of_origin <span class='op'>=</span> <span class='st'>"Omega"</span>,
   min_frac_cell_assigned <span class='op'>=</span> <span class='fl'>0.1</span>,
+  min_cluster_size <span class='op'>=</span> <span class='fl'>30</span>,
   verbose <span class='op'>=</span> <span class='cn'>TRUE</span>,
   <span class='va'>...</span>
 <span class='op'>)</span></pre>
@@ -227,6 +229,11 @@ false positive expected for a given cluster size.
       <th>cluster_of_origin</th>
       <td><p>A character specifying the name of the cluster of
 origin that will be concatenated before the name of true subclusters.</p></td>
+    </tr>
+    <tr>
+      <th>min_cluster_size</th>
+      <td><p>An integer specifying the minimum number of cells
+in a cluster to consider it as a 'true' subcluster.</p></td>
     </tr>
     <tr>
       <th>verbose</th>

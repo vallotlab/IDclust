@@ -82,7 +82,18 @@
 
       
 
-      </header><script src="scEpigenomics_files/header-attrs-2.14/header-attrs.js"></script><div class="row">
+      </header><script src="scEpigenomics_files/header-attrs-2.14/header-attrs.js"></script><script src="scEpigenomics_files/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="scEpigenomics_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
+<script src="scEpigenomics_files/bootstrap-3.3.5/js/bootstrap.min.js"></script><script src="scEpigenomics_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script><script src="scEpigenomics_files/bootstrap-3.3.5/shim/respond.min.js"></script><style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="scEpigenomics_files/navigation-1.1/tabsets.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Tutorial for scEpigenomics object (SingleCellExperiment)</h1>
@@ -152,7 +163,7 @@
     n <span class="op">=</span> <span class="fl">10</span>, remove_PC <span class="op">=</span> <span class="st">"Component_1"</span>, verbose <span class="op">=</span> <span class="cn">F</span><span class="op">)</span>
 
 <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/plot_reduced_dim_scExp.html">plot_reduced_dim_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, color_by <span class="op">=</span> <span class="st">"Annotation"</span>, reduced_dim <span class="op">=</span> <span class="st">"UMAP"</span><span class="op">)</span></code></pre></div>
-<p><img src="scEpigenomics_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
+<p><img src="scEpigenomics_files/figure-html/unnamed-chunk-3-1.png" width="672"></p>
 </div>
 <div id="classical-louvain-clustering" class="section level2">
 <h2 class="hasAnchor">
@@ -162,7 +173,7 @@
 <code class="sourceCode R"><span class="va">scExp</span> <span class="op">&lt;-</span> <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/find_clusters_louvain_scExp.html">find_clusters_louvain_scExp</a></span><span class="op">(</span><span class="va">scExp</span><span class="op">)</span>
 
 <span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/plot_reduced_dim_scExp.html">plot_reduced_dim_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, color_by <span class="op">=</span> <span class="st">"cell_cluster"</span>, reduced_dim <span class="op">=</span> <span class="st">"UMAP"</span><span class="op">)</span></code></pre></div>
-<p><img src="scEpigenomics_files/figure-html/unnamed-chunk-4-1.png" width="700"></p>
+<p><img src="scEpigenomics_files/figure-html/unnamed-chunk-4-1.png" width="672"></p>
 </div>
 </div>
 <div id="iterative-differential-clustering" class="section level1">
@@ -241,7 +252,7 @@
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">ChromSCape</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ChromSCape/man/plot_reduced_dim_scExp.html">plot_reduced_dim_scExp</a></span><span class="op">(</span><span class="va">scExp</span>, reduced_dim <span class="op">=</span> <span class="st">"UMAP"</span>, color_by <span class="op">=</span> <span class="st">"IDcluster"</span>,
     annotate_clusters <span class="op">=</span> <span class="cn">F</span><span class="op">)</span></code></pre></div>
-<p><img src="scEpigenomics_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
+<p><img src="scEpigenomics_files/figure-html/unnamed-chunk-7-1.png" width="672"></p>
 <p>We can also plot particular marker genes in the cluster network by changing the ‘color_by’ parameter to a gene present in the SingleCellExperiment object.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plot_cluster_network.html">plot_cluster_network</a></span><span class="op">(</span><span class="va">scExp</span>, IDC_summary <span class="op">=</span> <span class="va">IDC_summary</span>, color_by <span class="op">=</span> <span class="st">"Foxg1"</span>, threshold_to_define_feature_active <span class="op">=</span> <span class="fl">2</span>,
@@ -255,9 +266,7 @@
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
-    </nav>
-</div>
+      </div>
 
 </div>
 

@@ -32,6 +32,7 @@ find_differentiated_clusters(object, ...)
   limit = 5,
   cluster_of_origin = "Omega",
   min_frac_cell_assigned = 0.1,
+  min_cluster_size = 30,
   verbose = TRUE,
   ...
 )

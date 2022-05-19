@@ -3,6 +3,8 @@ title: "Hacking IDclust"
 author: "Pacome Prompsy"
 date: "5/17/2022"
 output: html_document
+pkgdown:
+  as_is: true
 ---
   
 ```{r setup, include=FALSE}
@@ -171,8 +173,11 @@ We can now test the function, make sure that the object returned is a data.frame
 containing the marker genes of each cluster as well as the cluster column.
 
 
-```{r}
+```{r results='hide'}
 res = differential_monocle3(Seu, by = "seurat_clusters", qval.th = 0.01)
+```
+  
+```{r}
 head(res)
 ```
   
@@ -190,7 +195,7 @@ data("Seu")
 Seu_monocle = processing_monocle3(Seu, n_dims = 100, dim_red = "PCA")
 ```
 
-```{r}
+```{r results='hide'}
 set.seed(47)
 output_dir = "~/Tests/IDC_monocle/"
 if(!dir.exists(output_dir)) dir.create(output_dir)
@@ -221,7 +226,7 @@ Seurat::DimPlot(Seu, reduction = "umap", group.by = "IDcluster")
 We can also plot the cluster network using the summary and tghe 
 
 
-# ```{r , fig.width = 10, fig.height = 10}
+```{r , fig.width = 10, fig.height = 10}
 IDC_summary = qs::qread(file.path(output_dir, "IDC_summary.qs"))
 plot_cluster_network(Seu, 
                      IDC_summary = IDC_summary,

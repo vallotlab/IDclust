@@ -584,6 +584,8 @@ iterative_differential_clustering.default <- function(
 #' minimum percentage of the total cells in the SingleCellExperiment object that
 #' needs to be assigned. If a lower proportion is assigned, all cells are 
 #' assigned to the cluster of origin.
+#' @param min_cluster_size An integer specifying the minimum number of cells
+#' in a cluster to consider it as a 'true' subcluster.
 #' @param verbose A logical specifying wether to print.
 #' @param ... Additional parameters passed to the differential_function. See 
 #' [differential_ChromSCape()] for more information on additional
@@ -602,6 +604,7 @@ find_differentiated_clusters.Seurat <- function(object,
                                                 limit = 5,
                                                 cluster_of_origin = "Omega",
                                                 min_frac_cell_assigned = 0.1,
+                                                min_cluster_size = 30,
                                                 verbose = TRUE,
                                                 ...
 ){

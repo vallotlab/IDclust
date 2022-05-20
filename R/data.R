@@ -35,7 +35,7 @@
 #' @format IDC_summary_scRNA - A data.frame obtained by 
 #' [iterative_differential_clustering()].
 #' 
-"IDC_DA_scRNA"
+"IDC_summary_scRNA"
 
 #' A list of data.frame containing the differential markers for scRNA dataset
 #' (Paired-Tag - scRNA) 

@@ -5,6 +5,8 @@ date: "5/17/2022"
 output: html_document
 pkgdown:
   as_is: true
+vignette: >
+  %\VignetteEngine{knitr::knitr}
 ---
 
 ```{r setup, include=FALSE}

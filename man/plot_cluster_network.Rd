@@ -22,6 +22,7 @@ plot_cluster_network(object, ...)
   function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
     flip.y = FALSE),
   legend = TRUE,
+  pathway_df = NULL,
   ...
 )
 
@@ -38,6 +39,7 @@ plot_cluster_network(object, ...)
     flip.y = FALSE),
   assay = "RNA",
   legend = TRUE,
+  pathway_df = NULL,
   ...
 )
 }
@@ -80,6 +82,10 @@ the rowData of the object}
 \item{function_layout}{A function of g for the layout of the graph.}
 
 \item{legend}{A logical indicating whether to plot the legend or not.}
+
+\item{pathway_df}{(Optional). A data.frame obtained by
+\code{\link[=top_enriched_pathways]{top_enriched_pathways()}} containing the top 1 pathway enriched per cluster
+to display it on the edges.}
 
 \item{assay}{If color_by is a gene, the assay in which to retrieve the counts.}
 }
@@ -142,6 +148,19 @@ plot_cluster_network(
                                                          flip.y = FALSE)
 )
 
+# Adding the pathway information on the edges:
+data("IDC_DA_scRNA", package = "IDclust")
+pathway_df = top_enriched_pathways(
+    IDC_DA_scRNA,
+    top = 1,
+    gene_col = "gene",
+    qval.th = 0.1)
+
+plot_cluster_network(
+    object = Seu,
+    IDC_summary = IDC_summary_scRNA,
+    pathway_df = pathway_df
+)
 }
 
 # Clustering of scExp scH3K27ac object (Paired-Tag)

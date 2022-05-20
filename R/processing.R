@@ -39,6 +39,8 @@ processing_Seurat <- function(Seu, n_dims = 50, dim_red = "pca"){
 #' @export 
 #'
 #' @examples
+#' data("scExp", package = "IDclust")
+#' processing_ChromSCape(scExp)
 processing_ChromSCape <- function(scExp, n_dims = 10, dim_red = "PCA"){
 
   # Re-run TFIDF and PCA and clusters using Louvain algorithm 

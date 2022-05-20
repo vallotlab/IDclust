@@ -23,3 +23,7 @@ Runs ChromSCape LSI and  removes the first
 component, often driven by total library size.
 See \code{\link[ChromSCape:preprocessing_filtering_and_reduction]{ChromSCape::preprocessing_filtering_and_reduction()}}.
 }
+\examples{
+data("scExp", package = "IDclust")
+processing_ChromSCape(scExp)
+}

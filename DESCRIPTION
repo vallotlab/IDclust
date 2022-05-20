@@ -42,5 +42,6 @@ Imports:
     igraph,
     foreach,
     SeuratObject,
+    enrichR
 Depends: 
     R (>= 4.1)

@@ -42,6 +42,19 @@
 #'                                                          flip.y = FALSE)
 #' )
 #' 
+#' # Adding the pathway information on the edges:
+#' data("IDC_DA_scRNA", package = "IDclust")
+#' pathway_df = top_enriched_pathways(
+#'     IDC_DA_scRNA,
+#'     top = 1,
+#'     gene_col = "gene",
+#'     qval.th = 0.1)
+#' 
+#' plot_cluster_network(
+#'     object = Seu,
+#'     IDC_summary = IDC_summary_scRNA,
+#'     pathway_df = pathway_df
+#' )
 #' }
 #' 
 #' # Clustering of scExp scH3K27ac object (Paired-Tag)
@@ -135,6 +148,7 @@ plot_cluster_network.default <- function(
     gene_col = "Gene",
     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE, flip.y = FALSE),
     legend = TRUE,
+    pathway_df = NULL,
     ...
 ){
     categ = TRUE
@@ -255,8 +269,16 @@ plot_cluster_network.default <- function(
     
     edges_ids =  igraph::get.edges(g, es = 1:(nrow(df)-1))
     
-    layout = function_layout(g)
     if(legend) par(mar = c(9, 0, 4, 8) + 0.1)
+    
+    df$pathway = ""
+    if(!is.null(pathway_df)){
+      pathway_df$Term = gsub(" \\(.*", "", pathway_df$Term)
+      # pathway_df$Term = substr( gsub(" \\(.*", "", pathway_df$Term), 1, 25)
+      df$pathway = pathway_df$Term[match(df$name, gsub("Omega:", "",pathway_df$cluster))]
+    }
+    
+    layout = function_layout(g)
     plot(g,
          layout = layout,
          vertex.shape = c("pie"),             # One of “none”, “circle”, “square”, “csquare”, “rectangle” “crectangle”, “vrectangle”, “pie”, “raster”, or “sphere”
@@ -271,15 +293,27 @@ plot_cluster_network.default <- function(
          edge.arrow.width=0,                          # Arrow width, defaults to 1
          edge.lty=c("solid"),
          vertex.label.color=c("black"),
-         vertex.label.family="Helvetica",                   # Font family of the label (e.g.“Times”, “Helvetica”)
+         vertex.label.family='sans',                   # Font family of the label (e.g.“Times”, “Helvetica”)
          vertex.label.font=c(1),                  # Font: 1 plain, 2 bold, 3, italic, 4 bold italic, 5 symbol
          vertex.label.cex=0.125 * log2(df$size),                 # Font size (multiplication factor, device-dependent)
          vertex.label.dist=c(3,rep(1, nrow(df) -1)),                           # Distance between the label and the vertex
          vertex.label.degree=c(4.7,rep(90, nrow(df) -1)), 
          margin = c(-0.2,-1,-0.2,-1),
          main = color_by,
-         ...
-    )
+         ...)
+    plot(g,
+         layout = layout,
+         vertex.shape="none", 
+         edge.arrow.size=0,                           # Arrow size, defaults to 1
+         edge.arrow.width=0,
+         edge.width=0,
+         vertex.label.cex = 0,
+         edge.label = lapply(df$pathway[-1], function(s) paste(strwrap(s, width=20), collapse = "\n")),
+         edge.label.family='sans',     
+         edge.label.cex = 0.5,
+         vertex.label="",  
+         edge.label.color='black', 
+         add = TRUE)
     
     if(legend){
         par(mar = c(5, 4, 4, 2) + 0.1)
@@ -380,6 +414,9 @@ plot_cluster_network.default <- function(
 #' given cell.
 #' @param assay If color_by is a gene, the assay in which to retrieve the counts.
 #' @param legend A logical indicating whether to plot the legend or not.
+#' @param pathway_df (Optional). A data.frame obtained by
+#'  [top_enriched_pathways()] containing the top 1 pathway enriched per cluster
+#'  to display it on the edges.
 #' @param ... Additional parameters passed to the plot function.
 #' @return A hierarchical network of cluster assignation:
 #' * Size of nodes reflects the number of cells
@@ -406,6 +443,7 @@ plot_cluster_network.Seurat <- function(
     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE, flip.y = FALSE),
     assay = "RNA",
     legend = TRUE,
+    pathway_df = NULL,
     ...
 ){
     categ = TRUE
@@ -513,12 +551,21 @@ plot_cluster_network.Seurat <- function(
     # Make sure that all the edge have a minimum width of 1
     df$ndiff[which(df$ndiff == 0)] = 1
     df$size = node_size_factor * sqrt(50 * df$size / nrow(repartition))
+    df$size[1] = df$size[1] / 1.5
     df$ndiff = edge_size_factor * log2(df$ndiff+1)
     g = igraph::simplify( igraph::graph_from_adjacency_matrix(adjmatrix = adj.mat))
     
     edges_ids =  igraph::get.edges(g, es = 1:(nrow(df)-1))
     
     if(legend) par(mar = c(9, 0, 4, 8) + 0.1)
+    
+    df$pathway = ""
+    if(!is.null(pathway_df)){
+      pathway_df$Term = gsub(" \\(.*", "", pathway_df$Term)
+      # pathway_df$Term = substr( gsub(" \\(.*", "", pathway_df$Term), 1, 25)
+      df$pathway = pathway_df$Term[match(df$name, gsub("Omega:", "",pathway_df$cluster))]
+    }
+    
     layout = function_layout(g)
     plot(g,
          layout = layout,
@@ -534,16 +581,28 @@ plot_cluster_network.Seurat <- function(
          edge.arrow.width=0,                          # Arrow width, defaults to 1
          edge.lty=c("solid"),
          vertex.label.color=c("black"),
-         vertex.label.family="Helvetica",                   # Font family of the label (e.g.“Times”, “Helvetica”)
+         vertex.label.family='sans',                   # Font family of the label (e.g.“Times”, “Helvetica”)
          vertex.label.font=c(1),                  # Font: 1 plain, 2 bold, 3, italic, 4 bold italic, 5 symbol
          vertex.label.cex=0.125 * log2(df$size),                 # Font size (multiplication factor, device-dependent)
          vertex.label.dist=c(3,rep(1, nrow(df) -1)),                           # Distance between the label and the vertex
          vertex.label.degree=c(4.7,rep(90, nrow(df) -1)), 
          margin = c(-0.2,-1,-0.2,-1),
          main = color_by,
-         ...
-    )
-    
+         ...)
+    plot(g,
+         layout = layout,
+         vertex.shape="none", 
+         edge.arrow.size=0,                           # Arrow size, defaults to 1
+         edge.arrow.width=0,
+         edge.width=0,
+         vertex.label.cex = 0,
+         edge.label = lapply(df$pathway[-1], function(s) paste(strwrap(s, width=20), collapse = "\n")),
+         edge.label.family='sans',     
+         edge.label.cex = 0.5,
+         vertex.label="",  
+         edge.label.color='black', 
+         add = TRUE)
+
     if(legend){
         par(mar = c(5, 4, 4, 2) + 0.1)
         sizes = c(50, 100, 200, 500, 1000)

@@ -37,9 +37,9 @@
 #' 
 "IDC_summary_scRNA"
 
-#' A list of data.frame containing the differential markers for scRNA dataset
+#' A data.frame containing the differential markers for scRNA dataset
 #' (Paired-Tag - scRNA) 
-#' @description A list of differential markers for scRNA
+#' @description A data.frame of differential markers for scRNA
 #'
 #' @usage data("IDC_DA_scRNA")
 #' 
@@ -96,9 +96,9 @@
 "IDC_summary_scEpigenomics"
 
 
-#' A list of data.frame containing the differential markers for scEpigenomics dataset
+#' A data.frame containing the differential markers for scEpigenomics dataset
 #' (Paired-Tag - scEpigenomics) 
-#' @description A list of differential markers for scEpigenomics
+#' @description A data.frame of differential markers for scEpigenomics
 #'
 #' @usage data("IDC_DA_scEpigenomics")
 #' 

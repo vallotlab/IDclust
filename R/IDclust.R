@@ -507,7 +507,9 @@ iterative_differential_clustering.default <- function(
                     
                     # Retrieve DA results
                     diffmat_n = DA$diffmat_n
-                    list_res[[partition_cluster_of_origin]] = DA$res
+                    res =  DA$res
+                    res$cluster_of_origin = partition_cluster_of_origin
+                    list_res[[partition_cluster_of_origin]] = res
                     list_embeddings[[partition_cluster_of_origin]] = SingleCellExperiment::reducedDim(object., "PCA")
                     
                     # If more than 'min_frac_cell_assigned' of the cells were assigned
@@ -540,6 +542,7 @@ iterative_differential_clustering.default <- function(
         }
     } 
     
+    
     if(verbose) cat("\n\n\n##########################################################\nFinished !\nFound a total of", length(unique(object$IDcluster)),"clusters after",iteration ,"iterations.",
                     "\nThe average cluster size is ", floor(mean(table(object$IDcluster)))," and the median is",floor(median(table(object$IDcluster))),".",
                     "\nThe number of initital clusters not subclustered is ",length(grep(":", unique(object$IDcluster),invert = TRUE)),".",
@@ -547,14 +550,15 @@ iterative_differential_clustering.default <- function(
     
     ## Saving results
     if(saving){
-        # List of differential features for each re-clustering
-        qs::qsave(list_res, file.path(output_dir, "IDC_DA.qs"))
+        # Table of differential features for each re-clustering
+        IDC_DA = do.call("rbind", list_res)
+        write.csv(IDC_DA, file = file.path(output_dir, "IDC_DA.csv"), quote = FALSE, row.names = FALSE)
         
         # List of embedding of each re-clustered cluster
         qs::qsave(list_embeddings, file.path(output_dir, "IDC_embeddings.qs"))
         
-        # List of summaries of the number of differential features for each re-clustering
-        qs::qsave(differential_summary_df, file.path(output_dir, "IDC_summary.qs"))
+        # Summary table of the number of differential features for each re-clustering
+        write.csv(differential_summary_df, file = file.path(output_dir, "IDC_summary.qs"), quote = FALSE, row.names = FALSE)
         
         # Final SingleCellExperiment with the clusters found by IDC 
         qs::qsave(object, file.path(output_dir, "scExp_IDC.qs"))
@@ -874,7 +878,9 @@ iterative_differential_clustering.Seurat <- function(
                     
                     # Retrieve DA results
                     diffmat_n = DA$diffmat_n
-                    list_res[[partition_cluster_of_origin]] = DA$res
+                    res = DA$res
+                    res$origin_cluster =partition_cluster_of_origin
+                    list_res[[partition_cluster_of_origin]] = res
                     list_embeddings[[partition_cluster_of_origin]] = object.@reductions[[dim_red]]@cell.embeddings
                     
                     # If more than 'min_frac_cell_assigned' of the cells were assigned
@@ -921,14 +927,15 @@ iterative_differential_clustering.Seurat <- function(
     
     ## Saving results
     if(saving){
-        # List of differential features for each re-clustering
-        qs::qsave(list_res, file.path(output_dir, "IDC_DA.qs"))
+        # Table of differential features for each re-clustering
+        IDC_DA = do.call("rbind", list_res)
+        write.csv(IDC_DA, file = file.path(output_dir, "IDC_DA.csv"), quote = FALSE, row.names = FALSE)
         
         # List of embedding of each re-clustered cluster
         qs::qsave(list_embeddings, file.path(output_dir, "IDC_embeddings.qs"))
         
-        # List of summaries of the number of differential features for each re-clustering
-        qs::qsave(differential_summary_df, file.path(output_dir, "IDC_summary.qs"))
+        # Summary table of the number of differential features for each re-clustering
+        write.csv(differential_summary_df, file = file.path(output_dir, "IDC_summary.qs"), quote = FALSE, row.names = FALSE)
         
         # Final SingleCellExperiment with the clusters found by IDC 
         qs::qsave(object, file.path(output_dir, "Seu_IDC.qs"))

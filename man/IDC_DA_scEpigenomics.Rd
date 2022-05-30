@@ -3,7 +3,7 @@
 \docType{data}
 \name{IDC_DA_scEpigenomics}
 \alias{IDC_DA_scEpigenomics}
-\title{A list of data.frame containing the differential markers for scEpigenomics dataset
+\title{A data.frame containing the differential markers for scEpigenomics dataset
 (Paired-Tag - scEpigenomics)}
 \format{
 IDC_DA_scEpigenomics - A data.frame obtained by
@@ -13,7 +13,7 @@ IDC_DA_scEpigenomics - A data.frame obtained by
 data("IDC_DA_scEpigenomics")
 }
 \description{
-A list of differential markers for scEpigenomics
+A data.frame of differential markers for scEpigenomics
 }
 \references{
 Joint profiling of histone modifications and transcriptome in single cells

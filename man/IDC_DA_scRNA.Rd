@@ -3,7 +3,7 @@
 \docType{data}
 \name{IDC_DA_scRNA}
 \alias{IDC_DA_scRNA}
-\title{A list of data.frame containing the differential markers for scRNA dataset
+\title{A data.frame containing the differential markers for scRNA dataset
 (Paired-Tag - scRNA)}
 \format{
 IDC_DA_scRNA - A data.frame obtained by
@@ -13,7 +13,7 @@ IDC_DA_scRNA - A data.frame obtained by
 data("IDC_DA_scRNA")
 }
 \description{
-A list of differential markers for scRNA
+A data.frame of differential markers for scRNA
 }
 \references{
 Joint profiling of histone modifications and transcriptome in single cells

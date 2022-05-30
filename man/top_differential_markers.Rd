@@ -15,9 +15,9 @@ top_differential_markers(
 )
 }
 \arguments{
-\item{object}{A list of data.frame of  differential features at each
+\item{object}{A data.frame of  differential features at each
 clustering  iteration produced by \code{\link[=iterative_differential_clustering]{iterative_differential_clustering()}}
-("IDC_DA.qs").}
+("IDC_DA.csv").}
 
 \item{top}{An integer specifying the number of top features to retrieve per
 cluster.}
@@ -64,7 +64,7 @@ data("IDC_DA_scEpigenomics", package = "IDclust")
 # We must first add the gene information to the DA list: 
 IDC_DA_scEpigenomics = add_gene_to_DA_list(
     scExp = scExp, 
-    IDC_DA_list = IDC_DA_scEpigenomics,
+    IDC_DA = IDC_DA_scEpigenomics,
     feature_ID_col = "ID", 
     gene_col = "Gene", 
     distanceToTSS = 1000,

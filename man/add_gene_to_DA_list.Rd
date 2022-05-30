@@ -2,11 +2,11 @@
 % Please edit documentation in R/interpretation.R
 \name{add_gene_to_DA_list}
 \alias{add_gene_to_DA_list}
-\title{Add genes to differential analysis list using a SingleCellExperiment}
+\title{Add genes to differential analysis using a SingleCellExperiment}
 \usage{
 add_gene_to_DA_list(
   scExp,
-  IDC_DA_list,
+  IDC_DA,
   feature_ID_col = "ID",
   gene_col = "Gene",
   distanceToTSS = 1000,
@@ -18,9 +18,9 @@ add_gene_to_DA_list(
 \item{scExp}{A SingleCellExperiment object. The rowData must contain a
 column with genes (see param 'gene_col').}
 
-\item{IDC_DA_list}{A list of data.frame of  differential features at each
+\item{IDC_DA}{A data.frame of differential features at each
 clustering  iteration produced by \code{\link[=iterative_differential_clustering]{iterative_differential_clustering()}}
-("IDC_DA.qs").}
+("IDC_DA.csv").}
 
 \item{feature_ID_col}{A character specifying the column in which to retrieve
 the feature ID.}
@@ -37,10 +37,12 @@ a feature close enough to a gene.}
 splitted.}
 }
 \value{
-
+A data.frame with the gene column filled. Might contain more rows
+than the original data.frame if multiple genes per feature were contained in
+the rowData of the SingleCellExperiment.
 }
 \description{
-Add genes to differential analysis list using a SingleCellExperiment
+Add genes to differential analysis using a SingleCellExperiment
 }
 \examples{
 data("scExp", package = "IDclust")
@@ -48,7 +50,7 @@ data("IDC_DA_scEpigenomics", package = "IDclust")
 
 IDC_DA_scEpigenomics = add_gene_to_DA_list(
     scExp = scExp, 
-    IDC_DA_list = IDC_DA_scEpigenomics,
+    IDC_DA = IDC_DA_scEpigenomics,
     feature_ID_col = "ID", 
     gene_col = "Gene", 
     distanceToTSS = 1000,

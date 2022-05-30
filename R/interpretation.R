@@ -1,11 +1,11 @@
 
-#'  Add genes to differential analysis list using a SingleCellExperiment 
+#'  Add genes to differential analysis using a SingleCellExperiment 
 #'  
 #' @param scExp  A SingleCellExperiment object. The rowData must contain a 
 #' column with genes (see param 'gene_col').  
-#' @param IDC_DA_list A list of data.frame of  differential features at each 
+#' @param IDC_DA A data.frame of differential features at each 
 #' clustering  iteration produced by [iterative_differential_clustering()]
-#' ("IDC_DA.qs").
+#' ("IDC_DA.csv").
 #' @param feature_ID_col A character specifying the column in which to retrieve 
 #' the feature ID.
 #' @param gene_col A character specifying the column in which to retrieve the 
@@ -16,7 +16,10 @@
 #' @param split_char If split is TRUE. A character by which the gene column is 
 #' splitted.
 #' 
-#' @return
+#' @return A data.frame with the gene column filled. Might contain more rows
+#' than the original data.frame if multiple genes per feature were contained in
+#' the rowData of the SingleCellExperiment. 
+#' 
 #' @export
 #' @rdname add_gene_to_DA_list
 #' @examples 
@@ -25,7 +28,7 @@
 #' 
 #' IDC_DA_scEpigenomics = add_gene_to_DA_list(
 #'     scExp = scExp, 
-#'     IDC_DA_list = IDC_DA_scEpigenomics,
+#'     IDC_DA = IDC_DA_scEpigenomics,
 #'     feature_ID_col = "ID", 
 #'     gene_col = "Gene", 
 #'     distanceToTSS = 1000,
@@ -35,7 +38,7 @@
 #' 
 add_gene_to_DA_list <- function(
     scExp, 
-    IDC_DA_list,
+    IDC_DA,
     feature_ID_col = "ID", 
     gene_col = "Gene", 
     distanceToTSS = 1000,
@@ -44,8 +47,9 @@ add_gene_to_DA_list <- function(
 ){
     df = as.data.frame(SingleCellExperiment::rowData(scExp))
 
-    for(origin in names(IDC_DA_list)){
-        topmarker = IDC_DA_list[[origin]]
+    IDC_DA_list = list()
+    for(origin in unique(IDC_DA$cluster_of_origin)){
+        topmarker = IDC_DA %>% dplyr::filter(cluster_of_origin == origin)
         topmarker[[gene_col]] = df[[gene_col]][match(topmarker[[feature_ID_col]], df[[feature_ID_col]])]
         if(!is.null(distanceToTSS)) topmarker$distanceToTSS = df$distanceToTSS[match(topmarker[[feature_ID_col]], df[[feature_ID_col]])]
         if(!is.null(distanceToTSS) | !is.na(distanceToTSS))
@@ -55,8 +59,10 @@ add_gene_to_DA_list <- function(
         }
         IDC_DA_list[[origin]] = topmarker
     }
-
-    return(IDC_DA_list)
+    IDC_DA = do.call("rbind", IDC_DA_list)
+    rownames(IDC_DA) = NULL
+    
+    return(IDC_DA)
 }
 
 
@@ -64,9 +70,9 @@ add_gene_to_DA_list <- function(
 
 #' Retrieve top marker genes from list of differential analysis
 #'
-#' @param object  A list of data.frame of  differential features at each 
+#' @param object  A data.frame of  differential features at each 
 #' clustering  iteration produced by [iterative_differential_clustering()]
-#' ("IDC_DA.qs").
+#' ("IDC_DA.csv").
 #' @param top An integer specifying the number of top features to retrieve per
 #' cluster.
 #' @param gene_col A character specifying the column in which to retrieve the 
@@ -104,7 +110,7 @@ add_gene_to_DA_list <- function(
 #' # We must first add the gene information to the DA list: 
 #' IDC_DA_scEpigenomics = add_gene_to_DA_list(
 #'     scExp = scExp, 
-#'     IDC_DA_list = IDC_DA_scEpigenomics,
+#'     IDC_DA = IDC_DA_scEpigenomics,
 #'     feature_ID_col = "ID", 
 #'     gene_col = "Gene", 
 #'     distanceToTSS = 1000,
@@ -132,26 +138,26 @@ top_differential_markers <- function(
     pseudogene_pattern = NULL
 ){
     topmarkers = list()
-    IDC_DA_list = object
     if(order_by == "logFC_col") order_by = logFC_col else order_by = qvalue_col
-    for(origin in names(IDC_DA_list)){
-        topmarker = IDC_DA_list[[origin]]
-        topmarker$origin = origin
+    for(origin in unique(object$cluster_of_origin)){
+        topmarker = object %>% dplyr::filter(cluster_of_origin == origin)
+
         if(!is.null(pseudogene_pattern)) topmarker = topmarker[grep(pseudogene_pattern, topmarker[[gene_col]], invert = TRUE),]
         
         topmarkers[[origin]] = topmarker %>%
             dplyr::group_by(cluster) %>% dplyr::slice_max(order_by = .data[[order_by]], n =  top, with_ties = FALSE) %>%
-            dplyr::select(origin, cluster, .data[[logFC_col]], .data[[qvalue_col]], .data[[gene_col]])
+            dplyr::select(cluster_of_origin, cluster, .data[[logFC_col]], .data[[qvalue_col]], .data[[gene_col]])
     }
     
     df = do.call("rbind",topmarkers)
-    df$cluster = paste0(df$origin, ":", gsub("logFC.","",df$cluster))
+    rownames(topmarkers) = NULL
+    
     return(df)
 }
 
 #'  Find enriched pathways in marker genes of IDclust 
 #'  
-#' @param IDC_DA_list A list of data.frame of  differential features at each 
+#' @param IDC_DA A data.frame of  differential features at each 
 #' clustering  iteration produced by [iterative_differential_clustering()]
 #' ("IDC_DA.qs").
 #' @param top An integer specifying the number of top pathways to retrieve per
@@ -166,6 +172,9 @@ top_differential_markers <- function(
 #' @param order_by_database A logical. If TRUE, row will appear in the order of
 #' the databases vector, then within each database are sorted by adjusted
 #' pvalue.
+#' @param max_genes_enriched An integer specifying the maximum number of genes
+#' per cluster to enrich. If there are more than max_genes_enriched genes in the
+#' list, will keep only the top max_genes_enriched genes for enrichment.
 #' 
 #' @return
 #' @export
@@ -189,7 +198,7 @@ top_differential_markers <- function(
 #' # We must first add the gene information to the DA list: 
 #' IDC_DA_scEpigenomics = add_gene_to_DA_list(
 #'     scExp = scExp, 
-#'     IDC_DA_list = IDC_DA_scEpigenomics,
+#'     IDC_DA = IDC_DA_scEpigenomics,
 #'     feature_ID_col = "ID", 
 #'     gene_col = "Gene", 
 #'     distanceToTSS = 1000,
@@ -205,18 +214,19 @@ top_differential_markers <- function(
 #' )
 #' }
 top_enriched_pathways <- function(
-    IDC_DA_list,
+    IDC_DA,
     top = 1,
     qval.th = 0.1,
     gene_col = "gene",
     website = c("Enrichr", "FlyEnrichr", "WormEnrichr", "YeastEnrichr", "FishEnrichr")[1],
     databases = c("MSigDB_Hallmark_2020", "GO_Molecular_Function_2021", "MSigDB_Oncogenic_Signatures"),
-    order_by_database = TRUE
+    order_by_database = TRUE,
+    max_genes_enriched = 1000
 ){
   enriched_list = list()
   
-  for(origin in names(IDC_DA_list)){
-    topmarker_all = IDC_DA_list[[origin]]
+  for(origin in unique(IDC_DA$cluster_of_origin)){
+    topmarker_all = IDC_DA %>% dplyr::filter(cluster_of_origin == origin)
     
     for(clust in unique(topmarker_all$cluster)){
       name = paste0(origin, ":", clust)
@@ -224,8 +234,11 @@ top_enriched_pathways <- function(
       topmarker = topmarker_all %>% dplyr::filter(cluster == clust)
       cat("Enriching", nrow(topmarker), "marker genes from cluster", name,"...\n")
       
+      genes = topmarker[[gene_col]]
+      if(length(genes) > max_genes_enriched) genes = head(genes, n = max_genes_enriched)
+          
       enriched_path = differential_pathway(
-        genes = topmarker[[gene_col]], 
+        genes = genes, 
         qval.th = qval.th, 
         website = website,
         databases = databases,
@@ -235,13 +248,14 @@ top_enriched_pathways <- function(
       if(nrow(enriched_path) < 1){
         
       } else{
-        enriched_path$cluster = name
         enriched_list[[name]] = enriched_path[min(top, nrow(enriched_path)),]
       }
     }
   }
   
   enriched_df = do.call("rbind",enriched_list)
+  rownames(enriched_df) = NULL
+  
   return(enriched_df)
 }
 

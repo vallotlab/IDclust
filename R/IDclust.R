@@ -429,9 +429,10 @@ iterative_differential_clustering.default <- function(
     names(list_embeddings)[1] = paste(unique(object$IDcluster), collapse = "_")
     
     # List of marker features
-    list_res = list(DA$res)
+    res = DA$res
+    res$cluster_of_origin = "Omega"
+    list_res = list(res)
     names(list_res)[1] = "Omega"
-    
     
     iteration = 0
     gc()
@@ -558,7 +559,7 @@ iterative_differential_clustering.default <- function(
         qs::qsave(list_embeddings, file.path(output_dir, "IDC_embeddings.qs"))
         
         # Summary table of the number of differential features for each re-clustering
-        write.csv(differential_summary_df, file = file.path(output_dir, "IDC_summary.qs"), quote = FALSE, row.names = FALSE)
+        write.csv(differential_summary_df, file = file.path(output_dir, "IDC_summary.csv"), quote = FALSE, row.names = FALSE)
         
         # Final SingleCellExperiment with the clusters found by IDC 
         qs::qsave(object, file.path(output_dir, "scExp_IDC.qs"))
@@ -811,7 +812,9 @@ iterative_differential_clustering.Seurat <- function(
     names(list_embeddings)[1] = paste(unique(object$IDcluster), collapse = "_")
     
     # List of differential analyses
-    list_res = list(DA$res)
+    res = DA$res
+    res$cluster_of_origin = "Omega"
+    list_res = list(res)
     names(list_res)[1] = "Omega"
     
     
@@ -879,7 +882,7 @@ iterative_differential_clustering.Seurat <- function(
                     # Retrieve DA results
                     diffmat_n = DA$diffmat_n
                     res = DA$res
-                    res$origin_cluster =partition_cluster_of_origin
+                    res$cluster_of_origin = partition_cluster_of_origin
                     list_res[[partition_cluster_of_origin]] = res
                     list_embeddings[[partition_cluster_of_origin]] = object.@reductions[[dim_red]]@cell.embeddings
                     
@@ -935,7 +938,7 @@ iterative_differential_clustering.Seurat <- function(
         qs::qsave(list_embeddings, file.path(output_dir, "IDC_embeddings.qs"))
         
         # Summary table of the number of differential features for each re-clustering
-        write.csv(differential_summary_df, file = file.path(output_dir, "IDC_summary.qs"), quote = FALSE, row.names = FALSE)
+        write.csv(differential_summary_df, file = file.path(output_dir, "IDC_summary.csv"), quote = FALSE, row.names = FALSE)
         
         # Final SingleCellExperiment with the clusters found by IDC 
         qs::qsave(object, file.path(output_dir, "Seu_IDC.qs"))

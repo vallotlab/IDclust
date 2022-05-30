@@ -5,18 +5,19 @@
 \title{Find enriched pathways in marker genes of IDclust}
 \usage{
 top_enriched_pathways(
-  IDC_DA_list,
+  IDC_DA,
   top = 1,
   qval.th = 0.1,
   gene_col = "gene",
   website = c("Enrichr", "FlyEnrichr", "WormEnrichr", "YeastEnrichr", "FishEnrichr")[1],
   databases = c("MSigDB_Hallmark_2020", "GO_Molecular_Function_2021",
     "MSigDB_Oncogenic_Signatures"),
-  order_by_database = TRUE
+  order_by_database = TRUE,
+  max_genes_enriched = 1000
 )
 }
 \arguments{
-\item{IDC_DA_list}{A list of data.frame of  differential features at each
+\item{IDC_DA}{A data.frame of  differential features at each
 clustering  iteration produced by \code{\link[=iterative_differential_clustering]{iterative_differential_clustering()}}
 ("IDC_DA.qs").}
 
@@ -37,6 +38,10 @@ See https://maayanlab.cloud/Enrichr/ for available databases.}
 \item{order_by_database}{A logical. If TRUE, row will appear in the order of
 the databases vector, then within each database are sorted by adjusted
 pvalue.}
+
+\item{max_genes_enriched}{An integer specifying the maximum number of genes
+per cluster to enrich. If there are more than max_genes_enriched genes in the
+list, will keep only the top max_genes_enriched genes for enrichment.}
 }
 \value{
 
@@ -62,7 +67,7 @@ data("IDC_DA_scEpigenomics", package = "IDclust")
 # We must first add the gene information to the DA list: 
 IDC_DA_scEpigenomics = add_gene_to_DA_list(
     scExp = scExp, 
-    IDC_DA_list = IDC_DA_scEpigenomics,
+    IDC_DA = IDC_DA_scEpigenomics,
     feature_ID_col = "ID", 
     gene_col = "Gene", 
     distanceToTSS = 1000,

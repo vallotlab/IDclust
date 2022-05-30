@@ -46,7 +46,7 @@
 #' data("IDC_DA_scRNA", package = "IDclust")
 #' pathway_df = top_enriched_pathways(
 #'     IDC_DA_scRNA,
-#'     top = 1,
+#'     top = 5,
 #'     gene_col = "gene",
 #'     qval.th = 0.1)
 #' 

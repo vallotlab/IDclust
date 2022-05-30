@@ -184,7 +184,7 @@ top_differential_markers <- function(
 #' if(requireNamespace("enrichR")){
 #' #scRNA
 #' data("IDC_DA_scRNA", package = "IDclust")
-#'
+#' library(enrichR)
 #' top_enriched_pathways(
 #'     IDC_DA_scRNA,
 #'     top = 1,
@@ -235,7 +235,12 @@ top_enriched_pathways <- function(
       cat("Enriching", nrow(topmarker), "marker genes from cluster", name,"...\n")
       
       genes = topmarker[[gene_col]]
-      if(length(genes) > max_genes_enriched) genes = head(genes, n = max_genes_enriched)
+      if(length(genes) > max_genes_enriched){
+          
+          cat("More than", max_genes_enriched, " genes in the list, only ",
+              "keeping the first", max_genes_enriched, "genes in the list.\n")
+          genes = head(genes, n = max_genes_enriched)
+      } 
           
       enriched_path = differential_pathway(
         genes = genes, 
@@ -248,6 +253,8 @@ top_enriched_pathways <- function(
       if(nrow(enriched_path) < 1){
         
       } else{
+          enriched_path$cluster = clust
+          enriched_path$cluster_of_origin = origin
         enriched_list[[name]] = enriched_path[min(top, nrow(enriched_path)),]
       }
     }

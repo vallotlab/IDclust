@@ -274,8 +274,9 @@ plot_cluster_network.default <- function(
     df$pathway = ""
     if(!is.null(pathway_df)){
       pathway_df$Term = gsub(" \\(.*", "", pathway_df$Term)
-      # pathway_df$Term = substr( gsub(" \\(.*", "", pathway_df$Term), 1, 25)
-      df$pathway = pathway_df$Term[match(df$name, gsub("Omega:", "",pathway_df$cluster))]
+      pathway_df = pathway_df %>% group_by(cluster, cluster_of_origin) %>% 
+          dplyr::summarise(Term = head(Term, 1))
+      df$pathway = pathway_df$Term[match(df$name, gsub("Omega:", "",paste0(pathway_df$cluster_of_origin, ":", pathway_df$cluster)))]
     }
     
     layout = function_layout(g)
@@ -561,9 +562,10 @@ plot_cluster_network.Seurat <- function(
     
     df$pathway = ""
     if(!is.null(pathway_df)){
-      pathway_df$Term = gsub(" \\(.*", "", pathway_df$Term)
-      # pathway_df$Term = substr( gsub(" \\(.*", "", pathway_df$Term), 1, 25)
-      df$pathway = pathway_df$Term[match(df$name, gsub("Omega:", "",pathway_df$cluster))]
+        pathway_df$Term = gsub(" \\(.*", "", pathway_df$Term)
+        pathway_df = pathway_df %>% group_by(cluster, cluster_of_origin) %>% 
+            dplyr::summarise(Term = head(Term, 1))
+        df$pathway = pathway_df$Term[match(df$name, gsub("Omega:", "",paste0(pathway_df$cluster_of_origin, ":", pathway_df$cluster)))]
     }
     
     layout = function_layout(g)

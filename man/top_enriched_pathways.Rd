@@ -53,7 +53,7 @@ Find enriched pathways in marker genes of IDclust
 if(requireNamespace("enrichR")){
 #scRNA
 data("IDC_DA_scRNA", package = "IDclust")
-
+library(enrichR)
 top_enriched_pathways(
     IDC_DA_scRNA,
     top = 1,

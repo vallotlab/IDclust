@@ -3,6 +3,7 @@ IDclust is an unsupervised method for clustering single-cell datasets (scRNA, sc
 
 ![alt text](https://github.com/vallotlab/IDclust/blob/master/inst/www/scheme.png?raw=true)
 
+
 # Installation
 
 Install package

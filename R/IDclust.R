@@ -202,7 +202,7 @@ find_differentiated_clusters.default <- function(
                            subcluster = cluster_u,
                            true_subcluster = cluster_u)
     
-    res = differential_function(object, by = by, ...)
+    res = differential_function(object, by = by, logFC.th = logFC.th, qval.th = qval.th, ...)
     gc()
     n_cell_assigned = 0
     for(i in 1:(length(cluster_u))){
@@ -324,6 +324,10 @@ find_differentiated_clusters.default <- function(
 #' @param color Set of colors to use for the coloring of the clusters. This must
 #' contains enough colors for each cluster (minimum 20 colors, but 100 colors
 #' at least is recommended, based on the dataset).
+#' @param swapExperiment A character specifying an alternative experiment
+#' (see [SingleCellExperiment::altExp()]) to switch for differential analysis.
+#' The processing will be done in the main experiment while the differential
+#' analysis will be done in the alternative experiment.
 #' @param verbose A logical specifying wether to print.
 #'
 #' @param ... 
@@ -367,6 +371,7 @@ iterative_differential_clustering.default <- function(
     limit_by_proportion = NULL,
     color = NULL,
     nThreads = 10,
+    swapExperiment = NULL,
     verbose = TRUE,
     ...
 ){
@@ -382,7 +387,7 @@ iterative_differential_clustering.default <- function(
     object. = ChromSCape::find_clusters_louvain_scExp(object,
                                                       k = starting.k,
                                                       resolution = starting.resolution,
-                                                      use.dimred = "PCA")
+                                                      use.dimred = dim_red)
     object$IDcluster = gsub("C","A", object.$cell_cluster)
     
     # Calculate the average % cells activated in a feature
@@ -394,6 +399,12 @@ iterative_differential_clustering.default <- function(
     # are always considered as true clusters).
     if(verbose) cat("Initial round of clustering - limit of differential genes set to 0",
                     " for this first round only.\n")
+    
+    if(length(swapExperiment)){
+        if(verbose) cat("Swicthing experiment for DA to ", swapExperiment, ".\n")
+      object. = ChromSCape::swapAltExp_sameColData(object., alt = swapExperiment)
+    }
+    
     DA = find_differentiated_clusters(
         object, 
         differential_function = differential_function,
@@ -406,6 +417,11 @@ iterative_differential_clustering.default <- function(
         cluster_of_origin = "Omega",
         verbose = verbose,
         ...)
+    
+    if(length(swapExperiment)){
+        if(verbose) cat("Swicthing back for clustering to main Experiment.\n")
+        object = ChromSCape::getMainExperiment(object)
+    }
     
     # Starting list of clusters to re-cluster
     differential_summary_df = DA$diffmat_n
@@ -430,7 +446,7 @@ iterative_differential_clustering.default <- function(
     
     # List of marker features
     res = DA$res
-    res$cluster_of_origin = "Omega"
+    if(nrow(res) > 0) res$cluster_of_origin = "Omega"
     list_res = list(res)
     names(list_res)[1] = "Omega"
     
@@ -444,10 +460,10 @@ iterative_differential_clustering.default <- function(
             # Plot each iteration of the algorithm
             png(file.path(output_dir, "iterations", paste0("Iteration_",iteration,".png")), width = 1600, height = 1200, res = 200)
             object. = object
-            object.$IDcluster = gsub("Omega:","",object.$IDcluster)
+            object.$cell_cluster = gsub("Omega:","",object.$IDcluster)
             print(
                 ChromSCape::plot_reduced_dim_scExp(object, reduced_dim = vizualization_dim_red, color_by = "IDcluster",
-                                                   downsample = 50000, size = 0.35, transparency = 0.75) +
+                                                   downsample = 50000, size = 0.35, transparency = 0.75, annotate_clusters = TRUE) +
                     ggtitle(paste0("Initital Clustering")) + theme(legend.position = "none")
             )
             dev.off()
@@ -476,6 +492,7 @@ iterative_differential_clustering.default <- function(
             
             # Re-cluster a cluster only if there are more than 100 cells
             if(ncol(object.) > 100){
+
                 
                 # Re-processing sub-cluster
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
@@ -492,6 +509,12 @@ iterative_differential_clustering.default <- function(
                     if(verbose) cat("Found", length(cluster_u),"subclusters.\n")
                     if(verbose) print(table(clusters))
                     
+                    
+                    if(length(swapExperiment)){
+                        if(verbose) cat("Swicthing experiment for DA to ", swapExperiment, ".\n")
+                        object. = ChromSCape::swapAltExp_sameColData(object., alt = swapExperiment)
+                    }
+                    
                     # Find differentiated clusters
                     DA = find_differentiated_clusters(object.,
                                                       differential_function = differential_function,
@@ -506,12 +529,17 @@ iterative_differential_clustering.default <- function(
                                                       ...)
                     gc()
                     
+                    if(length(swapExperiment)){
+                        if(verbose) cat("Swicthing back for clustering to main Experiment.\n")
+                      object. = ChromSCape::getMainExperiment(object.)
+                    }
+                    
                     # Retrieve DA results
                     diffmat_n = DA$diffmat_n
                     res =  DA$res
                     res$cluster_of_origin = partition_cluster_of_origin
                     list_res[[partition_cluster_of_origin]] = res
-                    list_embeddings[[partition_cluster_of_origin]] = SingleCellExperiment::reducedDim(object., "PCA")
+                    list_embeddings[[partition_cluster_of_origin]] = SingleCellExperiment::reducedDim(object., dim_red)
                     
                     # If more than 'min_frac_cell_assigned' of the cells were assigned
                     # to 'true' subclusters (with marker features)
@@ -813,7 +841,7 @@ iterative_differential_clustering.Seurat <- function(
     
     # List of differential analyses
     res = DA$res
-    res$cluster_of_origin = "Omega"
+    if(nrow(res) > 0)  res$cluster_of_origin = "Omega"
     list_res = list(res)
     names(list_res)[1] = "Omega"
     

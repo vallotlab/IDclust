@@ -22,7 +22,7 @@ plot_cluster_network(object, ...)
   function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
     flip.y = FALSE),
   legend = TRUE,
-  pathway_df = NULL,
+  edge_df = NULL,
   ...
 )
 
@@ -39,7 +39,7 @@ plot_cluster_network(object, ...)
     flip.y = FALSE),
   assay = "RNA",
   legend = TRUE,
-  pathway_df = NULL,
+  edge_df = NULL,
   ...
 )
 }
@@ -83,7 +83,7 @@ the rowData of the object}
 
 \item{legend}{A logical indicating whether to plot the legend or not.}
 
-\item{pathway_df}{(Optional). A data.frame obtained by
+\item{edge_df}{(Optional). A data.frame obtained by
 \code{\link[=top_enriched_pathways]{top_enriched_pathways()}} containing the top 1 pathway enriched per cluster
 to display it on the edges.}
 
@@ -150,7 +150,7 @@ plot_cluster_network(
 
 # Adding the pathway information on the edges:
 data("IDC_DA_scRNA", package = "IDclust")
-pathway_df = top_enriched_pathways(
+edge_df = top_enriched_pathways(
     IDC_DA_scRNA,
     top = 5,
     gene_col = "gene",
@@ -159,7 +159,7 @@ pathway_df = top_enriched_pathways(
 plot_cluster_network(
     object = Seu,
     IDC_summary = IDC_summary_scRNA,
-    pathway_df = pathway_df
+    edge_df = edge_df
 )
 }
 
@@ -178,7 +178,8 @@ plot_cluster_network(
     node_size_factor = 7.5,
     edge_size_factor = 1,
     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
-                                                         flip.y = FALSE)
+                                                         flip.y = FALSE),
+    edge_df = topmarkers
 )
 
 # Plotting proportion of cells activating a specific gene in  scExp scH3K27ac 

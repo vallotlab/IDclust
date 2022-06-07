@@ -120,7 +120,7 @@ add_gene_to_DA_list <- function(
 #' 
 #' top_differential_markers(
 #'     IDC_DA_scEpigenomics,
-#'     top = 1,
+#'     top = 3,
 #'     gene_col = "Gene",
 #'     logFC_col = "logFC",
 #'     qvalue_col = "qval",
@@ -255,7 +255,7 @@ top_enriched_pathways <- function(
       } else{
           enriched_path$cluster = clust
           enriched_path$cluster_of_origin = origin
-        enriched_list[[name]] = enriched_path[min(top, nrow(enriched_path)),]
+        enriched_list[[name]] = enriched_path[1:min(top, nrow(enriched_path)),]
       }
     }
   }

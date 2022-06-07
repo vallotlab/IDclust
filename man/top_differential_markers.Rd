@@ -74,7 +74,7 @@ IDC_DA_scEpigenomics = add_gene_to_DA_list(
 
 top_differential_markers(
     IDC_DA_scEpigenomics,
-    top = 1,
+    top = 3,
     gene_col = "Gene",
     logFC_col = "logFC",
     qvalue_col = "qval",

@@ -42,9 +42,9 @@
 #'                                                          flip.y = FALSE)
 #' )
 #' 
-#' # Adding the pathway information on the edges:
+#' # Plotting cluster networ with the pathway information on the edges:
 #' data("IDC_DA_scRNA", package = "IDclust")
-#' pathway_df = top_enriched_pathways(
+#' edge_df = top_enriched_pathways(
 #'     IDC_DA_scRNA,
 #'     top = 5,
 #'     gene_col = "gene",
@@ -53,7 +53,7 @@
 #' plot_cluster_network(
 #'     object = Seu,
 #'     IDC_summary = IDC_summary_scRNA,
-#'     pathway_df = pathway_df
+#'     edge_df = edge_df
 #' )
 #' }
 #' 
@@ -72,7 +72,8 @@
 #'     node_size_factor = 7.5,
 #'     edge_size_factor = 1,
 #'     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
-#'                                                          flip.y = FALSE)
+#'                                                          flip.y = FALSE),
+#'     edge_df = topmarkers
 #' )
 #'
 #' # Plotting proportion of cells activating a specific gene in  scExp scH3K27ac 
@@ -90,6 +91,37 @@
 #'     edge_size_factor = 1,
 #'     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
 #'                                                          flip.y = FALSE)
+#' )
+#' 
+#' # Adding on the edges the 3 top markers of each clusters in scExp H3K27ac
+#' # object (Paired-Tag)
+#' 
+#' # Adding gene information in the IDC_DA
+#' data("IDC_DA_scEpigenomics", package = "IDclust")
+#' IDC_DA_scEpigenomics = add_gene_to_DA_list(
+#'     scExp = scExp, 
+#'     IDC_DA = IDC_DA_scEpigenomics
+#' )
+#' 
+#' # Finding the 3 top markers per cluster
+#' topmarkers = top_differential_markers(
+#'     IDC_DA_scEpigenomics,
+#'     top = 3,
+#'     gene_col = "Gene",
+#'     logFC_col = "logFC",
+#'     qvalue_col = "qval",
+#'     order_by = "logFC_col",
+#'     pseudogene_pattern = "Rik|Vmn|Gm|AW"
+#' )
+#' 
+#' # Concatenate top 3 markers per cluster/cluster_of_origin 
+#' topmarkers = topmarkers %>% dplyr::group_by(cluster_of_origin, cluster) %>%
+#'  dplyr::summarise(Term = paste(Gene, collapse = " "))
+#' 
+#' plot_cluster_network(
+#'     object = scExp,
+#'     IDC_summary = IDC_summary_scEpigenomics,
+#'     edge_df = topmarkers
 #' )
 #' 
 #' }
@@ -120,6 +152,10 @@ plot_cluster_network <- function(object, ...) {
 #' to consider a gene  linked to a region. Used only if "color_by" is a gene 
 #' name.
 #' @param legend A logical indicating whether to plot the legend or not.
+#' @param edge_df A data.frame containing column 'Term', 'cluster' and 
+#' 'cluster_of_origin'. Typically obtained by [top_enriched_pathways()]. 
+#' Will add label (Term) on the corresponding edges (cluster_of_origin to 
+#' cluster).
 #' @param ... Additional parameters passed to the plot function.
 #'
 #' @return A hierarchical network of cluster assignation:
@@ -148,7 +184,7 @@ plot_cluster_network.default <- function(
     gene_col = "Gene",
     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE, flip.y = FALSE),
     legend = TRUE,
-    pathway_df = NULL,
+    edge_df = NULL,
     ...
 ){
     categ = TRUE
@@ -264,6 +300,7 @@ plot_cluster_network.default <- function(
     # Make sure that all the edge have a minimum width of 1
     df$ndiff[which(df$ndiff == 0)] = 1
     df$size = node_size_factor * sqrt(50 * df$size / nrow(repartition))
+    df$size[1] = df$size[1] / 1.5
     df$ndiff = edge_size_factor * log2(df$ndiff+1)
     g = igraph::simplify( igraph::graph_from_adjacency_matrix(adjmatrix = adj.mat))
     
@@ -272,11 +309,11 @@ plot_cluster_network.default <- function(
     if(legend) par(mar = c(9, 0, 4, 8) + 0.1)
     
     df$pathway = ""
-    if(!is.null(pathway_df)){
-      pathway_df$Term = gsub(" \\(.*", "", pathway_df$Term)
-      pathway_df = pathway_df %>% group_by(cluster, cluster_of_origin) %>% 
+    if(!is.null(edge_df)){
+      edge_df$Term = gsub(" \\(.*", "", edge_df$Term)
+      edge_df = edge_df %>% group_by(cluster, cluster_of_origin) %>% 
           dplyr::summarise(Term = head(Term, 1))
-      df$pathway = pathway_df$Term[match(df$name, gsub("Omega:", "",paste0(pathway_df$cluster_of_origin, ":", pathway_df$cluster)))]
+      df$pathway = edge_df$Term[match(df$name, gsub("Omega:", "",paste0(edge_df$cluster_of_origin, ":", edge_df$cluster)))]
     }
     
     layout = function_layout(g)
@@ -307,6 +344,7 @@ plot_cluster_network.default <- function(
          vertex.shape="none", 
          edge.arrow.size=0,                           # Arrow size, defaults to 1
          edge.arrow.width=0,
+         edge.lty=0,
          edge.width=0,
          vertex.label.cex = 0,
          edge.label = lapply(df$pathway[-1], function(s) paste(strwrap(s, width=20), collapse = "\n")),
@@ -415,7 +453,7 @@ plot_cluster_network.default <- function(
 #' given cell.
 #' @param assay If color_by is a gene, the assay in which to retrieve the counts.
 #' @param legend A logical indicating whether to plot the legend or not.
-#' @param pathway_df (Optional). A data.frame obtained by
+#' @param edge_df (Optional). A data.frame obtained by
 #'  [top_enriched_pathways()] containing the top 1 pathway enriched per cluster
 #'  to display it on the edges.
 #' @param ... Additional parameters passed to the plot function.
@@ -444,7 +482,7 @@ plot_cluster_network.Seurat <- function(
     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE, flip.y = FALSE),
     assay = "RNA",
     legend = TRUE,
-    pathway_df = NULL,
+    edge_df = NULL,
     ...
 ){
     categ = TRUE
@@ -561,11 +599,11 @@ plot_cluster_network.Seurat <- function(
     if(legend) par(mar = c(9, 0, 4, 8) + 0.1)
     
     df$pathway = ""
-    if(!is.null(pathway_df)){
-        pathway_df$Term = gsub(" \\(.*", "", pathway_df$Term)
-        pathway_df = pathway_df %>% group_by(cluster, cluster_of_origin) %>% 
+    if(!is.null(edge_df)){
+        edge_df$Term = gsub(" \\(.*", "", edge_df$Term)
+        edge_df = edge_df %>% group_by(cluster, cluster_of_origin) %>% 
             dplyr::summarise(Term = head(Term, 1))
-        df$pathway = pathway_df$Term[match(df$name, gsub("Omega:", "",paste0(pathway_df$cluster_of_origin, ":", pathway_df$cluster)))]
+        df$pathway = edge_df$Term[match(df$name, gsub("Omega:", "",paste0(edge_df$cluster_of_origin, ":", edge_df$cluster)))]
     }
     
     layout = function_layout(g)

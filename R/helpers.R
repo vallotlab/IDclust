@@ -53,4 +53,29 @@ create_pseudobulk_mat_Seu <- function(Seu,
 }
 
 
+#' Summarise Differential Analysis table
+#'
+#' @param res A differential analysis data.frame
+#' @param chr_col Character specifying the chromosome column.
+#' @param start_col Character specifying the start column.
+#' @param end_col Character specifying the end column.
+#' @param ID_col Character specifying the ID column.
+#'
+#' @return A gathered data.frame with a cluster column
+#' @export
+#'
+#' @examples
+summarise_DA <- function(res,
+                         chr_col = "chr",
+                         start_col = "start",
+                         end_col = "end",
+                         ID_col = "ID"
+){
+    res = res %>% dplyr::select(-.data[[chr_col]], -.data[[start_col]], -.data[[end_col]])
+    res = res %>% tidyr::gather("key", "var", -.data[[ID_col]])
+    res = res %>% tidyr::extract(key, c("column", "cluster"), "(.*)\\.(.*)")
+    res = res %>% tidyr::spread(column, var)
+    return(res)
+}
+
 

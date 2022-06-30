@@ -157,10 +157,10 @@ iterative_differential_clustering <- function(object, ...) {
 #' assigned to the cluster of origin.
 #' @param limit An integer specifying the minimum number of features required 
 #' for a subcluster to be called 'true' subcluster.
-#' @param limit_by_proportion Optional. A data.frame containing 3 columns - 
-#' ncells, mean_n_differential, sd_n_differential - that reflect the number of 
-#' false positive expected for a given cluster size.
-#'  (See  [calculate_FDR_scEpigenomics]).
+#' @param FP_linear_model Optional. A linear model (see [stats::lm()]) of 
+#' the number of false positive expected for a given cluster size. The [lm_list]
+#' list of linear models present in this package gives default values accross
+#' multiple binsizes. (See  [calculate_FDR_scEpigenomics]).
 #' @param cluster_of_origin A character specifying the name of the cluster of 
 #' origin that will be concatenated before the name of true subclusters. 
 #' @param min_cluster_size An integer specifying the minimum number of cells
@@ -191,7 +191,7 @@ find_differentiated_clusters.default <- function(
     qval.th = 0.01,
     min_frac_cell_assigned = 0.1,
     limit = 5,
-    limit_by_proportion = NULL,
+    FP_linear_model = NULL,
     cluster_of_origin = "Omega",
     min_cluster_size = 30,
     verbose = TRUE,
@@ -216,7 +216,7 @@ find_differentiated_clusters.default <- function(
             
             if(verbose) cat(cluster," - found", diffmat_n$n_differential[i], "enriched features.\n")
             
-            if(is.null(limit_by_proportion)){
+            if(is.null(FP_linear_model)){
                 if(diffmat_n$n_differential[i] < limit){
                     if(verbose) cat(cluster, " cluster has less than", limit, "enriched features.\nAssigning the cells to cluster of origin.\n")
                     diffmat_n$true_subcluster[i] = cluster_of_origin
@@ -225,9 +225,11 @@ find_differentiated_clusters.default <- function(
                     diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster)
                 }
             } else{
-                index = which.min(abs(limit_by_proportion$ncells - length(group_cells)))
-                limit. = max(limit, 
-                             limit_by_proportion$mean_n_differential[index][1] + 2 * limit_by_proportion$sd_n_differential[index][1])
+              cluster_size <- data.frame(ncells=length(group_cells))
+              conf = stats::predict(FP_linear_model, newdata = cluster_size, interval = 'confidence')
+              confidence_limit = conf[1,"upr"]
+              cat("Ncells = ",length(group_cells), " - Confidence = ", confidence_limit, "\n")
+                limit. = max(limit,  confidence_limit)
                 if(diffmat_n$n_differential[i] < limit.){
                     if(verbose) cat(cluster, " cluster has less than", limit., "enriched features.\nAssigning the cells to cluster of origin.\n")
                     diffmat_n$true_subcluster[i] = cluster_of_origin
@@ -314,9 +316,10 @@ find_differentiated_clusters.default <- function(
 #' clustering at each iteration.
 #' @param k An integer specifying the number of nearest neighbors to use for 
 #' the Louvain clustering at each iteration.
-#' @param limit_by_proportion Optional. A data.frame containing 3 columns - 
-#' ncells, mean_n_differential, sd_n_differential - that reflect the number of 
-#' false positive expected for a given cluster size.
+#' @param FP_linear_model Optional. A linear model (see [stats::lm()]) of 
+#' the number of false positive expected for a given cluster size. The [lm_list]
+#' list of linear models present in this package gives default values accross
+#' multiple binsizes. (See  [calculate_FDR_scEpigenomics]).
 #' @param n_dims An integer specifying the number of first dimensions to keep 
 #' in the dimensionality reduction step.
 #' @param nThreads  An integer specifying of threads to use
@@ -328,6 +331,10 @@ find_differentiated_clusters.default <- function(
 #' (see [SingleCellExperiment::altExp()]) to switch for differential analysis.
 #' The processing will be done in the main experiment while the differential
 #' analysis will be done in the alternative experiment.
+#' @param force_initial_clustering A logical specifying wether to force the 
+#' initial number of cluster between 2 and 6. This is in order to avoid a too high
+#' number of initial clusters which would be equivalent to a classical louvain
+#' clustering.
 #' @param verbose A logical specifying wether to print.
 #'
 #' @param ... 
@@ -368,10 +375,11 @@ iterative_differential_clustering.default <- function(
     starting.resolution = 0.1,
     resolution = 0.8,
     k = 50,
-    limit_by_proportion = NULL,
+    FP_linear_model = NULL,
     color = NULL,
     nThreads = 10,
     swapExperiment = NULL,
+    force_initial_clustering = TRUE,
     verbose = TRUE,
     ...
 ){
@@ -384,11 +392,36 @@ iterative_differential_clustering.default <- function(
     
     # For the first partition, try to find very low level clusters (e.g. low
     # resolution, high number of neighbors)
-    object. = ChromSCape::find_clusters_louvain_scExp(object,
-                                                      k = starting.k,
-                                                      resolution = starting.resolution,
-                                                      use.dimred = dim_red)
+    if(force_initial_clustering){
+      nclust = 1
+      factor = 1
+      max_iter = 10
+      iter = 0
+      while( (nclust < 2 | nclust > 6) & iter < max_iter){
+        object. = ChromSCape::find_clusters_louvain_scExp(object,
+                                                          k = starting.k,
+                                                          resolution = factor * starting.resolution,
+                                                          use.dimred = dim_red)
+        nclust = length(unique(object.$cell_cluster))
+        if(nclust < 2) factor = 1.15 * factor
+        if(nclust > 6) factor = 0.85 * factor
+        iter = iter + 1
+      } 
+      if(iter > max_iter) {
+        warning("IDclust::iterative_differential_clustering - Didn't manage",
+                " to find more than 1 initial cluster...")
+        return()
+      }
+    } else {
+      object. = ChromSCape::find_clusters_louvain_scExp(object,
+                                                        k = starting.k,
+                                                        resolution = starting.resolution,
+                                                        use.dimred = dim_red)
+    }
+
     object$IDcluster = gsub("C","A", object.$cell_cluster)
+    rm(object.)
+    gc()
     
     # Calculate the average % cells activated in a feature
     # and return a level of activation based on a given decile
@@ -402,7 +435,7 @@ iterative_differential_clustering.default <- function(
     
     if(length(swapExperiment)){
         if(verbose) cat("Swicthing experiment for DA to ", swapExperiment, ".\n")
-      object. = ChromSCape::swapAltExp_sameColData(object., alt = swapExperiment)
+      object = ChromSCape::swapAltExp_sameColData(object, alt = swapExperiment)
     }
     
     DA = find_differentiated_clusters(
@@ -413,7 +446,7 @@ iterative_differential_clustering.default <- function(
         qval.th = qval.th,
         min_frac_cell_assigned = min_frac_cell_assigned,
         limit = 0,
-        limit_by_proportion = NULL,
+        FP_linear_model = FP_linear_model,
         cluster_of_origin = "Omega",
         verbose = verbose,
         ...)
@@ -462,11 +495,12 @@ iterative_differential_clustering.default <- function(
             object. = object
             object.$cell_cluster = gsub("Omega:","",object.$IDcluster)
             print(
-                ChromSCape::plot_reduced_dim_scExp(object, reduced_dim = vizualization_dim_red, color_by = "IDcluster",
+                ChromSCape::plot_reduced_dim_scExp(object., reduced_dim = vizualization_dim_red, color_by = "IDcluster",
                                                    downsample = 50000, size = 0.35, transparency = 0.75, annotate_clusters = TRUE) +
                     ggtitle(paste0("Initital Clustering")) + theme(legend.position = "none")
             )
             dev.off()
+            rm(object.)
         }
         
         iteration = iteration + 1
@@ -501,6 +535,7 @@ iterative_differential_clustering.default <- function(
                 object.. = ChromSCape::find_clusters_louvain_scExp(object., k = k, resolution =  resolution,
                                                                    use.dimred = dim_red)
                 object.$IDcluster <- paste0(LETTERS[partition_depth],gsub("C", "", object..$cell_cluster))
+                rm(object..)
                 
                 clusters = object.$IDcluster 
                 cluster_u = unique(clusters)
@@ -523,7 +558,7 @@ iterative_differential_clustering.default <- function(
                                                       qval.th = qval.th,
                                                       min_frac_cell_assigned = min_frac_cell_assigned,
                                                       limit = limit,
-                                                      limit_by_proportion = limit_by_proportion,
+                                                      FP_linear_model = FP_linear_model,
                                                       cluster_of_origin = partition_cluster_of_origin,
                                                       verbose = verbose,
                                                       ...)
@@ -537,7 +572,7 @@ iterative_differential_clustering.default <- function(
                     # Retrieve DA results
                     diffmat_n = DA$diffmat_n
                     res =  DA$res
-                    res$cluster_of_origin = partition_cluster_of_origin
+                    res$cluster_of_origin = partition_cluster_of_origin[min(1,nrow(res))]
                     list_res[[partition_cluster_of_origin]] = res
                     list_embeddings[[partition_cluster_of_origin]] = SingleCellExperiment::reducedDim(object., dim_red)
                     
@@ -553,7 +588,7 @@ iterative_differential_clustering.default <- function(
                         if(plotting == TRUE){
                             png(file.path(output_dir, paste0(partition_cluster_of_origin,"_true.png")), width = 1400, height = 1200, res = 200)
                             print(
-                                ChromSCape::plot_reduced_dim_scExp(object., color_by = "IDcluster", reduced_dim = dim_red) + 
+                                ChromSCape::plot_reduced_dim_scExp(object., color_by = "IDcluster",annotate_clusters = F,  reduced_dim = dim_red) + 
                                     ggtitle(paste0(partition_cluster_of_origin))
                             )
                             dev.off()
@@ -744,6 +779,10 @@ find_differentiated_clusters.Seurat <- function(object,
 #' @param color Set of colors to use for the coloring of the clusters. This must
 #' contains enough colors for each cluster (minimum 20 colors, but 100 colors
 #' at least is recommended, based on the dataset).
+#' @param force_initial_clustering A logical specifying wether to force the 
+#' initial number of cluster between 2 and 6. This is in order to avoid a too high
+#' number of initial clusters which would be equivalent to a classical louvain
+#' clustering.
 #' @param verbose A logical specifying wether to print.
 #' @param ... Additional parameters passed to the differential_function. See 
 #' [differential_edgeR_pseudobulk_LRT()] for more information on additional
@@ -782,6 +821,7 @@ iterative_differential_clustering.Seurat <- function(
     k = 100,
     color = NULL,
     nThreads = 10,
+    force_initial_clustering = TRUE,
     verbose = TRUE,
     ...
 ){
@@ -807,7 +847,31 @@ iterative_differential_clustering.Seurat <- function(
     # For the first partition, try to find very low level clusters (e.g. low
     # resolution, high number of neighbors)
     object = Seurat::FindNeighbors(object, reduction = dim_red,  k.param = starting.k, dims = 1:n_dims, verbose = FALSE)
-    object = Seurat::FindClusters(object, algorithm = 2, resolution = starting.resolution, random.seed = 47, verbose = FALSE)
+    
+    if(force_initial_clustering){
+      nclust = 1
+      factor = 1
+      max_iter = 10
+      iter = 0
+      while( (nclust < 2 | nclust > 6) & iter < max_iter){
+        object = Seurat::FindClusters(object, algorithm = 2,
+                                      resolution = factor * starting.resolution,
+                                      random.seed = 47, verbose = FALSE)
+        
+        nclust = length(unique(object$seurat_clusters))
+        if(nclust < 2) factor = 1.15 * factor
+        if(nclust > 6) factor = 0.85 * factor
+        iter = iter + 1
+      } 
+      if(iter > max_iter) {
+        warning("IDclust::iterative_differential_clustering - Didn't manage",
+                " to find more than 1 initial cluster...")
+        return()
+      }
+    } else {
+      object = Seurat::FindClusters(object, algorithm = 2, resolution = starting.resolution, random.seed = 47, verbose = FALSE)
+      
+    }
     object$IDcluster = object$seurat_clusters
     object$IDcluster <- paste0("A",as.numeric(object$IDcluster))
     Seurat::Idents(object) = object$IDcluster
@@ -841,10 +905,10 @@ iterative_differential_clustering.Seurat <- function(
     
     # List of differential analyses
     res = DA$res
+    rownames(res) = NULL
     if(nrow(res) > 0)  res$cluster_of_origin = "Omega"
     list_res = list(res)
     names(list_res)[1] = "Omega"
-    
     
     iteration = 0
     gc()
@@ -910,7 +974,8 @@ iterative_differential_clustering.Seurat <- function(
                     # Retrieve DA results
                     diffmat_n = DA$diffmat_n
                     res = DA$res
-                    res$cluster_of_origin = partition_cluster_of_origin
+                    rownames(res) = NULL
+                    res$cluster_of_origin = partition_cluster_of_origin[min(1,nrow(res))]
                     list_res[[partition_cluster_of_origin]] = res
                     list_embeddings[[partition_cluster_of_origin]] = object.@reductions[[dim_red]]@cell.embeddings
                     

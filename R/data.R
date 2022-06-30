@@ -112,3 +112,25 @@
 #' [iterative_differential_clustering()].
 #' 
 "IDC_DA_scEpigenomics"
+
+
+#' A list of linear models of false positive differential markers accross number
+#' of cells
+#'
+#' 
+#' @description A list of linear mode#' according to number of cells for scEpigenomics dataset accross various 
+#' binsizes (200000, 100000, 50000, 20000, 10000, 5000, TSS, genebody_TSS)
+#' and was calculated aggregating false positive values accross multiple
+#' marks (H3K9me3, H3K27me3, H3K27ac, H3K4me1, H3K4me3.)
+#'
+#' @usage data("lm_list")
+#' 
+#' @references  
+#' Joint profiling of histone modifications and transcriptome in single cells
+#' from mouse brain, Chenxu Zhu, Yanxiao Zhang,  Yang Eric Li, Jacinta Lucero,
+#' . Margarita Behrens, Bing Ren, Nature Methods, 2021
+#' \href{https://doi.org/10.1038/s41592-021-01060-3}{Paired-Tag}
+#' 
+#' @format lm_list - A list of linear models. See [stats::lm()].
+#' 
+"lm_list"

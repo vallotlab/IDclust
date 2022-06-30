@@ -5,22 +5,18 @@
 \title{Calculate FDR for SingleCellExperiment object}
 \usage{
 calculate_FDR_scEpigenomics(
-  scExp,
+  object,
   differential_function = differential_ChromSCape,
   by = "IDcluster",
-  limit = 5,
+  logFC.th = log2(1.5),
   qval.th = 0.01,
-  logFC.th = log2(2),
-  min.pct = 0.01,
-  min_frac_cell_assigned = 0.1,
-  cluster_of_origin = "Omega",
-  nThreads = 10,
-  iterations = 10,
+  nThreads = 1,
+  iterations = 5,
   ...
 )
 }
 \arguments{
-\item{scExp}{A SingleCellExperiment object}
+\item{object}{A SingleCellExperiment object}
 
 \item{differential_function}{A function that take in entry a
 SingleCellExperiment object and  parameters passed in ... and returns a
@@ -29,26 +25,6 @@ cluster.}
 
 \item{by}{A character specifying the name of the metadata column referencing
 the clusters.}
-
-\item{limit}{An integer specifying the minimum number of significantly
-enriched / depleted features required in order for a subcluster to be called
-a 'true' subcluster}
-
-\item{qval.th}{A numeric specifying the adjusted p-value below
-which a feature is considered as significantly differential.}
-
-\item{logFC.th}{A numeric specifying the log Fold-Change of activation
-(\% cells activated) threshold above which a feature is defined as
-significantly differential.}
-
-\item{min.pct}{Minimum percentage of cells to be active in the cells of the
-cluster to consider a feature as potentially significantly differential.}
-
-\item{min_frac_cell_assigned}{A numeric between 0 and 1 specifying the
-minimum percentage of the total cells in the SingleCellExperiment object that
-needs to be assigned. If a lower proportion is assigned, all cells are}
-
-\item{cluster_of_origin}{Name of the parent cluster}
 
 \item{nThreads}{If runFDR==TRUE. An integer specifying of threads to use
 for the calculation of the FDR.}

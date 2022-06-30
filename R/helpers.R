@@ -31,21 +31,43 @@ create_pseudobulk_mat_Seu <- function(Seu,
     biological_replicate_col = "fake_replicate"
   }
   biological_replicates = unique(unlist(Seu[[biological_replicate_col]]))
-  
+  n_rep = length(biological_replicates)
   mat = matrix(0, nrow = nrow(Seu@assays[[assay]]@counts), ncol = length(cluster_u) * length(biological_replicates))
   rownames(mat) = rownames(Seu@assays[[assay]]@counts)
   
   n = 0
   names_mat =c()
   for(i in cluster_u){
+      rep_done = 0
+      cells_not_used = c()
     for(b in biological_replicates){
-      n = n+1
       cells = colnames(Seu)[which(Seu@meta.data[[by]] == i & unlist(Seu[[biological_replicate_col]]) == b)]
       if(length(cells) > 25) {
-        mat[,n] = Matrix::rowSums(Seu@assays[[assay]]@counts[,cells])
-        names_mat = c(names_mat,paste0(i,"_",b))
+          n = n+1
+          mat[,n] = Matrix::rowSums(Seu@assays[[assay]]@counts[,cells])
+          names_mat = c(names_mat, paste0(i,"_",b))
+          rep_done = rep_done + 1
+      } else {
+          cells_not_used = c(cells_not_used, cells)
       }
+      
     }
+    if(rep_done < n_rep & rep_done != 0){
+        n = n + 1
+        mat[,n] =  Matrix::rowSums(Seu@assays[[assay]]@counts[,cells_not_used])
+        names_mat = c(names_mat, paste0(i,"_small_rep"))
+    }
+    if(rep_done == 0){
+          n = n + 1
+          cells_rep1 = sample(cells_not_used, floor(length(cells_not_used)/2))
+          mat[,n] =  Matrix::rowSums(Seu@assays[[assay]]@counts[,cells_rep1])
+          names_mat = c(names_mat, paste0(i,"_small_rep1"))
+          
+          n = n + 1
+          cells_rep2 = cells_not_used[which(! cells_not_used %in% cells_rep1)]
+          names_mat = c(names_mat, paste0(i,"_small_rep2"))
+          mat[,n] =  Matrix::rowSums(Seu@assays[[assay]]@counts[,cells_rep2])
+      }
   }
   mat = mat[,which(Matrix::colSums(mat) > 0)]
   colnames(mat) = names_mat

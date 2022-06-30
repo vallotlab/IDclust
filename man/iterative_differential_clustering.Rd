@@ -27,9 +27,10 @@ iterative_differential_clustering(object, ...)
   starting.resolution = 0.1,
   resolution = 0.8,
   k = 50,
-  limit_by_proportion = NULL,
+  FP_linear_model = lm_list$genebody_TSS,
   color = NULL,
   nThreads = 10,
+  swapExperiment = NULL,
   verbose = TRUE,
   ...
 )
@@ -126,7 +127,7 @@ clustering at each iteration.}
 \item{k}{An integer specifying the number of nearest neighbors to use for
 the Louvain clustering at each iteration.}
 
-\item{limit_by_proportion}{Optional. A data.frame containing 3 columns -
+\item{FP_linear_model}{Optional. A data.frame containing 3 columns -
 ncells, mean_n_differential, sd_n_differential - that reflect the number of
 false positive expected for a given cluster size.}
 
@@ -136,6 +137,11 @@ at least is recommended, based on the dataset).}
 
 \item{nThreads}{An integer specifying of threads to use
 for the calculation of the FDR.}
+
+\item{swapExperiment}{A character specifying an alternative experiment
+(see \code{\link[SingleCellExperiment:altExps]{SingleCellExperiment::altExp()}}) to switch for differential analysis.
+The processing will be done in the main experiment while the differential
+analysis will be done in the alternative experiment.}
 
 \item{verbose}{A logical specifying wether to print.}
 }

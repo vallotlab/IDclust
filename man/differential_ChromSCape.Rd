@@ -9,7 +9,8 @@ differential_ChromSCape(
   by = "IDcluster",
   logFC.th = log2(1.5),
   qval.th = 0.01,
-  min.pct = 0.01
+  min.pct = 0.01,
+  marker = c("pos", "neg", "diff")[1]
 )
 }
 \arguments{
@@ -19,7 +20,7 @@ metadata column name matching the by parameter}
 \item{by}{A character specifying the name of the metadata column referencing
 the clusters.}
 
-\item{logFC.th}{A numeric specifying the log2 fold change of activation
+\item{logFC.th}{A positive numeric specifying the log2 fold change of activation
 above/below which a feature is considered as significantly differential.}
 
 \item{qval.th}{A numeric specifying the adjusted p-value below
@@ -27,6 +28,10 @@ which a feature is considered as significantly differential.}
 
 \item{min.pct}{Minimum percentage of cells to be active in the cells of the
 cluster to consider a feature as potentially significantly differential.}
+
+\item{marker}{A character specifying which markers to retrieve. 'pos' for
+positive markers (default), 'neg' for negative markers or 'diff' for
+differential markers.}
 }
 \value{
 

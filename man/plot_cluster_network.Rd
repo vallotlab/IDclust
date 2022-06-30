@@ -148,7 +148,7 @@ plot_cluster_network(
                                                          flip.y = FALSE)
 )
 
-# Adding the pathway information on the edges:
+# Plotting cluster networ with the pathway information on the edges:
 data("IDC_DA_scRNA", package = "IDclust")
 edge_df = top_enriched_pathways(
     IDC_DA_scRNA,
@@ -197,6 +197,37 @@ plot_cluster_network(
     edge_size_factor = 1,
     function_layout = function(g) igraph::layout_as_tree(g, root = 1, circular = TRUE,
                                                          flip.y = FALSE)
+)
+
+# Adding on the edges the 3 top markers of each clusters in scExp H3K27ac
+# object (Paired-Tag)
+
+# Adding gene information in the IDC_DA
+data("IDC_DA_scEpigenomics", package = "IDclust")
+IDC_DA_scEpigenomics = add_gene_to_DA_list(
+    scExp = scExp, 
+    IDC_DA = IDC_DA_scEpigenomics
+)
+
+# Finding the 3 top markers per cluster
+topmarkers = top_differential_markers(
+    IDC_DA_scEpigenomics,
+    top = 3,
+    gene_col = "Gene",
+    logFC_col = "logFC",
+    qvalue_col = "qval",
+    order_by = "logFC_col",
+    pseudogene_pattern = "Rik|Vmn|Gm|AW"
+)
+
+# Concatenate top 3 markers per cluster/cluster_of_origin 
+topmarkers = topmarkers \%>\% dplyr::group_by(cluster_of_origin, cluster) \%>\%
+ dplyr::summarise(Term = paste(Gene, collapse = " "))
+
+plot_cluster_network(
+    object = scExp,
+    IDC_summary = IDC_summary_scEpigenomics,
+    edge_df = topmarkers
 )
 
 }

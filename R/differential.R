@@ -111,15 +111,13 @@ differential_edgeR_pseudobulk_LRT <- function(object,
                 y <- edgeR::calcNormFactors(y)
                 design <- model.matrix(~group)
                 y <- edgeR::estimateDisp(y,design)
-                fit <- edgeR::glmFit(y,design)
-                lrt <- edgeR::glmLRT(fit,coef=2)
+                fit <- edgeR::glmFit(y, design)
+                lrt <- edgeR::glmLRT(fit, coef=2)
                 tab = lrt$table
                 
                 binmat = Matrix::Matrix((object@assays[[assay]]@counts > 0) + 0, sparse = TRUE)
                 pct.1 = Matrix::rowSums(binmat[,which(object@meta.data[,by] == cluster_u[i])]) / length(which(object@meta.data[,by] == cluster_u[i]))
                 pct.2 = Matrix::rowSums(binmat[,which(object@meta.data[,by]!= cluster_u[i])]) / length(which(object@meta.data[,by] != cluster_u[i]))
-                
-                tab = tab %>% dplyr::filter(abs(logFC) > 0.1 & PValue < 0.1) # very loose filter
                 
                 res. = data.frame(
                     "p_val" = tab$PValue,
@@ -184,7 +182,7 @@ differential_ChromSCape <- function(
     marker = c("pos", "neg", "diff")[1]
 ){
 
-    res = ChromSCape::differential_activation(scExp = object, group_by = by)
+    res = ChromSCape::differential_activation(scExp = object, by = by)
     res = summarise_DA(res)
 
     res_pos = res %>% dplyr::filter(logFC > logFC.th  & 

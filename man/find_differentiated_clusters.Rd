@@ -16,7 +16,7 @@ find_differentiated_clusters(object, ...)
   qval.th = 0.01,
   min_frac_cell_assigned = 0.1,
   limit = 5,
-  limit_by_proportion = NULL,
+  FP_linear_model = NULL,
   cluster_of_origin = "Omega",
   min_cluster_size = 30,
   verbose = TRUE,
@@ -69,7 +69,7 @@ assigned to the cluster of origin.}
 \item{limit}{An integer specifying the minimum number of features required
 for a subcluster to be called 'true' subcluster.}
 
-\item{limit_by_proportion}{Optional. A data.frame containing 3 columns -
+\item{FP_linear_model}{Optional. A data.frame containing 3 columns -
 ncells, mean_n_differential, sd_n_differential - that reflect the number of
 false positive expected for a given cluster size.
 (See  \link{calculate_FDR_scEpigenomics}).}

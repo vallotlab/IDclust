@@ -200,8 +200,12 @@ plot_cluster_network.default <- function(
         IDC_summary$cluster_of_origin = gsub("Omega:","", IDC_summary$cluster_of_origin)
     }
 
-    if(is.null(colors)) 
-        colors = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)]
+    if(is.null(colors) & categ) {
+        colors = c("#4285F4", "#DB4437", "#F4B400", "#0F9D58", "slategray",
+                   grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)])
+        colors = colors[seq_along(unique(unlist(object[[color_by]])))]
+    }
+        
     
     annot = as.data.frame(SingleCellExperiment::colData(object))
     
@@ -209,10 +213,10 @@ plot_cluster_network.default <- function(
     if(categ){
         color_df = data.frame(
             "color_by" = sort(unique(object[[color_by]])),
-            "color_by_color" = sample(colors, length(unique(object[[color_by]])), replace = FALSE)
+            "color_by_color" = colors
         )
     } else {
-        annot_feature = as.data.frame(SummarizedExperiment::rowRanges(scExp))
+        annot_feature = as.data.frame(SummarizedExperiment::rowRanges(object))
         annot_feature = annot_feature %>% 
             tidyr::separate_rows(.data[[gene_col]], sep = ", ") %>% 
             dplyr::group_by(.data[[gene_col]]) %>%
@@ -220,7 +224,7 @@ plot_cluster_network.default <- function(
         annot_feature = annot_feature %>%
             dplyr::filter( .data[["distanceToTSS"]] < max_distanceToTSS)
         
-        counts = SingleCellExperiment::counts(scExp[annot_feature$ID[which(
+        counts = SingleCellExperiment::counts(object[annot_feature$ID[which(
             annot_feature[[gene_col]] == color_by)],])
         
         if(!is.null(counts) & nrow(counts) > 1 ){
@@ -297,6 +301,7 @@ plot_cluster_network.default <- function(
         }
         
     }
+    
     # Make sure that all the edge have a minimum width of 1
     df$ndiff[which(df$ndiff == 0)] = 1
     df$size = node_size_factor * sqrt(50 * df$size / nrow(repartition))
@@ -311,7 +316,7 @@ plot_cluster_network.default <- function(
     df$pathway = ""
     if(!is.null(edge_df)){
       edge_df$Term = gsub(" \\(.*", "", edge_df$Term)
-      edge_df = edge_df %>% group_by(cluster, cluster_of_origin) %>% 
+      edge_df = edge_df %>% dplyr::group_by(cluster, cluster_of_origin) %>% 
           dplyr::summarise(Term = head(Term, 1))
       df$pathway = edge_df$Term[match(df$name, gsub("Omega:", "",paste0(edge_df$cluster_of_origin, ":", edge_df$cluster)))]
     }
@@ -339,6 +344,12 @@ plot_cluster_network.default <- function(
          margin = c(-0.2,-1,-0.2,-1),
          main = color_by,
          ...)
+
+    arguments <- list(...)
+    if(!"edge.label.cex" %in% names(arguments)) edge.label.cex = 0.5 else
+      edge.label.cex = arguments$edge.label.cex
+    
+
     plot(g,
          layout = layout,
          vertex.shape="none", 
@@ -347,12 +358,13 @@ plot_cluster_network.default <- function(
          edge.lty=0,
          edge.width=0,
          vertex.label.cex = 0,
-         edge.label = lapply(df$pathway[-1], function(s) paste(strwrap(s, width=20), collapse = "\n")),
+         edge.label = lapply(df$pathway[edges_ids[,2]], function(s) paste(strwrap(s, width=20), collapse = "\n")),
          edge.label.family='sans',     
-         edge.label.cex = 0.5,
+         edge.label.cex = edge.label.cex,
          vertex.label="",  
          edge.label.color='black', 
-         add = TRUE)
+         add = TRUE,
+         ...)
     
     if(legend){
         par(mar = c(5, 4, 4, 2) + 0.1)
@@ -498,8 +510,11 @@ plot_cluster_network.Seurat <- function(
         IDC_summary$cluster_of_origin = gsub("Omega:","", IDC_summary$cluster_of_origin)
     }
 
-    if(is.null(colors)) 
-        colors = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)]
+    if(is.null(colors)){
+        colors = c("#4285F4", "#DB4437", "#F4B400", "#0F9D58", "slategray",
+                   grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)])
+        colors = colors[seq_along(unique(unlist(object[[color_by]])))]
+    }
     
     # Annotation
     annot = as.data.frame(object@meta.data)
@@ -508,7 +523,7 @@ plot_cluster_network.Seurat <- function(
     if(categ){
         color_df = data.frame(
             "color_by" = sort(unique(object@meta.data[,color_by])),
-            "color_by_color" = sample(colors, length(unique(object@meta.data[,color_by])), replace = FALSE)
+            "color_by_color" = colors
         )
     } else {
         counts = as.numeric(Seu@assays[[assay]]@counts[color_by,])
@@ -606,6 +621,7 @@ plot_cluster_network.Seurat <- function(
         df$pathway = edge_df$Term[match(df$name, gsub("Omega:", "",paste0(edge_df$cluster_of_origin, ":", edge_df$cluster)))]
     }
     
+
     layout = function_layout(g)
     plot(g,
          layout = layout,
@@ -629,19 +645,26 @@ plot_cluster_network.Seurat <- function(
          margin = c(-0.2,-1,-0.2,-1),
          main = color_by,
          ...)
+    
+    arguments <- list(...)
+    if(!"edge.label.cex" %in% names(arguments)) edge.label.cex = 0.5 else
+      edge.label.cex = arguments$edge.label.cex
+    
     plot(g,
          layout = layout,
          vertex.shape="none", 
          edge.arrow.size=0,                           # Arrow size, defaults to 1
          edge.arrow.width=0,
+         edge.lty=0,
          edge.width=0,
          vertex.label.cex = 0,
-         edge.label = lapply(df$pathway[-1], function(s) paste(strwrap(s, width=20), collapse = "\n")),
+         edge.label = lapply(df$pathway[edges_ids[,2]], function(s) paste(strwrap(s, width=20), collapse = "\n")),
          edge.label.family='sans',     
-         edge.label.cex = 0.5,
          vertex.label="",  
          edge.label.color='black', 
-         add = TRUE)
+         add = TRUE,
+         edge.label.cex = edge.label.cex,
+         ...)
 
     if(legend){
         par(mar = c(5, 4, 4, 2) + 0.1)

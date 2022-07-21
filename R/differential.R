@@ -181,7 +181,9 @@ differential_ChromSCape <- function(
     min.pct = 0.01,
     marker = c("pos", "neg", "diff")[1]
 ){
-
+    if(is.null(SingleCellExperiment::rowData(object)$top_feature)) 
+        object = ChromSCape::find_top_features(scExp = object, n = nrow(object))
+    
     res = ChromSCape::differential_activation(scExp = object, by = by)
     res = summarise_DA(res)
 

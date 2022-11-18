@@ -17,7 +17,7 @@ iterative_differential_clustering(object, ...)
   dim_red = "PCA",
   vizualization_dim_red = "UMAP",
   processing_function = processing_ChromSCape,
-  quantile.activation = 0.7,
+  min.pct = NULL,
   differential_function = differential_ChromSCape,
   logFC.th = log2(1.5),
   qval.th = 0.01,
@@ -27,10 +27,11 @@ iterative_differential_clustering(object, ...)
   starting.resolution = 0.1,
   resolution = 0.8,
   k = 50,
-  FP_linear_model = lm_list$genebody_TSS,
+  FP_linear_model = NULL,
   color = NULL,
   nThreads = 10,
   swapExperiment = NULL,
+  force_initial_clustering = TRUE,
   verbose = TRUE,
   ...
 )
@@ -55,6 +56,7 @@ iterative_differential_clustering(object, ...)
   k = 100,
   color = NULL,
   nThreads = 10,
+  force_initial_clustering = TRUE,
   verbose = TRUE,
   ...
 )
@@ -86,10 +88,11 @@ at each step. It msut take in entry a Seurat object, \code{dim_red}
 and \code{n_dims} parameters and returns a Seurat containing a cell
 embedding. See \link{processing_Seurat} for the default function.}
 
-\item{quantile.activation}{A numeric between 0 and 1 specifying the quantile
-of global activation to take as minimal percentage of activation for the
-differential analysis. Increasing this value will decrease the number of
-differential features.}
+\item{min.pct}{A numeric between 0 and 1 specifying the fraction of cells
+active in a cluster for a feature to be defined as marker. Default to NULL,
+if NULL, the  70th percentile of global activation is taken as minimal
+percentage of activation for the differential analysis. Increasing this
+value will decrease the number of differential features.}
 
 \item{differential_function}{A function that take in entry a
 SingleCellExperiment object and  parameters passed in ... and returns a
@@ -127,9 +130,10 @@ clustering at each iteration.}
 \item{k}{An integer specifying the number of nearest neighbors to use for
 the Louvain clustering at each iteration.}
 
-\item{FP_linear_model}{Optional. A data.frame containing 3 columns -
-ncells, mean_n_differential, sd_n_differential - that reflect the number of
-false positive expected for a given cluster size.}
+\item{FP_linear_model}{Optional. A linear model (see \code{\link[stats:lm]{stats::lm()}}) of
+the number of false positive expected for a given cluster size. The \link{lm_list}
+list of linear models present in this package gives default values accross
+multiple binsizes. (See  \link{calculate_FDR_scEpigenomics}).}
 
 \item{color}{Set of colors to use for the coloring of the clusters. This must
 contains enough colors for each cluster (minimum 20 colors, but 100 colors
@@ -142,6 +146,11 @@ for the calculation of the FDR.}
 (see \code{\link[SingleCellExperiment:altExps]{SingleCellExperiment::altExp()}}) to switch for differential analysis.
 The processing will be done in the main experiment while the differential
 analysis will be done in the alternative experiment.}
+
+\item{force_initial_clustering}{A logical specifying wether to force the
+initial number of cluster between 2 and 6. This is in order to avoid a too high
+number of initial clusters which would be equivalent to a classical louvain
+clustering.}
 
 \item{verbose}{A logical specifying wether to print.}
 }

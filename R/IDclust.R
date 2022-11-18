@@ -298,10 +298,11 @@ find_differentiated_clusters.default <- function(
 #' @param qval.th A numeric specifying the adjusted p-value below
 #' which a feature is considered as significantly differential passed to the
 #' differential_function.
-#' @param quantile.activation A numeric between 0 and 1 specifying the quantile
-#' of global activation to take as minimal percentage of activation for the 
-#' differential analysis. Increasing this value will decrease the number of 
-#' differential features.
+#' @param min.pct A numeric between 0 and 1 specifying the fraction of cells
+#' active in a cluster for a feature to be defined as marker. Default to NULL, 
+#' if NULL, the  70th percentile of global activation is taken as minimal
+#'  percentage of activation for the differential analysis. Increasing this 
+#'  value will decrease the number of differential features.
 #' @param min_frac_cell_assigned A numeric between 0 and 1 specifying the
 #' minimum percentage of the total cells in the SingleCellExperiment object that
 #' needs to be assigned. If a lower proportion is assigned, all cells are 
@@ -365,7 +366,7 @@ iterative_differential_clustering.default <- function(
     dim_red = "PCA",
     vizualization_dim_red = "UMAP",
     processing_function = processing_ChromSCape,
-    quantile.activation = 0.7,
+    min.pct = NULL,
     differential_function = differential_ChromSCape,
     logFC.th = log2(1.5),
     qval.th = 0.01,
@@ -426,7 +427,8 @@ iterative_differential_clustering.default <- function(
     # Calculate the average % cells activated in a feature
     # and return a level of activation based on a given decile
     binmat = Matrix::Matrix((SummarizedExperiment::assays(object)$counts > 0) + 0, sparse = TRUE)
-    min.pct.activation = quantile(Matrix::rowSums(binmat) / ncol(binmat), quantile.activation)
+    if(is.null(min.pct)) min.pct = quantile(Matrix::rowSums(binmat) / ncol(binmat), 0.7)
+    if(verbose) cat("The minimum percentage of activation is ", round(100 * min.pct, 3),"%.\n")
     
     # Find initial differences (even if there are none, the initial clusters
     # are always considered as true clusters).
@@ -449,6 +451,7 @@ iterative_differential_clustering.default <- function(
         FP_linear_model = FP_linear_model,
         cluster_of_origin = "Omega",
         verbose = verbose,
+        min.pct = min.pct,
         ...)
     
     if(length(swapExperiment)){
@@ -561,6 +564,7 @@ iterative_differential_clustering.default <- function(
                                                       FP_linear_model = FP_linear_model,
                                                       cluster_of_origin = partition_cluster_of_origin,
                                                       verbose = verbose,
+                                                      min.pct = min.pct,
                                                       ...)
                     gc()
                     
@@ -718,8 +722,9 @@ find_differentiated_clusters.Seurat <- function(object,
                 n_cell_assigned = n_cell_assigned + length(group_cells)
                 diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster_u[i])
             }
-        } else {
-            
+        } else{
+            if(verbose) cat(cluster_u[i], " cluster has less than", min_cluster_size, " cells. \nAssigning the cells to cluster of origin.\n")
+            diffmat_n$true_subcluster[i] = cluster_of_origin
         }
     }
     passing = TRUE
@@ -842,6 +847,7 @@ iterative_differential_clustering.Seurat <- function(
         if(length(color) < 20) warning("IDclust::iterative_differential_clustering_scRNA - ",
                                        "The color vector might be too short.",
                                        "Please precise more colors.")
+        color = unname(color)
     }
     
     # For the first partition, try to find very low level clusters (e.g. low
@@ -993,7 +999,7 @@ iterative_differential_clustering.Seurat <- function(
                         if(plotting == TRUE){
                             png(file.path(output_dir, paste0(partition_cluster_of_origin,"_true.png")), width = 1400, height = 1200, res = 200)
                             print(
-                                Seurat::DimPlot(object., reduction = dim_red) + ggtitle(paste0(partition_cluster_of_origin, " - true"))
+                                Seurat::DimPlot(object., reduction = dim_red, cols = color) + ggtitle(paste0(partition_cluster_of_origin, " - true"))
                             )
                             dev.off()
                         }

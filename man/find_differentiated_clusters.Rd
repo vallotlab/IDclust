@@ -69,10 +69,10 @@ assigned to the cluster of origin.}
 \item{limit}{An integer specifying the minimum number of features required
 for a subcluster to be called 'true' subcluster.}
 
-\item{FP_linear_model}{Optional. A data.frame containing 3 columns -
-ncells, mean_n_differential, sd_n_differential - that reflect the number of
-false positive expected for a given cluster size.
-(See  \link{calculate_FDR_scEpigenomics}).}
+\item{FP_linear_model}{Optional. A linear model (see \code{\link[stats:lm]{stats::lm()}}) of
+the number of false positive expected for a given cluster size. The \link{lm_list}
+list of linear models present in this package gives default values accross
+multiple binsizes. (See  \link{calculate_FDR_scEpigenomics}).}
 
 \item{cluster_of_origin}{A character specifying the name of the cluster of
 origin that will be concatenated before the name of true subclusters.}

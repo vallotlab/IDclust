@@ -321,6 +321,7 @@ plot_cluster_network.default <- function(
       df$pathway = edge_df$Term[match(df$name, gsub("Omega:", "",paste0(edge_df$cluster_of_origin, ":", edge_df$cluster)))]
     }
     
+    
     layout = function_layout(g)
     plot(g,
          layout = layout,
@@ -513,7 +514,8 @@ plot_cluster_network.Seurat <- function(
     if(is.null(colors)){
         colors = c("#4285F4", "#DB4437", "#F4B400", "#0F9D58", "slategray",
                    grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)])
-        colors = colors[seq_along(unique(unlist(object[[color_by]])))]
+        if(color_by %in% colnames(object@meta.data))
+          colors = colors[seq_along(unique(unlist(object[[color_by]])))]
     }
     
     # Annotation
@@ -526,7 +528,7 @@ plot_cluster_network.Seurat <- function(
             "color_by_color" = colors
         )
     } else {
-        counts = as.numeric(Seu@assays[[assay]]@counts[color_by,])
+        counts = as.numeric(object@assays[[assay]]@counts[color_by,])
         sel = which(counts >= threshold_to_define_feature_active)
         counts[] = "Inactive"
         counts[sel] = "Active"

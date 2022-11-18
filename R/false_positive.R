@@ -24,7 +24,7 @@
 #' if(requireNamespace("ChromSCape", quietly=TRUE)){
 #' data("scExp", package = "IDclust")
 #' scExp = ChromSCape::find_clusters_louvain_scExp(scExp, resolution = 0.1)
-#' FDR_df = calculate_FDR_scEpigenomics(scExp, nThreads = 1, iterations = 2)
+#' FDR_df = calculate_FalsePositive(scExp, nThreads = 1, iterations = 2)
 #' head(FDR_df)
 #' }
 calculate_FalsePositive <- function(object,
@@ -111,7 +111,7 @@ calculate_FalsePositive <- function(object,
 #' if(requireNamespace("ChromSCape", quietly=TRUE)){
 #' data("scExp", package = "IDclust")
 #' scExp = ChromSCape::find_clusters_louvain_scExp(scExp, resolution = 0.1)
-#' FDR_df = calculate_FDR_scEpigenomics(scExp, nThreads = 1, iterations = 2)
+#' FDR_df = calculate_FalseNegative(scExp, nThreads = 1, iterations = 2)
 #' head(FDR_df)
 #' }
 calculate_FalseNegative <- function(object,

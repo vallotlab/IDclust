@@ -100,8 +100,8 @@ differential_edgeR_pseudobulk_LRT <- function(object,
         group = rep(1, ncol(mat))
         group[grep(paste0(cluster_u[i],"_"), fixed = TRUE, colnames(mat))] = 2
         
-        if(length(grep(paste0("^",cluster_u[i],"_"), colnames(mat))) > 1 &
-           length(grep(paste0("^",cluster_u[i],"_"), colnames(mat), invert = T)) > 1){
+        if(length(grep(paste0(cluster_u[i],"_"), fixed = TRUE, colnames(mat))) > 1 &
+           length(grep(paste0(cluster_u[i],"_"), fixed = TRUE, colnames(mat), invert = T)) > 1){
             
             group <- as.factor(group)
             y <- edgeR::DGEList(counts=mat, group=group)

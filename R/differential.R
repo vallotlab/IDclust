@@ -105,7 +105,7 @@ differential_edgeR_pseudobulk_LRT <- function(object,
             
             group <- as.factor(group)
             y <- edgeR::DGEList(counts=mat, group=group)
-            keep <- edgeR::filterByExpr(y)
+            keep <- edgeR::filterByExpr(y, min.count = 10, min.total.count = 15, large.n = 10, min.prop = 0.7)
             if(length(which(keep)) > 0){
                 y <- y[keep,,keep.lib.sizes=FALSE]
                 y <- edgeR::calcNormFactors(y)
@@ -113,8 +113,9 @@ differential_edgeR_pseudobulk_LRT <- function(object,
                 y <- edgeR::estimateDisp(y,design)
                 fit <- edgeR::glmFit(y, design)
                 lrt <- edgeR::glmLRT(fit, coef=2)
-                tab = lrt$table
-                
+                tab = edgeR::topTags(lrt, n = nrow(tab), adjust.method = "BH" ,
+                                     p.value = 2, sort.by = "logFC") # take all, do the filtering later on
+                tab = tab$table
                 binmat = Matrix::Matrix((object@assays[[assay]]@counts > 0) + 0, sparse = TRUE)
                 pct.1 = Matrix::rowSums(binmat[,which(object@meta.data[,by] == cluster_u[i])]) / length(which(object@meta.data[,by] == cluster_u[i]))
                 pct.2 = Matrix::rowSums(binmat[,which(object@meta.data[,by]!= cluster_u[i])]) / length(which(object@meta.data[,by] != cluster_u[i]))
@@ -124,7 +125,7 @@ differential_edgeR_pseudobulk_LRT <- function(object,
                     "avg_log2FC"= tab$logFC,
                     "pct.1" = pct.1[match(rownames(tab), names(pct.1))], 
                     "pct.2"= pct.2[match(rownames(tab), names(pct.2))],
-                    "p_val_adj" = stats::p.adjust(tab$PValue, method = "bonferroni"),
+                    "p_val_adj" = tab$FDR,
                     "cluster"= cluster_u[i],
                     "gene"= rownames(tab)
                 )

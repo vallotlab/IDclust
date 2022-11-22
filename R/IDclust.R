@@ -26,7 +26,7 @@ NULL
 #'     qval.th = 0.01,
 #'     by = "seurat_clusters",
 #'     limit = 5,
-#'     cluster_of_origin = "Omega",
+#'     cluster_of_origin = "Alpha",
 #'     min_frac_cell_assigned = 0.1,
 #'     verbose = TRUE
 #' )
@@ -50,7 +50,7 @@ NULL
 #'     qval.th = 0.01,
 #'     by = "seurat_clusters",
 #'     limit = 5,
-#'     cluster_of_origin = "Omega",
+#'     cluster_of_origin = "Alpha",
 #'     min_frac_cell_assigned = 0.1,
 #'     verbose = TRUE
 #' )
@@ -67,7 +67,7 @@ NULL
 #'     qval.th = 0.01,
 #'     by = "seurat_clusters",
 #'     limit = 5,
-#'     cluster_of_origin = "Omega",
+#'     cluster_of_origin = "Alpha",
 #'     min_frac_cell_assigned = 0.1,
 #'     verbose = TRUE,
 #'     test.use = "roc" # additional argument
@@ -86,7 +86,7 @@ NULL
 #'     qval.th = 0.01,
 #'     by = "IDcluster",
 #'     limit = 5,
-#'     cluster_of_origin = "Omega",
+#'     cluster_of_origin = "Alpha",
 #'     min_frac_cell_assigned = 0.1,
 #'     verbose = TRUE,
 #' )
@@ -192,7 +192,7 @@ find_differentiated_clusters.default <- function(
     min_frac_cell_assigned = 0.1,
     limit = 5,
     FP_linear_model = NULL,
-    cluster_of_origin = "Omega",
+    cluster_of_origin = "Alpha",
     min_cluster_size = 30,
     verbose = TRUE,
     ...){
@@ -449,7 +449,7 @@ iterative_differential_clustering.default <- function(
         min_frac_cell_assigned = min_frac_cell_assigned,
         limit = 0,
         FP_linear_model = FP_linear_model,
-        cluster_of_origin = "Omega",
+        cluster_of_origin = "Alpha",
         verbose = verbose,
         min.pct = min.pct,
         ...)
@@ -482,9 +482,9 @@ iterative_differential_clustering.default <- function(
     
     # List of marker features
     res = DA$res
-    if(nrow(res) > 0) res$cluster_of_origin = "Omega"
+    if(nrow(res) > 0) res$cluster_of_origin = "Alpha"
     list_res = list(res)
-    names(list_res)[1] = "Omega"
+    names(list_res)[1] = "Alpha"
     
     iteration = 0
     gc()
@@ -496,7 +496,7 @@ iterative_differential_clustering.default <- function(
             # Plot each iteration of the algorithm
             png(file.path(output_dir, "iterations", paste0("Iteration_",iteration,".png")), width = 1600, height = 1200, res = 200)
             object. = object
-            object.$cell_cluster = gsub("Omega_","",object.$IDcluster)
+            object.$cell_cluster = gsub("Alpha_","",object.$IDcluster)
             print(
                 ChromSCape::plot_reduced_dim_scExp(object., reduced_dim = vizualization_dim_red, color_by = "IDcluster",
                                                    downsample = 50000, size = 0.35, transparency = 0.75, annotate_clusters = TRUE) +
@@ -676,7 +676,7 @@ find_differentiated_clusters.Seurat <- function(object,
                                                 logFC.th = log2(1.5),
                                                 qval.th = 0.01,
                                                 limit = 5,
-                                                cluster_of_origin = "Omega",
+                                                cluster_of_origin = "Alpha",
                                                 min_frac_cell_assigned = 0.1,
                                                 min_cluster_size = 30,
                                                 verbose = TRUE,
@@ -903,7 +903,7 @@ iterative_differential_clustering.Seurat <- function(
         logFC.th = logFC.th,
         qval.th = qval.th,
         min_frac_cell_assigned = min_frac_cell_assigned,
-        cluster_of_origin =  "Omega",
+        cluster_of_origin =  "Alpha",
         limit = 0,
         verbose = verbose,
         ...)
@@ -919,9 +919,9 @@ iterative_differential_clustering.Seurat <- function(
     # List of differential analyses
     res = DA$res
     rownames(res) = NULL
-    if(nrow(res) > 0)  res$cluster_of_origin = "Omega"
+    if(nrow(res) > 0)  res$cluster_of_origin = "Alpha"
     list_res = list(res)
-    names(list_res)[1] = "Omega"
+    names(list_res)[1] = "Alpha"
     
     iteration = 0
     gc()
@@ -932,7 +932,7 @@ iterative_differential_clustering.Seurat <- function(
             # Plot initial
             png(file.path(output_dir, "iterations", paste0("Iteration_",iteration,".png")), width = 1600, height = 1200, res = 200)
             object. = object
-            object.$IDcluster = gsub("Omega_","",object.$IDcluster)
+            object.$IDcluster = gsub("Alpha_","",object.$IDcluster)
             print(
                 Seurat::DimPlot(object, group.by =  "IDcluster",  reduction = vizualization_dim_red, cols = color) 
             )

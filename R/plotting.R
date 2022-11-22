@@ -194,10 +194,10 @@ plot_cluster_network.default <- function(
             "(object@meta.data) or in rownames(object).")
     }
     
-    object[[cluster_col]] = gsub("Omega_","", object[[cluster_col]])
+    object[[cluster_col]] = gsub("Alpha_","", object[[cluster_col]])
     if(!is.null(IDC_summary)){
-        IDC_summary$true_subcluster = gsub("Omega_","", IDC_summary$true_subcluster)
-        IDC_summary$cluster_of_origin = gsub("Omega_","", IDC_summary$cluster_of_origin)
+        IDC_summary$true_subcluster = gsub("Alpha_","", IDC_summary$true_subcluster)
+        IDC_summary$cluster_of_origin = gsub("Alpha_","", IDC_summary$cluster_of_origin)
     }
 
     if(is.null(colors) & categ) {
@@ -245,7 +245,7 @@ plot_cluster_network.default <- function(
     
     clusters = object[[cluster_col]]
     
-    annot$partition_0 = "Omega"
+    annot$partition_0 = "Alpha"
     
     cluster_list = sapply(clusters, function(i) strsplit(i, split = "_", fixed =TRUE))
     max_partition_depth = max(sapply(cluster_list, length))
@@ -296,7 +296,7 @@ plot_cluster_network.default <- function(
             prop.base_clust[[i]][match(names(tab), names(empty))] = as.numeric(tab)
             prop.base_clust[[i]] = as.numeric(prop.base_clust[[i]])
             # } 
-            if(i != "Omega") df$ndiff[df$name == i] = IDC_summary$n_differential[which(IDC_summary$true_subcluster == i)][1]
+            if(i != "Alpha") df$ndiff[df$name == i] = IDC_summary$n_differential[which(IDC_summary$true_subcluster == i)][1]
             if(level != (ncol(repartition)-1)) adj.mat[i, unique(repartition[,level + 1 ][which(repartition[,level] == i)])] = 1
         }
         
@@ -318,7 +318,7 @@ plot_cluster_network.default <- function(
       edge_df$Term = gsub(" \\(.*", "", edge_df$Term)
       edge_df = edge_df %>% dplyr::group_by(cluster, cluster_of_origin) %>% 
           dplyr::summarise(Term = head(Term, 1))
-      df$pathway = edge_df$Term[match(df$name, gsub("Omega_", "",paste0(edge_df$cluster_of_origin, "_", edge_df$cluster)))]
+      df$pathway = edge_df$Term[match(df$name, gsub("Alpha_", "",paste0(edge_df$cluster_of_origin, "_", edge_df$cluster)))]
     }
     
     
@@ -504,11 +504,11 @@ plot_cluster_network.Seurat <- function(
                                                                    "be in colnames(object@meta.data) or in rownames(object).")
     }
     
-    object@meta.data[,cluster_col] = gsub("Omega_","", object@meta.data[,cluster_col])
+    object@meta.data[,cluster_col] = gsub("Alpha_","", object@meta.data[,cluster_col])
     
     if(!is.null(IDC_summary)){
-        IDC_summary$true_subcluster = gsub("Omega_","", IDC_summary$true_subcluster)
-        IDC_summary$cluster_of_origin = gsub("Omega_","", IDC_summary$cluster_of_origin)
+        IDC_summary$true_subcluster = gsub("Alpha_","", IDC_summary$true_subcluster)
+        IDC_summary$cluster_of_origin = gsub("Alpha_","", IDC_summary$cluster_of_origin)
     }
 
     if(is.null(colors)){
@@ -544,7 +544,7 @@ plot_cluster_network.Seurat <- function(
     
     clusters = object[[cluster_col]]
     
-    annot$partition_0 = "Omega"
+    annot$partition_0 = "Alpha"
     
     cluster_list = sapply(clusters, function(i) strsplit(i, split = "_", fixed =TRUE))
     max_partition_depth = max(sapply(cluster_list, length))
@@ -596,9 +596,9 @@ plot_cluster_network.Seurat <- function(
             prop.base_clust[[i]] = as.numeric(prop.base_clust[[i]])
             # } 
             if(!is.null(IDC_summary)) {
-                if(i != "Omega") df$ndiff[df$name == i] = IDC_summary$n_differential[which(IDC_summary$true_subcluster == i)][1]
+                if(i != "Alpha") df$ndiff[df$name == i] = IDC_summary$n_differential[which(IDC_summary$true_subcluster == i)][1]
             } else {
-                if(i != "Omega") df$ndiff[df$name == i] = 20
+                if(i != "Alpha") df$ndiff[df$name == i] = 20
             }
             if(level != (ncol(repartition)-1)) adj.mat[i, unique(repartition[,level + 1 ][which(repartition[,level] == i)])] = 1
         }
@@ -620,7 +620,7 @@ plot_cluster_network.Seurat <- function(
         edge_df$Term = gsub(" \\(.*", "", edge_df$Term)
         edge_df = edge_df %>% group_by(cluster, cluster_of_origin) %>% 
             dplyr::summarise(Term = head(Term, 1))
-        df$pathway = edge_df$Term[match(df$name, gsub("Omega_", "",paste0(edge_df$cluster_of_origin, "_", edge_df$cluster)))]
+        df$pathway = edge_df$Term[match(df$name, gsub("Alpha_", "",paste0(edge_df$cluster_of_origin, "_", edge_df$cluster)))]
     }
     
 

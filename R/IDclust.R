@@ -133,7 +133,7 @@ iterative_differential_clustering <- function(object, ...) {
 #' @details  Find significantly differential features between the given set
 #' of clusters (within the 'IDcluster' column of the SingleCellExperiment).
 #' For each cluster, if enough differences are found, mark the cluster as a 
-#' 'true' subcluster and gives it the alias 'cluster_of_origin:cluster'. 
+#' 'true' subcluster and gives it the alias 'cluster_of_origin_cluster'. 
 #' The function will use by default [ChromSCape::differential_activation()]
 #' function to define differential features.
 #' 
@@ -222,7 +222,7 @@ find_differentiated_clusters.default <- function(
                     diffmat_n$true_subcluster[i] = cluster_of_origin
                 } else{
                     n_cell_assigned = n_cell_assigned + length(group_cells)
-                    diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster)
+                    diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, "_", cluster)
                 }
             } else{
               cluster_size <- data.frame(ncells=length(group_cells))
@@ -235,7 +235,7 @@ find_differentiated_clusters.default <- function(
                     diffmat_n$true_subcluster[i] = cluster_of_origin
                 } else{
                     n_cell_assigned = n_cell_assigned + length(group_cells)
-                    diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster)
+                    diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, "_", cluster)
                 }
             }
         } else{
@@ -496,7 +496,7 @@ iterative_differential_clustering.default <- function(
             # Plot each iteration of the algorithm
             png(file.path(output_dir, "iterations", paste0("Iteration_",iteration,".png")), width = 1600, height = 1200, res = 200)
             object. = object
-            object.$cell_cluster = gsub("Omega:","",object.$IDcluster)
+            object.$cell_cluster = gsub("Omega_","",object.$IDcluster)
             print(
                 ChromSCape::plot_reduced_dim_scExp(object., reduced_dim = vizualization_dim_red, color_by = "IDcluster",
                                                    downsample = 50000, size = 0.35, transparency = 0.75, annotate_clusters = TRUE) +
@@ -519,7 +519,7 @@ iterative_differential_clustering.default <- function(
         if(!(partition_cluster_of_origin  %in% differential_summary_df$true_subcluster[duplicated(differential_summary_df$true_subcluster)])){
             
             # Letter assigned to the 'partition depth' (e.g. A, B, C...)
-            partition_depth = which(LETTERS == substr(gsub(".*:","",partition_cluster_of_origin),1,1)) + 1
+            partition_depth = which(LETTERS == substr(gsub(".*_","",partition_cluster_of_origin),1,1)) + 1
             
             # Select only cells from the given cluster
             object. = object[, which(object$IDcluster %in%  partition_cluster_of_origin)]
@@ -613,7 +613,7 @@ iterative_differential_clustering.default <- function(
     
     if(verbose) cat("\n\n\n##########################################################\nFinished !\nFound a total of", length(unique(object$IDcluster)),"clusters after",iteration ,"iterations.",
                     "\nThe average cluster size is ", floor(mean(table(object$IDcluster)))," and the median is",floor(median(table(object$IDcluster))),".",
-                    "\nThe number of initital clusters not subclustered is ",length(grep(":", unique(object$IDcluster),invert = TRUE)),".",
+                    "\nThe number of initital clusters not subclustered is ",length(grep("_", unique(object$IDcluster),invert = TRUE)),".",
                     "\n##########################################################\n")
     
     ## Saving results
@@ -720,7 +720,7 @@ find_differentiated_clusters.Seurat <- function(object,
                 diffmat_n$true_subcluster[i] = cluster_of_origin
             } else{
                 n_cell_assigned = n_cell_assigned + length(group_cells)
-                diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, ":", cluster_u[i])
+                diffmat_n$true_subcluster[i] = paste0(cluster_of_origin, "_", cluster_u[i])
             }
         } else{
             if(verbose) cat(cluster_u[i], " cluster has less than", min_cluster_size, " cells. \nAssigning the cells to cluster of origin.\n")
@@ -932,7 +932,7 @@ iterative_differential_clustering.Seurat <- function(
             # Plot initial
             png(file.path(output_dir, "iterations", paste0("Iteration_",iteration,".png")), width = 1600, height = 1200, res = 200)
             object. = object
-            object.$IDcluster = gsub("Omega:","",object.$IDcluster)
+            object.$IDcluster = gsub("Omega_","",object.$IDcluster)
             print(
                 Seurat::DimPlot(object, group.by =  "IDcluster",  reduction = vizualization_dim_red, cols = color) 
             )
@@ -945,7 +945,7 @@ iterative_differential_clustering.Seurat <- function(
         partition_cluster_of_origin = differential_summary_df$true_subcluster[iteration]
         if(!(partition_cluster_of_origin  %in% differential_summary_df$true_subcluster[duplicated(differential_summary_df$true_subcluster)])){
             
-            partition_depth = which(LETTERS == substr(gsub(".*:","",partition_cluster_of_origin),1,1)) + 1
+            partition_depth = which(LETTERS == substr(gsub(".*_","",partition_cluster_of_origin),1,1)) + 1
             
             # Select first cluster
             object. = object[, which(object$IDcluster %in%  partition_cluster_of_origin)]
@@ -1030,7 +1030,7 @@ iterative_differential_clustering.Seurat <- function(
     
     if(verbose) cat("\n\n\n##########################################################\nFinished !\nFound a total of", length(unique(object$IDcluster)),"clusters after",iteration ,"iterations.",
                     "\nThe average cluster size is ",floor(mean(table(object$IDcluster)))," and the median is",floor(median(table(object$IDcluster))),".",
-                    "\nThe number of initital clusters not subclustered is ",length(grep(":", unique(object$IDcluster),invert = TRUE)),".",
+                    "\nThe number of initital clusters not subclustered is ",length(grep("_", unique(object$IDcluster),invert = TRUE)),".",
                     "\n##########################################################\n")
     
     

@@ -194,10 +194,10 @@ plot_cluster_network.default <- function(
             "(object@meta.data) or in rownames(object).")
     }
     
-    object[[cluster_col]] = gsub("Omega:","", object[[cluster_col]])
+    object[[cluster_col]] = gsub("Omega_","", object[[cluster_col]])
     if(!is.null(IDC_summary)){
-        IDC_summary$true_subcluster = gsub("Omega:","", IDC_summary$true_subcluster)
-        IDC_summary$cluster_of_origin = gsub("Omega:","", IDC_summary$cluster_of_origin)
+        IDC_summary$true_subcluster = gsub("Omega_","", IDC_summary$true_subcluster)
+        IDC_summary$cluster_of_origin = gsub("Omega_","", IDC_summary$cluster_of_origin)
     }
 
     if(is.null(colors) & categ) {
@@ -247,11 +247,11 @@ plot_cluster_network.default <- function(
     
     annot$partition_0 = "Omega"
     
-    cluster_list = sapply(clusters, function(i) strsplit(i, split = ":", fixed =TRUE))
+    cluster_list = sapply(clusters, function(i) strsplit(i, split = "_", fixed =TRUE))
     max_partition_depth = max(sapply(cluster_list, length))
     for(i in seq_len(max_partition_depth)){
         annot[,paste0("partition_",i)] = sapply(cluster_list, function(l){
-            paste(l[1:min(i, length(l)) ], collapse = ":") })
+            paste(l[1:min(i, length(l)) ], collapse = "_") })
         na_idxs = which(is.na(annot[,paste0("partition_",i)]))
         if(i > 1 & length(na_idxs)) annot[na_idxs, paste0("partition_",i)] =
             annot[na_idxs, paste0("partition_",i-1)]
@@ -318,7 +318,7 @@ plot_cluster_network.default <- function(
       edge_df$Term = gsub(" \\(.*", "", edge_df$Term)
       edge_df = edge_df %>% dplyr::group_by(cluster, cluster_of_origin) %>% 
           dplyr::summarise(Term = head(Term, 1))
-      df$pathway = edge_df$Term[match(df$name, gsub("Omega:", "",paste0(edge_df$cluster_of_origin, ":", edge_df$cluster)))]
+      df$pathway = edge_df$Term[match(df$name, gsub("Omega_", "",paste0(edge_df$cluster_of_origin, "_", edge_df$cluster)))]
     }
     
     
@@ -504,11 +504,11 @@ plot_cluster_network.Seurat <- function(
                                                                    "be in colnames(object@meta.data) or in rownames(object).")
     }
     
-    object@meta.data[,cluster_col] = gsub("Omega:","", object@meta.data[,cluster_col])
+    object@meta.data[,cluster_col] = gsub("Omega_","", object@meta.data[,cluster_col])
     
     if(!is.null(IDC_summary)){
-        IDC_summary$true_subcluster = gsub("Omega:","", IDC_summary$true_subcluster)
-        IDC_summary$cluster_of_origin = gsub("Omega:","", IDC_summary$cluster_of_origin)
+        IDC_summary$true_subcluster = gsub("Omega_","", IDC_summary$true_subcluster)
+        IDC_summary$cluster_of_origin = gsub("Omega_","", IDC_summary$cluster_of_origin)
     }
 
     if(is.null(colors)){
@@ -546,11 +546,11 @@ plot_cluster_network.Seurat <- function(
     
     annot$partition_0 = "Omega"
     
-    cluster_list = sapply(clusters, function(i) strsplit(i, split = ":", fixed =TRUE))
+    cluster_list = sapply(clusters, function(i) strsplit(i, split = "_", fixed =TRUE))
     max_partition_depth = max(sapply(cluster_list, length))
     for(i in seq_len(max_partition_depth)){
         annot[,paste0("partition_",i)] = sapply(cluster_list, function(l){
-            paste(l[1:min(i, length(l)) ], collapse = ":") })
+            paste(l[1:min(i, length(l)) ], collapse = "_") })
         na_idxs = which(is.na(annot[,paste0("partition_",i)]))
         if(i > 1 & length(na_idxs)) annot[na_idxs, paste0("partition_",i)] =
             annot[na_idxs, paste0("partition_",i-1)]
@@ -620,7 +620,7 @@ plot_cluster_network.Seurat <- function(
         edge_df$Term = gsub(" \\(.*", "", edge_df$Term)
         edge_df = edge_df %>% group_by(cluster, cluster_of_origin) %>% 
             dplyr::summarise(Term = head(Term, 1))
-        df$pathway = edge_df$Term[match(df$name, gsub("Omega:", "",paste0(edge_df$cluster_of_origin, ":", edge_df$cluster)))]
+        df$pathway = edge_df$Term[match(df$name, gsub("Omega_", "",paste0(edge_df$cluster_of_origin, "_", edge_df$cluster)))]
     }
     
 

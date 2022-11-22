@@ -229,7 +229,7 @@ top_enriched_pathways <- function(
     topmarker_all = IDC_DA %>% dplyr::filter(cluster_of_origin == origin)
     
     for(clust in unique(topmarker_all$cluster)){
-      name = paste0(origin, ":", clust)
+      name = paste0(origin, "_", clust)
       
       topmarker = topmarker_all %>% dplyr::filter(cluster == clust)
       cat("Enriching", nrow(topmarker), "marker genes from cluster", name,"...\n")

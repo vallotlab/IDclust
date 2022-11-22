@@ -838,6 +838,13 @@ iterative_differential_clustering.Seurat <- function(
             dir.create(file.path(output_dir, "iterations"), showWarnings = FALSE) else stop("output_dir is an invalid directory")
     }
     
+  # Preprocessing the object & Running UMAP if needed
+  object = processing_function(object, n_dims = n_dims, dim_red = dim_red)
+  if(vizualization_dim_red == "umap") {
+    object <- FindNeighbors(object, dims = seq_len(n_dims))
+    object = Seurat::RunUMAP(object, dims = seq_len(n_dims), reduction = dim_red)
+  }
+    
     # Colors for the plot
     if (is.null(color)){
         color = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)]

@@ -113,7 +113,7 @@ differential_edgeR_pseudobulk_LRT <- function(object,
                 y <- edgeR::estimateDisp(y,design)
                 fit <- edgeR::glmFit(y, design)
                 lrt <- edgeR::glmLRT(fit, coef=2)
-                tab = edgeR::topTags(lrt, n = nrow(tab), adjust.method = "BH" ,
+                tab = edgeR::topTags(lrt, n = nrow(lrt$table), adjust.method = "BH" ,
                                      p.value = 2, sort.by = "logFC") # take all, do the filtering later on
                 tab = tab$table
                 binmat = Matrix::Matrix((object@assays[[assay]]@counts > 0) + 0, sparse = TRUE)

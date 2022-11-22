@@ -819,7 +819,7 @@ iterative_differential_clustering.Seurat <- function(
     logFC.th = log2(1.5),
     qval.th = 0.01,
     min_frac_cell_assigned = 0.1,
-    limit = 10,
+    limit = 5,
     starting.resolution = 0.1,
     starting.k = 100,
     resolution = 0.8,

@@ -315,8 +315,9 @@ find_differentiated_clusters.default <- function(
 #'  to set it quite high in order to have few starting clusters
 #' @param resolution A numeric specifying the resolution to use for the Louvain
 #' clustering at each iteration.
-#' @param k An integer specifying the number of nearest neighbors to use for 
-#' the Louvain clustering at each iteration.
+#' @param max_k An integer specifying the maximum number of nearest neighbors to use for 
+#' the Louvain clustering at each iteration. This k is reduced with the number of cells,
+#' to a minimum of k = 5.
 #' @param FP_linear_model Optional. A linear model (see [stats::lm()]) of 
 #' the number of false positive expected for a given cluster size. The [lm_list]
 #' list of linear models present in this package gives default values accross
@@ -375,7 +376,7 @@ iterative_differential_clustering.default <- function(
     starting.k = 100,
     starting.resolution = 0.1,
     resolution = 0.8,
-    k = 50,
+    max_k = 50,
     FP_linear_model = NULL,
     color = NULL,
     nThreads = 10,
@@ -535,6 +536,7 @@ iterative_differential_clustering.default <- function(
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
                 
                 # Re-clustering sub-cluster
+                k = max(5, min(max_k, 0.05 * ncol(object.))) # select a k according to the number of cells 
                 object.. = ChromSCape::find_clusters_louvain_scExp(object., k = k, resolution =  resolution,
                                                                    use.dimred = dim_red)
                 object.$IDcluster <- paste0(LETTERS[partition_depth],gsub("C", "", object..$cell_cluster))
@@ -770,8 +772,9 @@ find_differentiated_clusters.Seurat <- function(object,
 #' minimum percentage of the total cells in the SingleCellExperiment object that
 #' needs to be assigned. If a lower proportion is assigned, all cells are 
 #' assigned to the cluster of origin.
-#' @param k An integer specifying the number of nearest neighbors to use for 
-#' the Louvain clustering at each iteration.
+#' @param max_k An integer specifying the maximum number of nearest neighbors to use for 
+#' the Louvain clustering at each iteration. This k is reduced with the number of cells,
+#' to a minimum of k = 5.
 #' @param resolution A numeric specifying the resolution to use for the Louvain
 #' clustering at each iteration.
 #' @param starting.resolution A numeric specifying the resolution to use for the 
@@ -823,7 +826,7 @@ iterative_differential_clustering.Seurat <- function(
     starting.resolution = 0.1,
     starting.k = 100,
     resolution = 0.8,
-    k = 100,
+    max_k = 50,
     color = NULL,
     nThreads = 10,
     force_initial_clustering = TRUE,
@@ -957,6 +960,7 @@ iterative_differential_clustering.Seurat <- function(
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
                 
                 # Re-clustering sub-cluster
+                k = max(5, min(max_k, 0.05 * ncol(object.))) # select a k according to the number of cells 
                 object. = Seurat::FindNeighbors(object., reduction = dim_red, k.param = k, verbose = FALSE)
                 object. = Seurat::FindClusters(object., algorithm = 2,   resolution = resolution,
                                                random.seed = 47, verbose = FALSE)

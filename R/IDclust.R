@@ -529,7 +529,7 @@ iterative_differential_clustering.default <- function(
                             "with",ncol(object.),"cells.\n")
             
             # Re-cluster a cluster only if there are more than 100 cells
-            if(ncol(object.) > 100){
+            if(ncol(object.) > 10){
 
                 
                 # Re-processing sub-cluster
@@ -954,7 +954,7 @@ iterative_differential_clustering.Seurat <- function(
             object. = object[, which(object$IDcluster %in%  partition_cluster_of_origin)]
             if(verbose) cat("Re-calculating PCA and subclustering for cluster", partition_cluster_of_origin,".\n")
             
-            if(ncol(object.) > 100){
+            if(ncol(object.) > 10){
                 
                 # Re-processing sub-cluster
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)

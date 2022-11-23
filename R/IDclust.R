@@ -536,7 +536,7 @@ iterative_differential_clustering.default <- function(
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
                 
                 # Re-clustering sub-cluster
-                k = max(5, min(max_k, 0.05 * ncol(object.))) # select a k according to the number of cells 
+                k = max(10, min(max_k, 0.1 * ncol(object.))) # select a k according to the number of cells 
                 object.. = ChromSCape::find_clusters_louvain_scExp(object., k = k, resolution =  resolution,
                                                                    use.dimred = dim_red)
                 object.$IDcluster <- paste0(LETTERS[partition_depth],gsub("C", "", object..$cell_cluster))
@@ -960,7 +960,7 @@ iterative_differential_clustering.Seurat <- function(
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
                 
                 # Re-clustering sub-cluster
-                k = max(5, min(max_k, 0.05 * ncol(object.))) # select a k according to the number of cells 
+                k = max(10, min(max_k, 0.1 * ncol(object.))) # select a k according to the number of cells 
                 object. = Seurat::FindNeighbors(object., reduction = dim_red, k.param = k, verbose = FALSE)
                 object. = Seurat::FindClusters(object., algorithm = 2,   resolution = resolution,
                                                random.seed = 47, verbose = FALSE)

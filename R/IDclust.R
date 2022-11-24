@@ -867,7 +867,7 @@ iterative_differential_clustering.Seurat <- function(
     if(force_initial_clustering){
       nclust = 1
       factor = 1
-      max_iter = 10
+      max_iter = 100
       iter = 0
       while( (nclust < 2 | nclust > 6) & iter < max_iter){
         object = Seurat::FindClusters(object, algorithm = 2,
@@ -878,15 +878,14 @@ iterative_differential_clustering.Seurat <- function(
         if(nclust < 2) factor = 1.15 * factor
         if(nclust > 6) factor = 0.85 * factor
         iter = iter + 1
+        print(nclust)
       } 
-      if(iter > max_iter) {
-        warning("IDclust::iterative_differential_clustering - Didn't manage",
+      if(iter >= max_iter) {
+        stop("IDclust::iterative_differential_clustering - Didn't manage",
                 " to find more than 1 initial cluster...")
-        return()
       }
     } else {
       object = Seurat::FindClusters(object, algorithm = 2, resolution = starting.resolution, random.seed = 47, verbose = FALSE)
-      
     }
     object$IDcluster = object$seurat_clusters
     object$IDcluster <- paste0("A",as.numeric(object$IDcluster))

@@ -26,7 +26,8 @@ iterative_differential_clustering(object, ...)
   starting.k = 100,
   starting.resolution = 0.1,
   resolution = 0.8,
-  k = 50,
+  max_k = 50,
+  k_percent = 0.1,
   FP_linear_model = NULL,
   color = NULL,
   nThreads = 10,
@@ -49,11 +50,12 @@ iterative_differential_clustering(object, ...)
   logFC.th = log2(1.5),
   qval.th = 0.01,
   min_frac_cell_assigned = 0.1,
-  limit = 10,
+  limit = 5,
   starting.resolution = 0.1,
   starting.k = 100,
   resolution = 0.8,
-  k = 100,
+  max_k = 50,
+  k_percent = 0.1,
   color = NULL,
   nThreads = 10,
   force_initial_clustering = TRUE,
@@ -127,8 +129,12 @@ low in order to have few starting clusters.}
 \item{resolution}{A numeric specifying the resolution to use for the Louvain
 clustering at each iteration.}
 
-\item{k}{An integer specifying the number of nearest neighbors to use for
-the Louvain clustering at each iteration.}
+\item{max_k}{An integer specifying the maximum number of nearest neighbors to use for
+the Louvain clustering at each iteration. This k is reduced with the number of cells,
+to a minimum of k = 5.}
+
+\item{k_percent}{A numeric between 0 and 1 representing the fraction of cells
+to calculate the k for the KNN graph calulation of clustering.}
 
 \item{FP_linear_model}{Optional. A linear model (see \code{\link[stats:lm]{stats::lm()}}) of
 the number of false positive expected for a given cluster size. The \link{lm_list}

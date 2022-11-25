@@ -17,7 +17,7 @@ find_differentiated_clusters(object, ...)
   min_frac_cell_assigned = 0.1,
   limit = 5,
   FP_linear_model = NULL,
-  cluster_of_origin = "Omega",
+  cluster_of_origin = "Alpha",
   min_cluster_size = 30,
   verbose = TRUE,
   ...
@@ -30,7 +30,7 @@ find_differentiated_clusters(object, ...)
   logFC.th = log2(1.5),
   qval.th = 0.01,
   limit = 5,
-  cluster_of_origin = "Omega",
+  cluster_of_origin = "Alpha",
   min_frac_cell_assigned = 0.1,
   min_cluster_size = 30,
   verbose = TRUE,
@@ -103,7 +103,7 @@ Find Differentiated Clusters
 Find significantly differential features between the given set
 of clusters (within the 'IDcluster' column of the SingleCellExperiment).
 For each cluster, if enough differences are found, mark the cluster as a
-'true' subcluster and gives it the alias 'cluster_of_origin:cluster'.
+'true' subcluster and gives it the alias 'cluster_of_origin_cluster'.
 The function will use by default \code{\link[ChromSCape:differential_activation]{ChromSCape::differential_activation()}}
 function to define differential features.
 }
@@ -120,7 +120,7 @@ DA = find_differentiated_clusters(
     qval.th = 0.01,
     by = "seurat_clusters",
     limit = 5,
-    cluster_of_origin = "Omega",
+    cluster_of_origin = "Alpha",
     min_frac_cell_assigned = 0.1,
     verbose = TRUE
 )
@@ -144,7 +144,7 @@ DA = find_differentiated_clusters(
     qval.th = 0.01,
     by = "seurat_clusters",
     limit = 5,
-    cluster_of_origin = "Omega",
+    cluster_of_origin = "Alpha",
     min_frac_cell_assigned = 0.1,
     verbose = TRUE
 )
@@ -161,7 +161,7 @@ DA = find_differentiated_clusters(
     qval.th = 0.01,
     by = "seurat_clusters",
     limit = 5,
-    cluster_of_origin = "Omega",
+    cluster_of_origin = "Alpha",
     min_frac_cell_assigned = 0.1,
     verbose = TRUE,
     test.use = "roc" # additional argument
@@ -180,7 +180,7 @@ DA = find_differentiated_clusters(
     qval.th = 0.01,
     by = "IDcluster",
     limit = 5,
-    cluster_of_origin = "Omega",
+    cluster_of_origin = "Alpha",
     min_frac_cell_assigned = 0.1,
     verbose = TRUE,
 )

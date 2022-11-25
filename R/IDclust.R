@@ -318,6 +318,8 @@ find_differentiated_clusters.default <- function(
 #' @param max_k An integer specifying the maximum number of nearest neighbors to use for 
 #' the Louvain clustering at each iteration. This k is reduced with the number of cells,
 #' to a minimum of k = 5.
+#' @param k_percent A numeric between 0 and 1 representing the fraction of cells
+#' to calculate the k for the KNN graph calulation of clustering.
 #' @param FP_linear_model Optional. A linear model (see [stats::lm()]) of 
 #' the number of false positive expected for a given cluster size. The [lm_list]
 #' list of linear models present in this package gives default values accross
@@ -377,6 +379,7 @@ iterative_differential_clustering.default <- function(
     starting.resolution = 0.1,
     resolution = 0.8,
     max_k = 50,
+    k_percent = 0.1,
     FP_linear_model = NULL,
     color = NULL,
     nThreads = 10,
@@ -536,7 +539,7 @@ iterative_differential_clustering.default <- function(
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
                 
                 # Re-clustering sub-cluster
-                k = max(10, min(max_k, 0.1 * ncol(object.))) # select a k according to the number of cells 
+                k = max(10, min(max_k, k_percent * ncol(object.))) # select a k according to the number of cells 
                 object.. = ChromSCape::find_clusters_louvain_scExp(object., k = k, resolution =  resolution,
                                                                    use.dimred = dim_red)
                 object.$IDcluster <- paste0(LETTERS[partition_depth],gsub("C", "", object..$cell_cluster))
@@ -775,6 +778,8 @@ find_differentiated_clusters.Seurat <- function(object,
 #' @param max_k An integer specifying the maximum number of nearest neighbors to use for 
 #' the Louvain clustering at each iteration. This k is reduced with the number of cells,
 #' to a minimum of k = 5.
+#' @param k_percent A numeric between 0 and 1 representing the fraction of cells
+#' to calculate the k for the KNN graph calulation of clustering.
 #' @param resolution A numeric specifying the resolution to use for the Louvain
 #' clustering at each iteration.
 #' @param starting.resolution A numeric specifying the resolution to use for the 
@@ -827,6 +832,7 @@ iterative_differential_clustering.Seurat <- function(
     starting.k = 100,
     resolution = 0.8,
     max_k = 50,
+    k_percent = 0.1,
     color = NULL,
     nThreads = 10,
     force_initial_clustering = TRUE,
@@ -959,7 +965,7 @@ iterative_differential_clustering.Seurat <- function(
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
                 
                 # Re-clustering sub-cluster
-                k = max(10, min(max_k, 0.1 * ncol(object.))) # select a k according to the number of cells 
+                k = max(10, min(max_k, k_percent * ncol(object.))) # select a k according to the number of cells 
                 object. = Seurat::FindNeighbors(object., reduction = dim_red, k.param = k, verbose = FALSE)
                 object. = Seurat::FindClusters(object., algorithm = 2,   resolution = resolution,
                                                random.seed = 47, verbose = FALSE)

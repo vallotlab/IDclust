@@ -350,7 +350,8 @@ plot_cluster_network.default <- function(
     if(!"edge.label.cex" %in% names(arguments)) edge.label.cex = 0.5 else
       edge.label.cex = arguments$edge.label.cex
     
-
+    xpd = par()$xpd
+    par(xpd=NA)
     plot(g,
          layout = layout,
          vertex.shape="none", 
@@ -366,7 +367,7 @@ plot_cluster_network.default <- function(
          edge.label.color='black', 
          add = TRUE,
          ...)
-    
+    par(xpd = xpd)
     if(legend){
         par(mar = c(5, 4, 4, 2) + 0.1)
         sizes = c(50, 100, 200, 500, 1000)
@@ -625,6 +626,9 @@ plot_cluster_network.Seurat <- function(
     
 
     layout = function_layout(g)
+
+    xpd = par()$xpd
+    par(xpd=NA)
     plot(g,
          layout = layout,
          vertex.shape = c("pie"),             # One of “none”, “circle”, “square”, “csquare”, “rectangle” “crectangle”, “vrectangle”, “pie”, “raster”, or “sphere”
@@ -647,7 +651,7 @@ plot_cluster_network.Seurat <- function(
          margin = c(-0.2,-1,-0.2,-1),
          main = color_by,
          ...)
-    
+     par(xpd = xpd)
     arguments <- list(...)
     if(!"edge.label.cex" %in% names(arguments)) edge.label.cex = 0.5 else
       edge.label.cex = arguments$edge.label.cex

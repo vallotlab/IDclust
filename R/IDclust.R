@@ -377,7 +377,7 @@ iterative_differential_clustering.default <- function(
     limit = 5,
     starting.k = 100,
     starting.resolution = 0.1,
-    resolution = 0.8,
+    resolution = 0.1,
     max_k = 50,
     k_percent = 0.1,
     FP_linear_model = NULL,
@@ -830,7 +830,7 @@ iterative_differential_clustering.Seurat <- function(
     limit = 5,
     starting.resolution = 0.1,
     starting.k = 100,
-    resolution = 0.8,
+    resolution = 0.1,
     max_k = 50,
     k_percent = 0.1,
     color = NULL,
@@ -1061,4 +1061,6 @@ iterative_differential_clustering.Seurat <- function(
     
     return(object)
 }
+
+
 

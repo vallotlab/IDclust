@@ -35,9 +35,6 @@ for the calculation of the FDR.}
 \item{iterations}{An integer specifyung the number of iterations of random
 subsampling to run.}
 }
-\value{
-
-}
 \description{
 Calculate False Negative markers for SingleCellExperiment object
 }

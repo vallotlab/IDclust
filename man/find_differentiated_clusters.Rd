@@ -83,8 +83,6 @@ in a cluster to consider it as a 'true' subcluster.}
 \item{verbose}{A logical specifying wether to print.}
 }
 \value{
-
-
 A list containing :
 \itemize{
 \item "diffmat_n" - A data.frame containing the number of differential regions
@@ -93,8 +91,6 @@ foun per cluster and the new assignations of the subclusters.
 \item "passing_min_pct_cell_assigned" - A boolean indicating if enough cells
 were  assigned
 }
-
-
 }
 \description{
 Find Differentiated Clusters

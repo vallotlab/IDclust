@@ -13,24 +13,24 @@ iterative_differential_clustering(object, ...)
   output_dir = "./",
   plotting = TRUE,
   saving = TRUE,
-  n_dims = 10,
+  n_dims = 50,
   dim_red = "PCA",
   vizualization_dim_red = "UMAP",
   processing_function = processing_ChromSCape,
   min.pct = NULL,
   differential_function = differential_ChromSCape,
-  logFC.th = log2(1.5),
+  logFC.th = log2(2),
   qval.th = 0.01,
   min_frac_cell_assigned = 0.1,
   limit = 5,
   starting.k = 100,
   starting.resolution = 0.1,
-  resolution = 0.8,
+  resolution = 0.1,
   max_k = 50,
   k_percent = 0.1,
   FP_linear_model = NULL,
   color = NULL,
-  nThreads = 10,
+  d = 10,
   swapExperiment = NULL,
   force_initial_clustering = TRUE,
   verbose = TRUE,
@@ -47,17 +47,16 @@ iterative_differential_clustering(object, ...)
   vizualization_dim_red = "umap",
   processing_function = processing_Seurat,
   differential_function = differential_edgeR_pseudobulk_LRT,
-  logFC.th = log2(1.5),
+  logFC.th = log2(2),
   qval.th = 0.01,
   min_frac_cell_assigned = 0.1,
   limit = 5,
   starting.resolution = 0.1,
   starting.k = 100,
-  resolution = 0.8,
+  resolution = 0.1,
   max_k = 50,
   k_percent = 0.1,
   color = NULL,
-  nThreads = 10,
   force_initial_clustering = TRUE,
   verbose = TRUE,
   ...
@@ -145,9 +144,6 @@ multiple binsizes. (See  \link{calculate_FDR_scEpigenomics}).}
 contains enough colors for each cluster (minimum 20 colors, but 100 colors
 at least is recommended, based on the dataset).}
 
-\item{nThreads}{An integer specifying of threads to use
-for the calculation of the FDR.}
-
 \item{swapExperiment}{A character specifying an alternative experiment
 (see \code{\link[SingleCellExperiment:altExps]{SingleCellExperiment::altExp()}}) to switch for differential analysis.
 The processing will be done in the main experiment while the differential
@@ -161,8 +157,6 @@ clustering.}
 \item{verbose}{A logical specifying wether to print.}
 }
 \value{
-
-
 The SingleCellExperiment object with the assignation of cells to clusters.
 If saving is true, also saves list of differential analyses, differential
 analyses summaries and embeddings for each re-clustered cluster. If runFDR is

@@ -326,8 +326,6 @@ find_differentiated_clusters.default <- function(
 #' multiple binsizes. (See  [calculate_FDR_scEpigenomics]).
 #' @param n_dims An integer specifying the number of first dimensions to keep 
 #' in the dimensionality reduction step.
-#' @param nThreads  An integer specifying of threads to use
-#' for the calculation of the FDR.
 #' @param color Set of colors to use for the coloring of the clusters. This must
 #' contains enough colors for each cluster (minimum 20 colors, but 100 colors
 #' at least is recommended, based on the dataset).
@@ -787,8 +785,6 @@ find_differentiated_clusters.Seurat <- function(object,
 #' low in order to have few starting clusters.
 #' @param n_dims An integer specifying the number of first dimensions to keep 
 #' in the dimensionality reduction step.
-#' @param nThreads  An integer specifying of threads to use
-#' for the calculation of the FDR.
 #' @param color Set of colors to use for the coloring of the clusters. This must
 #' contains enough colors for each cluster (minimum 20 colors, but 100 colors
 #' at least is recommended, based on the dataset).
@@ -824,7 +820,7 @@ iterative_differential_clustering.Seurat <- function(
     vizualization_dim_red = "umap",
     processing_function = processing_Seurat,
     differential_function = differential_edgeR_pseudobulk_LRT,
-    logFC.th = log2(1.5),
+    logFC.th = log2(2),
     qval.th = 0.01,
     min_frac_cell_assigned = 0.1,
     limit = 5,
@@ -834,7 +830,6 @@ iterative_differential_clustering.Seurat <- function(
     max_k = 50,
     k_percent = 0.1,
     color = NULL,
-    nThreads = 10,
     force_initial_clustering = TRUE,
     verbose = TRUE,
     ...

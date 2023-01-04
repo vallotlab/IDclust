@@ -31,9 +31,6 @@ cluster to consider a feature as potentially significantly differential.}
 
 \item{...}{Additional parameters to pass to \code{\link[Seurat:FindAllMarkers]{Seurat::FindAllMarkers()}}.}
 }
-\value{
-
-}
 \description{
 Run \code{\link[Seurat:FindAllMarkers]{Seurat::FindAllMarkers()}}  function on the
 clusters in the 'by' column and return a data.frame  containing the marker

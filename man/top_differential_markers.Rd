@@ -37,9 +37,6 @@ markers (default to logFC_col.}
 \item{pseudogene_pattern}{A character specifying the pattern of 'pseudo-genes'
 to exclude from the top markers.}
 }
-\value{
-
-}
 \description{
 Retrieve top marker genes from list of differential analysis
 }

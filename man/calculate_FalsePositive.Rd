@@ -37,9 +37,6 @@ subsampling to run.}
 \code{\link[=differential_ChromSCape]{differential_ChromSCape()}} for more information on additional
 parameters for the default function.}
 }
-\value{
-
-}
 \description{
 Calculate False Positives markers for SingleCellExperiment object
 }

@@ -7,9 +7,9 @@
 differential_ChromSCape(
   object,
   by = "IDcluster",
-  logFC.th = log2(1.5),
+  logFC.th = log2(2),
   qval.th = 0.01,
-  min.pct = 0.01,
+  min.pct = 0.2,
   marker = c("pos", "neg", "diff")[1]
 )
 }
@@ -32,9 +32,6 @@ cluster to consider a feature as potentially significantly differential.}
 \item{marker}{A character specifying which markers to retrieve. 'pos' for
 positive markers (default), 'neg' for negative markers or 'diff' for
 differential markers.}
-}
-\value{
-
 }
 \description{
 Runs \code{\link[ChromSCape:differential_activation]{ChromSCape::differential_activation()}} function on clusters in the

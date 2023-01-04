@@ -90,8 +90,6 @@ to display it on the edges.}
 \item{assay}{If color_by is a gene, the assay in which to retrieve the counts.}
 }
 \value{
-
-
 A hierarchical network of cluster assignation:
 \itemize{
 \item Size of nodes reflects the number of cells

@@ -43,9 +43,6 @@ pvalue.}
 per cluster to enrich. If there are more than max_genes_enriched genes in the
 list, will keep only the top max_genes_enriched genes for enrichment.}
 }
-\value{
-
-}
 \description{
 Find enriched pathways in marker genes of IDclust
 }

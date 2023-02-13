@@ -72,7 +72,7 @@ create_pseudobulk_mat.Seurat <- function(object,
       cells = colnames(object)[which(meta[[by]] == i & unlist(object[[biological_replicate_col]]) == b)]
       if(length(cells) > 25) {
           n = n+1
-          mat[,n] = Matrix::rowSums(raw_mat[,cells])
+          mat[,n] = Matrix::rowSums(raw_mat[,cells, drop = F])
           names_mat = c(names_mat, paste0(i,"_",b))
           rep_done = rep_done + 1
       } else {
@@ -82,19 +82,19 @@ create_pseudobulk_mat.Seurat <- function(object,
     }
     if(rep_done < n_rep & rep_done != 0){
         n = n + 1
-        mat[,n] =  Matrix::rowSums(raw_mat[,cells_not_used])
+        mat[,n] =  Matrix::rowSums(raw_mat[,cells_not_used, drop = F])
         names_mat = c(names_mat, paste0(i,"_small_rep"))
     }
     if(rep_done == 0){
           n = n + 1
           cells_rep1 = sample(cells_not_used, floor(length(cells_not_used)/2))
-          mat[,n] =  Matrix::rowSums(raw_mat[,cells_rep1])
+          mat[,n] =  Matrix::rowSums(raw_mat[,cells_rep1, drop = F])
           names_mat = c(names_mat, paste0(i,"_small_rep1"))
           
           n = n + 1
           cells_rep2 = cells_not_used[which(! cells_not_used %in% cells_rep1)]
           names_mat = c(names_mat, paste0(i,"_small_rep2"))
-          mat[,n] =  Matrix::rowSums(raw_mat[,cells_rep2])
+          mat[,n] =  Matrix::rowSums(raw_mat[,cells_rep2, drop = F])
       }
   }
   mat = mat[,which(Matrix::colSums(mat) > 0)]
@@ -153,7 +153,7 @@ create_pseudobulk_mat.default <- function(object,
       cells = colnames(object)[which(meta[[by]] == i & unlist(object[[biological_replicate_col]]) == b)]
       if(length(cells) > 25) {
         n = n+1
-        mat[,n] = Matrix::rowSums(raw_mat[,cells])
+        mat[,n] = Matrix::rowSums(raw_mat[,cells, drop = F])
         names_mat = c(names_mat, paste0(i,"_",b))
         rep_done = rep_done + 1
       } else {
@@ -163,19 +163,19 @@ create_pseudobulk_mat.default <- function(object,
     }
     if(rep_done < n_rep & rep_done != 0){
       n = n + 1
-      mat[,n] =  Matrix::rowSums(raw_mat[,cells_not_used])
+      mat[,n] =  Matrix::rowSums(raw_mat[,cells_not_used, drop = F])
       names_mat = c(names_mat, paste0(i,"_small_rep"))
     }
     if(rep_done == 0){
       n = n + 1
       cells_rep1 = sample(cells_not_used, floor(length(cells_not_used)/2))
-      mat[,n] =  Matrix::rowSums(raw_mat[,cells_rep1])
+      mat[,n] =  Matrix::rowSums(raw_mat[,cells_rep1, drop = F])
       names_mat = c(names_mat, paste0(i,"_small_rep1"))
       
       n = n + 1
       cells_rep2 = cells_not_used[which(! cells_not_used %in% cells_rep1)]
       names_mat = c(names_mat, paste0(i,"_small_rep2"))
-      mat[,n] =  Matrix::rowSums(raw_mat[,cells_rep2])
+      mat[,n] =  Matrix::rowSums(raw_mat[,cells_rep2, drop = F])
     }
   }
   mat = mat[,which(Matrix::colSums(mat) > 0)]

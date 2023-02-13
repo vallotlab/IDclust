@@ -355,6 +355,9 @@ plot_cluster_network.default <- function(
      vertex.pie.color = list(color_df[,paste0(color_by, "_color")])
    }
   layout = function_layout(g)
+
+  xpd = par()$xpd
+  par(xpd=NA)
   plot(g,
        layout = layout,
        vertex.shape = shape,             # One of “none”, “circle”, “square”, “csquare”, “rectangle” “crectangle”, “vrectangle”, “pie”, “raster”, or “sphere”
@@ -378,6 +381,7 @@ plot_cluster_network.default <- function(
        margin = c(-0.2,-1,-0.2,-1),
        main = main,
        ...)
+  par(xpd=xpd)
   
   arguments <- list(...)
   if(!"edge.label.cex" %in% names(arguments)) edge.label.cex = 0.5 else
@@ -533,9 +537,15 @@ plot_cluster_network.Seurat <- function(
     ...
 ){
   categ = TRUE
+  shape = "pie"
+  if(!is.null(color_by)){
   if(!color_by %in% colnames(object@meta.data)) {
     if(color_by %in% rownames(object)) categ = FALSE else stop("color_by must ",
                                                                "be in colnames(object@meta.data) or in rownames(object).")
+  }
+  } else {
+    categ = FALSE
+    shape = "circle"
   }
   
   object@meta.data[,cluster_col] = gsub("Alpha_","", object@meta.data[,cluster_col])
@@ -545,11 +555,17 @@ plot_cluster_network.Seurat <- function(
     IDC_summary$cluster_of_origin = gsub("Alpha_","", IDC_summary$cluster_of_origin)
   }
   
-  if(is.null(colors)){
+  if(is.null(colors)) {
     colors = c("#4285F4", "#DB4437", "#F4B400", "#0F9D58", "slategray",
-               grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)])
-    if(color_by %in% colnames(object@meta.data))
+                        grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)])
+    if(categ){
       colors = colors[seq_along(unique(unlist(object[[color_by]])))]
+    } else {
+      color_df = data.frame(
+        "color_by" = "main",
+        "color_by_color" = colors[1]
+      )
+    }
   }
   
   # Annotation
@@ -561,7 +577,8 @@ plot_cluster_network.Seurat <- function(
       "color_by" = sort(unique(object@meta.data[,color_by])),
       "color_by_color" = colors
     )
-  } else {
+    colnames(color_df) = gsub("color_by", color_by, colnames(color_df))
+  } else if(!is.null(color_by)){
     counts = as.numeric(object@assays[[assay]]@counts[color_by,])
     sel = which(counts >= threshold_to_define_feature_active)
     counts[] = "Inactive"
@@ -572,9 +589,8 @@ plot_cluster_network.Seurat <- function(
       "color_by_color" = c("red","grey85")
     )
     annot[, color_by] = counts
+    colnames(color_df) = gsub("color_by", color_by, colnames(color_df))
   }
-  colnames(color_df) = gsub("color_by", color_by, colnames(color_df))
-  
   
   clusters = object[[cluster_col]]
   
@@ -592,7 +608,12 @@ plot_cluster_network.Seurat <- function(
   
   # Table of cell and cluster assignation for each 'partition depth'
   repartition = annot
-  repartition = repartition[,c(paste0("partition_",0:max_partition_depth), color_by)]
+  if(is.null(color_by)) {
+    repartition$tmp = 0
+    repartition = repartition[,c(paste0("partition_",0:max_partition_depth), "tmp")]
+  } else{
+    repartition = repartition[,c(paste0("partition_",0:max_partition_depth), color_by)]
+  }
   
   # Define all final clusters
   all_nodes = sapply(paste0("partition_",0:max_partition_depth), 
@@ -611,7 +632,7 @@ plot_cluster_network.Seurat <- function(
   df$ndiff = 0
   df$isFinal = 2
   prop.base_clust = list()
-  empty = table(repartition[[color_by]])
+  if(!is.null(color_by)) empty = table(repartition[[color_by]]) else empty = 0
   empty[] = 0
   
   # Fill adjency matrix with link between nodes (clusters).
@@ -623,12 +644,12 @@ plot_cluster_network.Seurat <- function(
     for(i in unique(repartition[,level])){
       df$size[df$name == i] = length(which(repartition[,level] == i))
       if(i %in% repartition[,ncol(repartition)-1]) df$isFinal[df$name == i] = 1
-      # if(is.null(prop.base_clust[[i]])){
-      prop.base_clust[[i]] = empty
-      tab = table(repartition[which(repartition[,level] == i), color_by])
-      prop.base_clust[[i]][match(names(tab), names(empty))] = as.numeric(tab)
-      prop.base_clust[[i]] = as.numeric(prop.base_clust[[i]])
-      # } 
+      if(!is.null(color_by)) {
+        prop.base_clust[[i]] = empty
+        tab = table(repartition[which(repartition[,level] == i), color_by])
+        prop.base_clust[[i]][match(names(tab), names(empty))] = as.numeric(tab)
+        prop.base_clust[[i]] = as.numeric(prop.base_clust[[i]])
+      }
       if(!is.null(IDC_summary)) {
         if(i != "Alpha") df$ndiff[df$name == i] = IDC_summary$n_differential[which(IDC_summary$true_subcluster == i)][1]
       } else {
@@ -660,31 +681,44 @@ plot_cluster_network.Seurat <- function(
   
   layout = function_layout(g)
   
+  colors_vertex = NULL
+  main = color_by
+  if(is.null(color_by)){
+    colors_vertex = colors[1]
+    main = ""
+    vertex.pie.color = NULL
+  } else {
+    vertex.pie.color = list(color_df[,paste0(color_by, "_color")])
+  }
+  
+  layout = function_layout(g)
   xpd = par()$xpd
   par(xpd=NA)
   plot(g,
        layout = layout,
-       vertex.shape = c("pie"),             # One of “none”, “circle”, “square”, “csquare”, “rectangle” “crectangle”, “vrectangle”, “pie”, “raster”, or “sphere”
-       vertex.pie = prop.base_clust,
+       vertex.shape = shape,             # One of “none”, “circle”, “square”, “csquare”, “rectangle” “crectangle”, “vrectangle”, “pie”, “raster”, or “sphere”
+       vertex.pie =  prop.base_clust,
        rescale=TRUE,
        vertex.pie.lty = df$isFinal,
-       vertex.pie.color=list(color_df[,paste0(color_by, "_color")]),
+       vertex.pie.color = vertex.pie.color,
        vertex.size = df$size,                          # Size of the node (default is 15)
        vertex.size2 = NA,
-       edge.width=df$ndiff[edges_ids[,2]],                        # Edge width, defaults to 1
-       edge.arrow.size=0,                           # Arrow size, defaults to 1
-       edge.arrow.width=0,                          # Arrow width, defaults to 1
-       edge.lty=c("solid"),
-       vertex.label.color=c("black"),
-       vertex.label.family='sans',                   # Font family of the label (e.g.“Times”, “Helvetica”)
-       vertex.label.font=c(1),                  # Font: 1 plain, 2 bold, 3, italic, 4 bold italic, 5 symbol
-       vertex.label.cex=0.125 * log2(df$size),                 # Font size (multiplication factor, device-dependent)
-       vertex.label.dist=c(3,rep(1, nrow(df) -1)),                           # Distance between the label and the vertex
-       vertex.label.degree=c(4.7,rep(90, nrow(df) -1)), 
+       edge.width = df$ndiff[edges_ids[,2]],                        # Edge width, defaults to 1
+       edge.arrow.size = 0,                           # Arrow size, defaults to 1
+       edge.arrow.width = 0,                          # Arrow width, defaults to 1
+       edge.lty = c("solid"),
+       vertex.color = colors_vertex,
+       vertex.label.color = c("black"),
+       vertex.label.family = 'sans',                   # Font family of the label (e.g.“Times”, “Helvetica”)
+       vertex.label.font = c(1),                  # Font: 1 plain, 2 bold, 3, italic, 4 bold italic, 5 symbol
+       vertex.label.cex = 0.125 * log2(df$size),                 # Font size (multiplication factor, device-dependent)
+       vertex.label.dist = c(3,rep(1, nrow(df) -1)),                           # Distance between the label and the vertex
+       vertex.label.degree = c(4.7,rep(90, nrow(df) -1)), 
        margin = c(-0.2,-1,-0.2,-1),
-       main = color_by,
+       main = main,
        ...)
   par(xpd = xpd)
+  
   arguments <- list(...)
   if(!"edge.label.cex" %in% names(arguments)) edge.label.cex = 0.5 else
     edge.label.cex = arguments$edge.label.cex

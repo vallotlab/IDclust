@@ -282,7 +282,7 @@ differential_edgeR_pseudobulk_LRT.default <- function(object,
   cluster_u = unique(meta[,by])
   n_cell_assigned = 0
   mat = create_pseudobulk_mat(object, by = by, biological_replicate_col)
-  res = data.frame("p_val" = 0, "avg_log2FC"= 0, "pct.1" = 0, "pct.2"= 0, "p_val_adj" = 0, "cluster"= "", "gene"= "")
+  res = data.frame("p_val" = 0, "avg_log2FC"= 0, "pct.1" = 0, "pct.2"= 0, "p_val_adj" = 0, "cluster"= "", "ID"= "")
   
   for(i in seq_along(cluster_u)){
     
@@ -316,7 +316,7 @@ differential_edgeR_pseudobulk_LRT.default <- function(object,
           "pct.2"= pct.2[match(rownames(tab), names(pct.2))],
           "p_val_adj" = tab$FDR,
           "cluster"= cluster_u[i],
-          "gene"= rownames(tab)
+          "ID"= rownames(tab)
         )
         res = rbind(res, res.)
         

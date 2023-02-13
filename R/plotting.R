@@ -126,7 +126,7 @@
 #' 
 #' }
 plot_cluster_network <- function(object, ...) {
-    UseMethod(generic = 'plot_cluster_network', object = object)
+  UseMethod(generic = 'plot_cluster_network', object = object)
 }
 
 #' Plot Iterative Differential Clustering network
@@ -138,7 +138,7 @@ plot_cluster_network <- function(object, ...) {
 #' saving option is TRUE. Use to determine the width of the edges based on the
 #' number of differential features of the given marker.
 #' @param color_by A character specifying the column of the SingleCellExperiment
-#'  to use for coloring the nodes.
+#'  to use for coloring the nodes. If NULL, the nodes will be unicolor circles.
 #' @param cluster_col A character specifying the column of the 
 #' SingleCellExperiment to use to store the iterative differential clusters. 
 #' @param node_size_factor A numeric specifying the size of the nodes.  
@@ -173,7 +173,7 @@ plot_cluster_network <- function(object, ...) {
 #' 
 plot_cluster_network.default <- function(
     object,
-    IDC_summary,
+    IDC_summary = NULL,
     color_by = "IDcluster",
     cluster_col = "IDcluster",
     colors = NULL,
@@ -187,260 +187,293 @@ plot_cluster_network.default <- function(
     edge_df = NULL,
     ...
 ){
-    categ = TRUE
+  categ = TRUE
+  shape = "pie"
+  if(!is.null(color_by)){
     if(!color_by %in% colnames(SingleCellExperiment::colData(object))) {
-        if(color_by %in% unlist(strsplit(SingleCellExperiment::rowData(object)[[gene_col]], split = ", ", fixed = T)))
-            categ = FALSE else stop("color_by must be in colnames",
-            "(object@meta.data) or in rownames(object).")
+      if(color_by %in% unlist(strsplit(SingleCellExperiment::rowData(object)[[gene_col]], split = ", ", fixed = T)))
+        categ = FALSE else stop("color_by must be in colnames",
+                                "(object@meta.data) or in rownames(object).")
     }
-    
-    object[[cluster_col]] = gsub("Alpha_","", object[[cluster_col]])
-    if(!is.null(IDC_summary)){
-        IDC_summary$true_subcluster = gsub("Alpha_","", IDC_summary$true_subcluster)
-        IDC_summary$cluster_of_origin = gsub("Alpha_","", IDC_summary$cluster_of_origin)
-    }
-
-    if(is.null(colors) & categ) {
-        colors = c("#4285F4", "#DB4437", "#F4B400", "#0F9D58", "slategray",
-                   grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)])
-        colors = colors[seq_along(unique(unlist(object[[color_by]])))]
-    }
-        
-    
-    annot = as.data.frame(SingleCellExperiment::colData(object))
-    
-    # Make a color data.frame
+  } else {
+    categ = FALSE
+    shape = "circle"
+  }
+  object[[cluster_col]] = gsub("Alpha_","", object[[cluster_col]])
+  if(!is.null(IDC_summary)){
+    IDC_summary$true_subcluster = gsub("Alpha_","", IDC_summary$true_subcluster)
+    IDC_summary$cluster_of_origin = gsub("Alpha_","", IDC_summary$cluster_of_origin)
+  }
+  
+  if(is.null(colors)) {
+    colors = c("#4285F4", "#DB4437", "#F4B400", "#0F9D58", "slategray",
+                        grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)])
     if(categ){
-        color_df = data.frame(
-            "color_by" = sort(unique(object[[color_by]])),
-            "color_by_color" = colors
-        )
+      colors = colors[seq_along(unique(unlist(object[[color_by]])))]
     } else {
-        annot_feature = as.data.frame(SummarizedExperiment::rowRanges(object))
-        annot_feature = annot_feature %>% 
-            tidyr::separate_rows(.data[[gene_col]], sep = ", ") %>% 
-            dplyr::group_by(.data[[gene_col]]) %>%
-            dplyr::slice_min(.data[["distanceToTSS"]])
-        annot_feature = annot_feature %>%
-            dplyr::filter( .data[["distanceToTSS"]] < max_distanceToTSS)
-        
-        counts = SingleCellExperiment::counts(object[annot_feature$ID[which(
-            annot_feature[[gene_col]] == color_by)],])
-        
-        if(!is.null(counts) & nrow(counts) > 1 ){
-            counts = Matrix::rowSums(counts)
-        }
-        counts = as.numeric(counts)
-        sel = which(counts >= threshold_to_define_feature_active)
-        counts[] = "Inactive"
-        counts[sel] = "Active"
-        
-        color_df = data.frame(
-            "color_by" = sort(unique(counts)),
-            "color_by_color" = c("red","grey85")
-        )
-        annot[, color_by] = counts
+      color_df = data.frame(
+        "color_by" = "main",
+        "color_by_color" = colors[1]
+      )
     }
+  }
+  
+  
+  annot = as.data.frame(SingleCellExperiment::colData(object))
+  
+  # Make a color data.frame
+  if(categ){
+    color_df = data.frame(
+      "color_by" = sort(unique(object[[color_by]])),
+      "color_by_color" = colors
+    )
     colnames(color_df) = gsub("color_by", color_by, colnames(color_df))
+  } else if(!is.null(color_by)){
+    annot_feature = as.data.frame(SummarizedExperiment::rowRanges(object))
+    annot_feature = annot_feature %>% 
+      tidyr::separate_rows(.data[[gene_col]], sep = ", ") %>% 
+      dplyr::group_by(.data[[gene_col]]) %>%
+      dplyr::slice_min(.data[["distanceToTSS"]])
+    annot_feature = annot_feature %>%
+      dplyr::filter( .data[["distanceToTSS"]] < max_distanceToTSS)
     
-    clusters = object[[cluster_col]]
+    counts = SingleCellExperiment::counts(object[annot_feature$ID[which(
+      annot_feature[[gene_col]] == color_by)],])
     
-    annot$partition_0 = "Alpha"
-    
-    cluster_list = sapply(clusters, function(i) strsplit(i, split = "_", fixed =TRUE))
-    max_partition_depth = max(sapply(cluster_list, length))
-    for(i in seq_len(max_partition_depth)){
-        annot[,paste0("partition_",i)] = sapply(cluster_list, function(l){
-            paste(l[1:min(i, length(l)) ], collapse = "_") })
-        na_idxs = which(is.na(annot[,paste0("partition_",i)]))
-        if(i > 1 & length(na_idxs)) annot[na_idxs, paste0("partition_",i)] =
-            annot[na_idxs, paste0("partition_",i-1)]
+    if(!is.null(counts) & nrow(counts) > 1 ){
+      counts = Matrix::rowSums(counts)
     }
+    counts = as.numeric(counts)
+    sel = which(counts >= threshold_to_define_feature_active)
+    counts[] = "Inactive"
+    counts[sel] = "Active"
     
-    # Table of cell and cluster assignation for each 'partition depth'
-    repartition = annot
+    color_df = data.frame(
+      "color_by" = sort(unique(counts)),
+      "color_by_color" = c("red","grey85")
+    )
+    annot[, color_by] = counts
+    colnames(color_df) = gsub("color_by", color_by, colnames(color_df))
+  } 
+  
+  clusters = object[[cluster_col]]
+  
+  annot$partition_0 = "Alpha"
+  
+  cluster_list = sapply(clusters, function(i) strsplit(i, split = "_", fixed =TRUE))
+  max_partition_depth = max(sapply(cluster_list, length))
+  for(i in seq_len(max_partition_depth)){
+    annot[,paste0("partition_",i)] = sapply(cluster_list, function(l){
+      paste(l[1:min(i, length(l)) ], collapse = "_") })
+    na_idxs = which(is.na(annot[,paste0("partition_",i)]))
+    if(i > 1 & length(na_idxs)) annot[na_idxs, paste0("partition_",i)] =
+      annot[na_idxs, paste0("partition_",i-1)]
+  }
+  
+  # Table of cell and cluster assignation for each 'partition depth'
+  repartition = annot
+  if(is.null(color_by)) {
+    repartition$tmp = 0
+    repartition = repartition[,c(paste0("partition_",0:max_partition_depth), "tmp")]
+  } else{
     repartition = repartition[,c(paste0("partition_",0:max_partition_depth), color_by)]
-    
-    # Define all final clusters
-    all_nodes = sapply(paste0("partition_",0:max_partition_depth), 
-                       function(j){unique(repartition[,j])})
-    all_nodes = unique(unlist(all_nodes))
-    
-    # Create adjency matrix for graph
-    adj.mat = matrix(0, nrow = length(all_nodes), ncol = length(all_nodes),
-                     dimnames = list(all_nodes, all_nodes))
-    adj.mat[1, unique(repartition$partition_1)] = 1
-    
-    df = data.frame(name =all_nodes)
-    rownames(df) = df$name
-    
-    df$size = 0
-    df$ndiff = 0
-    df$isFinal = 2
-    prop.base_clust = list()
-    empty = table(repartition[[color_by]])
-    empty[] = 0
-    
-    # Fill adjency matrix with link between nodes (clusters).
-    # Size of nodes reflects the number of cells
-    # Width of edges reflects the number of differential features defining a cluster
-    # Color of nodes reflects the repartition of cells according to the 'color_by'
-    # column
-    for(level in 1:(ncol(repartition)-1)){
-        for(i in unique(repartition[,level])){
-            df$size[df$name == i] = length(which(repartition[,level] == i))
-            if(i %in% repartition[,ncol(repartition)-1]) df$isFinal[df$name == i] = 1
-            # if(is.null(prop.base_clust[[i]])){
-            prop.base_clust[[i]] = empty
-            tab = table(repartition[which(repartition[,level] == i), color_by])
-            prop.base_clust[[i]][match(names(tab), names(empty))] = as.numeric(tab)
-            prop.base_clust[[i]] = as.numeric(prop.base_clust[[i]])
-            # } 
-            if(i != "Alpha") df$ndiff[df$name == i] = IDC_summary$n_differential[which(IDC_summary$true_subcluster == i)][1]
-            if(level != (ncol(repartition)-1)) adj.mat[i, unique(repartition[,level + 1 ][which(repartition[,level] == i)])] = 1
-        }
-        
+  }
+  
+  
+  # Define all final clusters
+  all_nodes = sapply(paste0("partition_",0:max_partition_depth), 
+                     function(j){unique(repartition[,j])})
+  all_nodes = unique(unlist(all_nodes))
+  
+  # Create adjency matrix for graph
+  adj.mat = matrix(0, nrow = length(all_nodes), ncol = length(all_nodes),
+                   dimnames = list(all_nodes, all_nodes))
+  adj.mat[1, unique(repartition$partition_1)] = 1
+  
+  df = data.frame(name =all_nodes)
+  rownames(df) = df$name
+  
+  df$size = 0
+  df$ndiff = 0
+  df$isFinal = 2
+  prop.base_clust = list()
+  if(!is.null(color_by)) empty = table(repartition[[color_by]]) else empty = 0
+  empty[] = 0
+  
+  # Fill adjency matrix with link between nodes (clusters).
+  # Size of nodes reflects the number of cells
+  # Width of edges reflects the number of differential features defining a cluster
+  # Color of nodes reflects the repartition of cells according to the 'color_by'
+  # column
+  for(level in 1:(ncol(repartition)-1)){
+    for(i in unique(repartition[,level])){
+      df$size[df$name == i] = length(which(repartition[,level] == i))
+      if(i %in% repartition[,ncol(repartition)-1]) df$isFinal[df$name == i] = 1
+      if(!is.null(color_by)) {
+        prop.base_clust[[i]] = empty
+        tab = table(repartition[which(repartition[,level] == i), color_by])
+        prop.base_clust[[i]][match(names(tab), names(empty))] = as.numeric(tab)
+        prop.base_clust[[i]] = as.numeric(prop.base_clust[[i]])
+      }
+      if(!is.null(IDC_summary)) {
+        if(i != "Alpha") df$ndiff[df$name == i] = IDC_summary$n_differential[which(IDC_summary$true_subcluster == i)][1]
+      } else {
+        if(i != "Alpha") df$ndiff[df$name == i] = 20
+      }
+      
+      if(level != (ncol(repartition)-1)) adj.mat[i, unique(repartition[,level + 1 ][which(repartition[,level] == i)])] = 1
     }
     
-    # Make sure that all the edge have a minimum width of 1
-    df$ndiff[which(df$ndiff == 0)] = 1
-    df$size = node_size_factor * sqrt(50 * df$size / nrow(repartition))
-    df$size[1] = df$size[1] / 1.5
-    df$ndiff = edge_size_factor * log2(df$ndiff+1)
-    g = igraph::simplify( igraph::graph_from_adjacency_matrix(adjmatrix = adj.mat))
+  }
+  
+  # Make sure that all the edge have a minimum width of 1
+  df$ndiff[which(df$ndiff == 0)] = 1
+  df$size = node_size_factor * sqrt(50 * df$size / nrow(repartition))
+  df$size[1] = df$size[1] / 1.5
+  df$ndiff = edge_size_factor * log2(df$ndiff+1)
+  g = igraph::simplify( igraph::graph_from_adjacency_matrix(adjmatrix = adj.mat))
+  
+  edges_ids =  igraph::get.edges(g, es = 1:(nrow(df)-1))
+  
+  if(legend) par(mar = c(9, 0, 4, 8) + 0.1)
+  
+  df$pathway = ""
+  if(!is.null(edge_df)){
+    edge_df$Term = gsub(" \\(.*", "", edge_df$Term)
+    edge_df = edge_df %>% dplyr::group_by(cluster, cluster_of_origin) %>% 
+      dplyr::summarise(Term = head(Term, 1))
+    df$pathway = edge_df$Term[match(df$name, gsub("Alpha_", "",paste0(edge_df$cluster_of_origin, "_", edge_df$cluster)))]
+  }
+
+  colors_vertex = NULL
+  main = color_by
+   if(is.null(color_by)){
+     colors_vertex = colors[1]
+     main = ""
+     vertex.pie.color = NULL
+   } else {
+     vertex.pie.color = list(color_df[,paste0(color_by, "_color")])
+   }
+  layout = function_layout(g)
+  plot(g,
+       layout = layout,
+       vertex.shape = shape,             # One of “none”, “circle”, “square”, “csquare”, “rectangle” “crectangle”, “vrectangle”, “pie”, “raster”, or “sphere”
+       vertex.pie =  prop.base_clust,
+       rescale=TRUE,
+       vertex.pie.lty = df$isFinal,
+       vertex.pie.color = vertex.pie.color,
+       vertex.size = df$size,                          # Size of the node (default is 15)
+       vertex.size2 = NA,
+       edge.width = df$ndiff[edges_ids[,2]],                        # Edge width, defaults to 1
+       edge.arrow.size = 0,                           # Arrow size, defaults to 1
+       edge.arrow.width = 0,                          # Arrow width, defaults to 1
+       edge.lty = c("solid"),
+       vertex.color = colors_vertex,
+       vertex.label.color = c("black"),
+       vertex.label.family = 'sans',                   # Font family of the label (e.g.“Times”, “Helvetica”)
+       vertex.label.font = c(1),                  # Font: 1 plain, 2 bold, 3, italic, 4 bold italic, 5 symbol
+       vertex.label.cex = 0.125 * log2(df$size),                 # Font size (multiplication factor, device-dependent)
+       vertex.label.dist = c(3,rep(1, nrow(df) -1)),                           # Distance between the label and the vertex
+       vertex.label.degree = c(4.7,rep(90, nrow(df) -1)), 
+       margin = c(-0.2,-1,-0.2,-1),
+       main = main,
+       ...)
+  
+  arguments <- list(...)
+  if(!"edge.label.cex" %in% names(arguments)) edge.label.cex = 0.5 else
+    edge.label.cex = arguments$edge.label.cex
+  
+  xpd = par()$xpd
+  par(xpd=NA)
+  plot(g,
+       layout = layout,
+       vertex.shape="none", 
+       edge.arrow.size=0,                           # Arrow size, defaults to 1
+       edge.arrow.width=0,
+       edge.lty=0,
+       edge.width=0,
+       vertex.label.cex = 0,
+       edge.label = lapply(df$pathway[edges_ids[,2]], function(s) paste(strwrap(s, width=20), collapse = "\n")),
+       edge.label.family='sans',     
+       edge.label.cex = edge.label.cex,
+       vertex.label="",  
+       edge.label.color='black', 
+       add = TRUE,
+       ...)
+  par(xpd = xpd)
+  if(legend){
+    par(mar = c(5, 4, 4, 2) + 0.1)
+    sizes = c(50, 100, 200, 500, 1000)
+    sizes. = node_size_factor * sqrt(50 * sizes / nrow(repartition))
     
-    edges_ids =  igraph::get.edges(g, es = 1:(nrow(df)-1))
+    legend(x = 0.5,
+           y = -1.25,
+           ncol = 6,
+           xjust = 0.5,
+           box.lty=0,
+           legend=unique(color_df[,1]),
+           pch=20,
+           pt.cex = 4,
+           y.intersp = 2,
+           col=as.vector(unique(color_df[,2])),
+           xpd = TRUE)
     
-    if(legend) par(mar = c(9, 0, 4, 8) + 0.1)
+    legend(x = 1.5,
+           y =1.35,
+           title = "#Ncells",
+           legend=as.character(sizes),
+           box.lty=0,
+           pch=1,
+           cex = 1,
+           pt.cex = sizes./10,
+           y.intersp = 1.5,
+           x.intersp = 2,
+           col="black",
+           xpd = TRUE)
     
-    df$pathway = ""
-    if(!is.null(edge_df)){
-      edge_df$Term = gsub(" \\(.*", "", edge_df$Term)
-      edge_df = edge_df %>% dplyr::group_by(cluster, cluster_of_origin) %>% 
-          dplyr::summarise(Term = head(Term, 1))
-      df$pathway = edge_df$Term[match(df$name, gsub("Alpha_", "",paste0(edge_df$cluster_of_origin, "_", edge_df$cluster)))]
+    
+    text(c(1.5,1.5)  + 0.35, c(0.2,-0.05),
+         labels = c("Final", "Transient"))
+    
+    circle. <- function (r, x0, y0,  ...){
+      t <- seq(0, 2 * pi, by = 0.01)
+      x <- r * cos(t) + x0
+      y <- r * sin(t) + y0
+      lines(x, y, ...)
     }
+    circle.(r = 0.1,
+            x0 =  1.5,
+            y0 = 0.2,
+            lty = 1, 
+            col = "black",
+            xpd =TRUE)
+    circle.(r = 0.1,
+            x0 = 1.5,
+            y0 =  -0.05,
+            lty = 2, 
+            col = "black",
+            xpd =TRUE)
     
-    
-    layout = function_layout(g)
-    plot(g,
-         layout = layout,
-         vertex.shape = c("pie"),             # One of “none”, “circle”, “square”, “csquare”, “rectangle” “crectangle”, “vrectangle”, “pie”, “raster”, or “sphere”
-         vertex.pie = prop.base_clust,
-         rescale=TRUE,
-         vertex.pie.lty = df$isFinal,
-         vertex.pie.color=list(color_df[,paste0(color_by, "_color")]),
-         vertex.size = df$size,                          # Size of the node (default is 15)
-         vertex.size2 = NA,
-         edge.width=df$ndiff[edges_ids[,2]],                        # Edge width, defaults to 1
-         edge.arrow.size=0,                           # Arrow size, defaults to 1
-         edge.arrow.width=0,                          # Arrow width, defaults to 1
-         edge.lty=c("solid"),
-         vertex.label.color=c("black"),
-         vertex.label.family='sans',                   # Font family of the label (e.g.“Times”, “Helvetica”)
-         vertex.label.font=c(1),                  # Font: 1 plain, 2 bold, 3, italic, 4 bold italic, 5 symbol
-         vertex.label.cex=0.125 * log2(df$size),                 # Font size (multiplication factor, device-dependent)
-         vertex.label.dist=c(3,rep(1, nrow(df) -1)),                           # Distance between the label and the vertex
-         vertex.label.degree=c(4.7,rep(90, nrow(df) -1)), 
-         margin = c(-0.2,-1,-0.2,-1),
-         main = color_by,
-         ...)
-
-    arguments <- list(...)
-    if(!"edge.label.cex" %in% names(arguments)) edge.label.cex = 0.5 else
-      edge.label.cex = arguments$edge.label.cex
-    
-    xpd = par()$xpd
-    par(xpd=NA)
-    plot(g,
-         layout = layout,
-         vertex.shape="none", 
-         edge.arrow.size=0,                           # Arrow size, defaults to 1
-         edge.arrow.width=0,
-         edge.lty=0,
-         edge.width=0,
-         vertex.label.cex = 0,
-         edge.label = lapply(df$pathway[edges_ids[,2]], function(s) paste(strwrap(s, width=20), collapse = "\n")),
-         edge.label.family='sans',     
-         edge.label.cex = edge.label.cex,
-         vertex.label="",  
-         edge.label.color='black', 
-         add = TRUE,
-         ...)
-    par(xpd = xpd)
-    if(legend){
-        par(mar = c(5, 4, 4, 2) + 0.1)
-        sizes = c(50, 100, 200, 500, 1000)
-        sizes. = node_size_factor * sqrt(50 * sizes / nrow(repartition))
-        
-        legend(x = 0.5,
-               y = -1.25,
-               ncol = 6,
-               xjust = 0.5,
-               box.lty=0,
-               legend=unique(color_df[,1]),
-               pch=20,
-               pt.cex = 4,
-               y.intersp = 2,
-               col=as.vector(unique(color_df[,2])),
-               xpd = TRUE)
-
-        legend(x = 1.5,
-               y =1.35,
-               title = "#Ncells",
-               legend=as.character(sizes),
-               box.lty=0,
-               pch=1,
-               cex = 1,
-               pt.cex = sizes./10,
-               y.intersp = 1.5,
-               x.intersp = 2,
-               col="black",
-               xpd = TRUE)
-
-        
-        text(c(1.5,1.5)  + 0.35, c(0.2,-0.05),
-             labels = c("Final", "Transient"))
-        
-        circle. <- function (r, x0, y0,  ...){
-            t <- seq(0, 2 * pi, by = 0.01)
-            x <- r * cos(t) + x0
-            y <- r * sin(t) + y0
-            lines(x, y, ...)
-        }
-        circle.(r = 0.1,
-               x0 =  1.5,
-               y0 = 0.2,
-               lty = 1, 
-               col = "black",
-               xpd =TRUE)
-        circle.(r = 0.1,
-                x0 = 1.5,
-                y0 =  -0.05,
-                lty = 2, 
-                col = "black",
-                xpd =TRUE)
-        
-        if(!is.null(IDC_summary)){
-            sizes = c(5,10,20,50,100)
-            sizes. = edge_size_factor * log2(sizes+1)
-            legend(x = 1.5,
-                   y = -0.35,
-                   title = "#Nmarkers",
-                   legend=as.character(sizes),
-                   box.lty=0,
-                   lty = 1,
-                   cex = 1,
-                   lwd = 1.5*sizes.,
-                   col = "grey65",
-                   y.intersp = c(1.35),
-                   x.intersp = 2,
-                   xpd = TRUE
-                   )
-        }
+    if(!is.null(IDC_summary)){
+      sizes = c(5,10,20,50,100)
+      sizes. = edge_size_factor * log2(sizes+1)
+      legend(x = 1.5,
+             y = -0.35,
+             title = "#Nmarkers",
+             legend=as.character(sizes),
+             box.lty=0,
+             lty = 1,
+             cex = 1,
+             lwd = 1.5*sizes.,
+             col = "grey65",
+             y.intersp = c(1.35),
+             x.intersp = 2,
+             xpd = TRUE
+      )
     }
-    
-    return(color_df)
+  }
+  
+  return(color_df)
 }
 
 
@@ -499,251 +532,320 @@ plot_cluster_network.Seurat <- function(
     edge_df = NULL,
     ...
 ){
-    categ = TRUE
-    if(!color_by %in% colnames(object@meta.data)) {
-        if(color_by %in% rownames(object)) categ = FALSE else stop("color_by must ",
-                                                                   "be in colnames(object@meta.data) or in rownames(object).")
+  categ = TRUE
+  if(!color_by %in% colnames(object@meta.data)) {
+    if(color_by %in% rownames(object)) categ = FALSE else stop("color_by must ",
+                                                               "be in colnames(object@meta.data) or in rownames(object).")
+  }
+  
+  object@meta.data[,cluster_col] = gsub("Alpha_","", object@meta.data[,cluster_col])
+  
+  if(!is.null(IDC_summary)){
+    IDC_summary$true_subcluster = gsub("Alpha_","", IDC_summary$true_subcluster)
+    IDC_summary$cluster_of_origin = gsub("Alpha_","", IDC_summary$cluster_of_origin)
+  }
+  
+  if(is.null(colors)){
+    colors = c("#4285F4", "#DB4437", "#F4B400", "#0F9D58", "slategray",
+               grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)])
+    if(color_by %in% colnames(object@meta.data))
+      colors = colors[seq_along(unique(unlist(object[[color_by]])))]
+  }
+  
+  # Annotation
+  annot = as.data.frame(object@meta.data)
+  
+  # Make a color data.frame
+  if(categ){
+    color_df = data.frame(
+      "color_by" = sort(unique(object@meta.data[,color_by])),
+      "color_by_color" = colors
+    )
+  } else {
+    counts = as.numeric(object@assays[[assay]]@counts[color_by,])
+    sel = which(counts >= threshold_to_define_feature_active)
+    counts[] = "Inactive"
+    counts[sel] = "Active"
+    
+    color_df = data.frame(
+      "color_by" = sort(unique(counts)),
+      "color_by_color" = c("red","grey85")
+    )
+    annot[, color_by] = counts
+  }
+  colnames(color_df) = gsub("color_by", color_by, colnames(color_df))
+  
+  
+  clusters = object[[cluster_col]]
+  
+  annot$partition_0 = "Alpha"
+  
+  cluster_list = sapply(clusters, function(i) strsplit(i, split = "_", fixed =TRUE))
+  max_partition_depth = max(sapply(cluster_list, length))
+  for(i in seq_len(max_partition_depth)){
+    annot[,paste0("partition_",i)] = sapply(cluster_list, function(l){
+      paste(l[1:min(i, length(l)) ], collapse = "_") })
+    na_idxs = which(is.na(annot[,paste0("partition_",i)]))
+    if(i > 1 & length(na_idxs)) annot[na_idxs, paste0("partition_",i)] =
+      annot[na_idxs, paste0("partition_",i-1)]
+  }
+  
+  # Table of cell and cluster assignation for each 'partition depth'
+  repartition = annot
+  repartition = repartition[,c(paste0("partition_",0:max_partition_depth), color_by)]
+  
+  # Define all final clusters
+  all_nodes = sapply(paste0("partition_",0:max_partition_depth), 
+                     function(j){unique(repartition[,j])})
+  all_nodes = unique(unlist(all_nodes))
+  
+  # Create adjency matrix for graph
+  adj.mat = matrix(0, nrow = length(all_nodes), ncol = length(all_nodes),
+                   dimnames = list(all_nodes, all_nodes))
+  adj.mat[1, unique(repartition$partition_1)] = 1
+  
+  df = data.frame(name =all_nodes)
+  rownames(df) = df$name
+  
+  df$size = 0
+  df$ndiff = 0
+  df$isFinal = 2
+  prop.base_clust = list()
+  empty = table(repartition[[color_by]])
+  empty[] = 0
+  
+  # Fill adjency matrix with link between nodes (clusters).
+  # Size of nodes reflects the number of cells
+  # Width of edges reflects the number of differential features defining a cluster
+  # Color of nodes reflects the repartition of cells according to the 'color_by'
+  # column
+  for(level in 1:(ncol(repartition)-1)){
+    for(i in unique(repartition[,level])){
+      df$size[df$name == i] = length(which(repartition[,level] == i))
+      if(i %in% repartition[,ncol(repartition)-1]) df$isFinal[df$name == i] = 1
+      # if(is.null(prop.base_clust[[i]])){
+      prop.base_clust[[i]] = empty
+      tab = table(repartition[which(repartition[,level] == i), color_by])
+      prop.base_clust[[i]][match(names(tab), names(empty))] = as.numeric(tab)
+      prop.base_clust[[i]] = as.numeric(prop.base_clust[[i]])
+      # } 
+      if(!is.null(IDC_summary)) {
+        if(i != "Alpha") df$ndiff[df$name == i] = IDC_summary$n_differential[which(IDC_summary$true_subcluster == i)][1]
+      } else {
+        if(i != "Alpha") df$ndiff[df$name == i] = 20
+      }
+      if(level != (ncol(repartition)-1)) adj.mat[i, unique(repartition[,level + 1 ][which(repartition[,level] == i)])] = 1
     }
     
-    object@meta.data[,cluster_col] = gsub("Alpha_","", object@meta.data[,cluster_col])
+  }
+  # Make sure that all the edge have a minimum width of 1
+  df$ndiff[which(df$ndiff == 0)] = 1
+  df$size = node_size_factor * sqrt(50 * df$size / nrow(repartition))
+  df$size[1] = df$size[1] / 1.5
+  df$ndiff = edge_size_factor * log2(df$ndiff+1)
+  g = igraph::simplify( igraph::graph_from_adjacency_matrix(adjmatrix = adj.mat))
+  
+  edges_ids =  igraph::get.edges(g, es = 1:(nrow(df)-1))
+  
+  if(legend) par(mar = c(9, 0, 4, 8) + 0.1)
+  
+  df$pathway = ""
+  if(!is.null(edge_df)){
+    edge_df$Term = gsub(" \\(.*", "", edge_df$Term)
+    edge_df = edge_df %>% group_by(cluster, cluster_of_origin) %>% 
+      dplyr::summarise(Term = head(Term, 1))
+    df$pathway = edge_df$Term[match(df$name, gsub("Alpha_", "",paste0(edge_df$cluster_of_origin, "_", edge_df$cluster)))]
+  }
+  
+  
+  layout = function_layout(g)
+  
+  xpd = par()$xpd
+  par(xpd=NA)
+  plot(g,
+       layout = layout,
+       vertex.shape = c("pie"),             # One of “none”, “circle”, “square”, “csquare”, “rectangle” “crectangle”, “vrectangle”, “pie”, “raster”, or “sphere”
+       vertex.pie = prop.base_clust,
+       rescale=TRUE,
+       vertex.pie.lty = df$isFinal,
+       vertex.pie.color=list(color_df[,paste0(color_by, "_color")]),
+       vertex.size = df$size,                          # Size of the node (default is 15)
+       vertex.size2 = NA,
+       edge.width=df$ndiff[edges_ids[,2]],                        # Edge width, defaults to 1
+       edge.arrow.size=0,                           # Arrow size, defaults to 1
+       edge.arrow.width=0,                          # Arrow width, defaults to 1
+       edge.lty=c("solid"),
+       vertex.label.color=c("black"),
+       vertex.label.family='sans',                   # Font family of the label (e.g.“Times”, “Helvetica”)
+       vertex.label.font=c(1),                  # Font: 1 plain, 2 bold, 3, italic, 4 bold italic, 5 symbol
+       vertex.label.cex=0.125 * log2(df$size),                 # Font size (multiplication factor, device-dependent)
+       vertex.label.dist=c(3,rep(1, nrow(df) -1)),                           # Distance between the label and the vertex
+       vertex.label.degree=c(4.7,rep(90, nrow(df) -1)), 
+       margin = c(-0.2,-1,-0.2,-1),
+       main = color_by,
+       ...)
+  par(xpd = xpd)
+  arguments <- list(...)
+  if(!"edge.label.cex" %in% names(arguments)) edge.label.cex = 0.5 else
+    edge.label.cex = arguments$edge.label.cex
+  
+  plot(g,
+       layout = layout,
+       vertex.shape="none", 
+       edge.arrow.size=0,                           # Arrow size, defaults to 1
+       edge.arrow.width=0,
+       edge.lty=0,
+       edge.width=0,
+       vertex.label.cex = 0,
+       edge.label = lapply(df$pathway[edges_ids[,2]], function(s) paste(strwrap(s, width=20), collapse = "\n")),
+       edge.label.family='sans',     
+       vertex.label="",  
+       edge.label.color='black', 
+       add = TRUE,
+       edge.label.cex = edge.label.cex,
+       ...)
+  
+  if(legend){
+    par(mar = c(5, 4, 4, 2) + 0.1)
+    sizes = c(50, 100, 200, 500, 1000)
+    sizes. = node_size_factor * sqrt(50 * sizes / nrow(repartition))
+    
+    legend(x = 0.5,
+           y = -1.25,
+           ncol = 6,
+           box.lty=0,
+           legend=unique(color_df[,1]),
+           pch=20,
+           xjust = 0.5,
+           pt.cex = 4,
+           y.intersp = 2,
+           col=as.vector(unique(color_df[,2])),
+           xpd = TRUE)
+    
+    legend(x = 1.5,
+           y =1.35,
+           title = "#Ncells",
+           legend=as.character(sizes),
+           box.lty=0,
+           pch=1,
+           cex = 1,
+           pt.cex = sizes./10,
+           y.intersp = 1.5,
+           x.intersp = 2,
+           col="black",
+           xpd = TRUE)
+    
+    
+    text(c(1.5,1.5)  + 0.35, c(0.2,-0.05),
+         labels = c("Final", "Transient"))
+    
+    circle. <- function (r, x0, y0,  ...){
+      t <- seq(0, 2 * pi, by = 0.01)
+      x <- r * cos(t) + x0
+      y <- r * sin(t) + y0
+      lines(x, y, ...)
+    }
+    circle.(r = 0.1,
+            x0 =  1.5,
+            y0 = 0.2,
+            lty = 1, 
+            col = "black",
+            xpd =TRUE)
+    circle.(r = 0.1,
+            x0 = 1.5,
+            y0 =  -0.05,
+            lty = 2, 
+            col = "black",
+            xpd =TRUE)
     
     if(!is.null(IDC_summary)){
-        IDC_summary$true_subcluster = gsub("Alpha_","", IDC_summary$true_subcluster)
-        IDC_summary$cluster_of_origin = gsub("Alpha_","", IDC_summary$cluster_of_origin)
+      sizes = c(5,10,20,50,100)
+      sizes. = edge_size_factor * log2(sizes+1)
+      legend(x = 1.5,
+             y = -0.35,
+             title = "#Nmarkers",
+             legend=as.character(sizes),
+             box.lty=0,
+             lty = 1,
+             cex = 1,
+             lwd = 1.5*sizes.,
+             col = "grey65",
+             y.intersp = c(1.35),
+             x.intersp = 2,
+             xpd = TRUE
+      )
     }
+  }
+  
+  return(color_df)
+}
 
-    if(is.null(colors)){
-        colors = c("#4285F4", "#DB4437", "#F4B400", "#0F9D58", "slategray",
-                   grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = TRUE)])
-        if(color_by %in% colnames(object@meta.data))
-          colors = colors[seq_along(unique(unlist(object[[color_by]])))]
+#' Seurat-Like Heatmap of SingleCellExperiment features x cells
+#'
+#' @param object A SingleCellExperiment object containing IDclusters 
+#' @param DA The differential analysis output from IDclust
+#' @param white.line The size of the white line separating
+#'
+#' @return
+#' @export
+#' 
+#' @importFrom Seurat Idents ScaleData DoHeatmap
+#' @import ggplot2
+#' 
+#' @examples
+#' if(!requireNamespace("patchwork", quietly=TRUE)){
+#' data(scExp)
+#' data(IDC_DA_scEpigenomics)
+#' heatmap_scExp(scExp, IDC_DA_scEpigenomics)
+#' }
+heatmap_scExp = function(scExp, DA, clusters = "All", feature = "Gene", white.line = 25){
+  if(!requireNamespace("patchwork", quietly=TRUE)){
+    warning("Please install patchwork package first.")
+    return()
+  } else{
+    require(patchwork)
+  }
+  if(feature == "Gene") stopifnot("Gene" %in% colnames(DA))
+  DA$IDcluster = paste0(DA$cluster_of_origin, "_", DA$cluster)
+  if(clusters[1] != "All") DA = DA[which(DA$IDcluster %in% clusters),]
+  DA = DA[order(DA$cluster),]
+  
+  if(clusters[1] != "All") {
+    scExp = scExp[,which(scExp$IDcluster %in% clusters)]
+    scExp = scExp[which(rownames(scExp) %in% DA$ID),]
+  }
+  mat = counts(scExp)
+  
+  if(feature == "Gene"){
+    DA_Gene = DA[which(!is.na(DA$Gene)),]
+    rownames(mat)[match( DA_Gene$ID, rownames(mat))] = DA_Gene$Gene
+    DA$Gene[which(is.na(DA$Gene))] = gsub("_", "-", DA$ID[which(is.na(DA$Gene))])
+  }
+  object = CreateSeuratObject(mat, meta.data = as.data.frame(colData(scExp)))
+  Idents(object) = object$IDcluster
+  Seurat::Idents(object) = factor((object$IDcluster))
+  object = Seurat::ScaleData(object, features = rownames(object))
+  
+  lp = list()
+  for(i in 1:length(unique(DA$IDcluster))){
+    if(i == 1) group.bar = TRUE else group.bar = FALSE
+    if(i == 1) margin = margin(50,0,-1000,0) else margin = margin(0,0,-20,0)
+    idclust = levels(Seurat::Idents(object))[i]
+    if(feature == "Gene"){
+      IDs. = DA$Gene[DA$IDcluster == idclust]
+    } else{
+      IDs. = gsub("_", "-", DA$ID[DA$IDcluster == idclust])
     }
-    
-    # Annotation
-    annot = as.data.frame(object@meta.data)
-    
-    # Make a color data.frame
-    if(categ){
-        color_df = data.frame(
-            "color_by" = sort(unique(object@meta.data[,color_by])),
-            "color_by_color" = colors
-        )
-    } else {
-        counts = as.numeric(object@assays[[assay]]@counts[color_by,])
-        sel = which(counts >= threshold_to_define_feature_active)
-        counts[] = "Inactive"
-        counts[sel] = "Active"
-        
-        color_df = data.frame(
-            "color_by" = sort(unique(counts)),
-            "color_by_color" = c("red","grey85")
-        )
-        annot[, color_by] = counts
-    }
-    colnames(color_df) = gsub("color_by", color_by, colnames(color_df))
-    
-    
-    clusters = object[[cluster_col]]
-    
-    annot$partition_0 = "Alpha"
-    
-    cluster_list = sapply(clusters, function(i) strsplit(i, split = "_", fixed =TRUE))
-    max_partition_depth = max(sapply(cluster_list, length))
-    for(i in seq_len(max_partition_depth)){
-        annot[,paste0("partition_",i)] = sapply(cluster_list, function(l){
-            paste(l[1:min(i, length(l)) ], collapse = "_") })
-        na_idxs = which(is.na(annot[,paste0("partition_",i)]))
-        if(i > 1 & length(na_idxs)) annot[na_idxs, paste0("partition_",i)] =
-            annot[na_idxs, paste0("partition_",i-1)]
-    }
-    
-    # Table of cell and cluster assignation for each 'partition depth'
-    repartition = annot
-    repartition = repartition[,c(paste0("partition_",0:max_partition_depth), color_by)]
-    
-    # Define all final clusters
-    all_nodes = sapply(paste0("partition_",0:max_partition_depth), 
-                       function(j){unique(repartition[,j])})
-    all_nodes = unique(unlist(all_nodes))
-    
-    # Create adjency matrix for graph
-    adj.mat = matrix(0, nrow = length(all_nodes), ncol = length(all_nodes),
-                     dimnames = list(all_nodes, all_nodes))
-    adj.mat[1, unique(repartition$partition_1)] = 1
-    
-    df = data.frame(name =all_nodes)
-    rownames(df) = df$name
-    
-    df$size = 0
-    df$ndiff = 0
-    df$isFinal = 2
-    prop.base_clust = list()
-    empty = table(repartition[[color_by]])
-    empty[] = 0
-    
-    # Fill adjency matrix with link between nodes (clusters).
-    # Size of nodes reflects the number of cells
-    # Width of edges reflects the number of differential features defining a cluster
-    # Color of nodes reflects the repartition of cells according to the 'color_by'
-    # column
-    for(level in 1:(ncol(repartition)-1)){
-        for(i in unique(repartition[,level])){
-            df$size[df$name == i] = length(which(repartition[,level] == i))
-            if(i %in% repartition[,ncol(repartition)-1]) df$isFinal[df$name == i] = 1
-            # if(is.null(prop.base_clust[[i]])){
-            prop.base_clust[[i]] = empty
-            tab = table(repartition[which(repartition[,level] == i), color_by])
-            prop.base_clust[[i]][match(names(tab), names(empty))] = as.numeric(tab)
-            prop.base_clust[[i]] = as.numeric(prop.base_clust[[i]])
-            # } 
-            if(!is.null(IDC_summary)) {
-                if(i != "Alpha") df$ndiff[df$name == i] = IDC_summary$n_differential[which(IDC_summary$true_subcluster == i)][1]
-            } else {
-                if(i != "Alpha") df$ndiff[df$name == i] = 20
-            }
-            if(level != (ncol(repartition)-1)) adj.mat[i, unique(repartition[,level + 1 ][which(repartition[,level] == i)])] = 1
-        }
-        
-    }
-    # Make sure that all the edge have a minimum width of 1
-    df$ndiff[which(df$ndiff == 0)] = 1
-    df$size = node_size_factor * sqrt(50 * df$size / nrow(repartition))
-    df$size[1] = df$size[1] / 1.5
-    df$ndiff = edge_size_factor * log2(df$ndiff+1)
-    g = igraph::simplify( igraph::graph_from_adjacency_matrix(adjmatrix = adj.mat))
-    
-    edges_ids =  igraph::get.edges(g, es = 1:(nrow(df)-1))
-    
-    if(legend) par(mar = c(9, 0, 4, 8) + 0.1)
-    
-    df$pathway = ""
-    if(!is.null(edge_df)){
-        edge_df$Term = gsub(" \\(.*", "", edge_df$Term)
-        edge_df = edge_df %>% group_by(cluster, cluster_of_origin) %>% 
-            dplyr::summarise(Term = head(Term, 1))
-        df$pathway = edge_df$Term[match(df$name, gsub("Alpha_", "",paste0(edge_df$cluster_of_origin, "_", edge_df$cluster)))]
-    }
-    
-
-    layout = function_layout(g)
-
-    xpd = par()$xpd
-    par(xpd=NA)
-    plot(g,
-         layout = layout,
-         vertex.shape = c("pie"),             # One of “none”, “circle”, “square”, “csquare”, “rectangle” “crectangle”, “vrectangle”, “pie”, “raster”, or “sphere”
-         vertex.pie = prop.base_clust,
-         rescale=TRUE,
-         vertex.pie.lty = df$isFinal,
-         vertex.pie.color=list(color_df[,paste0(color_by, "_color")]),
-         vertex.size = df$size,                          # Size of the node (default is 15)
-         vertex.size2 = NA,
-         edge.width=df$ndiff[edges_ids[,2]],                        # Edge width, defaults to 1
-         edge.arrow.size=0,                           # Arrow size, defaults to 1
-         edge.arrow.width=0,                          # Arrow width, defaults to 1
-         edge.lty=c("solid"),
-         vertex.label.color=c("black"),
-         vertex.label.family='sans',                   # Font family of the label (e.g.“Times”, “Helvetica”)
-         vertex.label.font=c(1),                  # Font: 1 plain, 2 bold, 3, italic, 4 bold italic, 5 symbol
-         vertex.label.cex=0.125 * log2(df$size),                 # Font size (multiplication factor, device-dependent)
-         vertex.label.dist=c(3,rep(1, nrow(df) -1)),                           # Distance between the label and the vertex
-         vertex.label.degree=c(4.7,rep(90, nrow(df) -1)), 
-         margin = c(-0.2,-1,-0.2,-1),
-         main = color_by,
-         ...)
-     par(xpd = xpd)
-    arguments <- list(...)
-    if(!"edge.label.cex" %in% names(arguments)) edge.label.cex = 0.5 else
-      edge.label.cex = arguments$edge.label.cex
-    
-    plot(g,
-         layout = layout,
-         vertex.shape="none", 
-         edge.arrow.size=0,                           # Arrow size, defaults to 1
-         edge.arrow.width=0,
-         edge.lty=0,
-         edge.width=0,
-         vertex.label.cex = 0,
-         edge.label = lapply(df$pathway[edges_ids[,2]], function(s) paste(strwrap(s, width=20), collapse = "\n")),
-         edge.label.family='sans',     
-         vertex.label="",  
-         edge.label.color='black', 
-         add = TRUE,
-         edge.label.cex = edge.label.cex,
-         ...)
-
-    if(legend){
-        par(mar = c(5, 4, 4, 2) + 0.1)
-        sizes = c(50, 100, 200, 500, 1000)
-        sizes. = node_size_factor * sqrt(50 * sizes / nrow(repartition))
-        
-        legend(x = 0.5,
-               y = -1.25,
-               ncol = 6,
-               box.lty=0,
-               legend=unique(color_df[,1]),
-               pch=20,
-               xjust = 0.5,
-               pt.cex = 4,
-               y.intersp = 2,
-               col=as.vector(unique(color_df[,2])),
-               xpd = TRUE)
-        
-        legend(x = 1.5,
-               y =1.35,
-               title = "#Ncells",
-               legend=as.character(sizes),
-               box.lty=0,
-               pch=1,
-               cex = 1,
-               pt.cex = sizes./10,
-               y.intersp = 1.5,
-               x.intersp = 2,
-               col="black",
-               xpd = TRUE)
-        
-        
-        text(c(1.5,1.5)  + 0.35, c(0.2,-0.05),
-             labels = c("Final", "Transient"))
-        
-        circle. <- function (r, x0, y0,  ...){
-            t <- seq(0, 2 * pi, by = 0.01)
-            x <- r * cos(t) + x0
-            y <- r * sin(t) + y0
-            lines(x, y, ...)
-        }
-        circle.(r = 0.1,
-                x0 =  1.5,
-                y0 = 0.2,
-                lty = 1, 
-                col = "black",
-                xpd =TRUE)
-        circle.(r = 0.1,
-                x0 = 1.5,
-                y0 =  -0.05,
-                lty = 2, 
-                col = "black",
-                xpd =TRUE)
-        
-        if(!is.null(IDC_summary)){
-            sizes = c(5,10,20,50,100)
-            sizes. = edge_size_factor * log2(sizes+1)
-            legend(x = 1.5,
-                   y = -0.35,
-                   title = "#Nmarkers",
-                   legend=as.character(sizes),
-                   box.lty=0,
-                   lty = 1,
-                   cex = 1,
-                   lwd = 1.5*sizes.,
-                   col = "grey65",
-                   y.intersp = c(1.35),
-                   x.intersp = 2,
-                   xpd = TRUE
-            )
-        }
-    }
-    
-    return(color_df)
+    lp[[idclust]] = Seurat::DoHeatmap(object, group.bar = group.bar, combine = TRUE,
+                                      features = IDs., angle = 90, size = 2,
+                                      raster = T, lines.width = white.line) +
+      scale_fill_viridis_c() + NoLegend() +  theme(plot.margin = margin,
+                                                   axis.text =  element_text(size = 5))
+  }
+  
+  heights = sapply(unique(levels(Seurat::Idents(object))), function(i) length(DA$ID[DA$IDcluster == i]))
+  heights[1] = heights[1] + 10
+  wrap_plots(lp) + plot_layout(nrow = length(unique(levels(Seurat::Idents(object)))), heights = heights)
+  
 }
 

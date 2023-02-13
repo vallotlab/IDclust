@@ -537,7 +537,8 @@ iterative_differential_clustering.default <- function(
                 object. = processing_function(object., n_dims = n_dims, dim_red = dim_red)
                 
                 # Re-clustering sub-cluster
-                k = max(10, min(max_k, k_percent * ncol(object.))) # select a k according to the number of cells 
+                k = max(10, min(max_k, k_percent * ncol(object.))) # select a k according to the number of cells
+                if(verbose) cat("Reclustering with k =", k, "and resolution =", resolution, "\n")
                 object.. = ChromSCape::find_clusters_louvain_scExp(object., k = k, resolution =  resolution,
                                                                    use.dimred = dim_red)
                 object.$IDcluster <- paste0(LETTERS[partition_depth],gsub("C", "", object..$cell_cluster))

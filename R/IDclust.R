@@ -624,6 +624,7 @@ iterative_differential_clustering.default <- function(
     if(saving){
         # Table of differential features for each re-clustering
         IDC_DA = do.call("rbind", list_res)
+        IDC_DA$IDcluster =  paste0(IDC_DA$cluster_of_origin, "_", IDC_DA$cluster)
         write.csv(IDC_DA, file = file.path(output_dir, "IDC_DA.csv"), quote = FALSE, row.names = FALSE)
         
         # List of embedding of each re-clustered cluster
@@ -1043,6 +1044,7 @@ iterative_differential_clustering.Seurat <- function(
     if(saving){
         # Table of differential features for each re-clustering
         IDC_DA = do.call("rbind", list_res)
+        IDC_DA$IDcluster =  paste0(IDC_DA$cluster_of_origin, "_", IDC_DA$cluster)
         write.csv(IDC_DA, file = file.path(output_dir, "IDC_DA.csv"), quote = FALSE, row.names = FALSE)
         
         # List of embedding of each re-clustered cluster

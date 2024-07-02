@@ -719,7 +719,7 @@ find_differentiated_clusters.Seurat <- function(object,
             
             res. = res[which(res$cluster == cluster_u[i]),]
             diffmat_n$n_differential[i] = nrow(res.)
-            if(verbose) cat(cluster_u[i],"- Found",diffmat_n$n_differential[i], "differential regions.\n")
+            if(verbose) cat(cluster_u[i],"- Found",diffmat_n$n_differential[i], "differential genes.\n")
             if(diffmat_n$n_differential[i] < limit){
                 if(verbose) cat(cluster_u[i], " cluster has less than", limit, "enriched features.\nAssigning the cells to cluster of origin.\n")
                 diffmat_n$true_subcluster[i] = cluster_of_origin

@@ -1043,8 +1043,15 @@ iterative_differential_clustering.Seurat <- function(
     ## Saving results
     if(saving){
         # Table of differential features for each re-clustering
+        
         IDC_DA = do.call("rbind", list_res)
-        IDC_DA$IDcluster =  paste0(IDC_DA$cluster_of_origin, "_", IDC_DA$cluster)
+        if(nrow(IDC_DA) > 0){
+          IDC_DA$IDcluster =  paste0(IDC_DA$cluster_of_origin, "_", IDC_DA$cluster)
+        } else{
+          IDC_DA$IDcluster = character(0)
+          warning("There were no differential genes found between clusters, keeping first round only.")
+        }
+        
         write.csv(IDC_DA, file = file.path(output_dir, "IDC_DA.csv"), quote = FALSE, row.names = FALSE)
         
         # List of embedding of each re-clustered cluster

@@ -61,8 +61,9 @@ add_gene_to_DA_list <- function(
     }
     IDC_DA = do.call("rbind", IDC_DA_list)
     rownames(IDC_DA) = NULL
+    colnames(IDC_DA)[colnames(IDC_DA) == "Gene"] = "gene"
     
-    return(IDC_DA)
+    return(as.data.frame(IDC_DA))
 }
 
 

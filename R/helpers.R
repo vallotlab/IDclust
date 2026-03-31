@@ -50,7 +50,7 @@ create_pseudobulk_mat.Seurat <- function(object,
                                       by = "IDcluster",
                                       biological_replicate_col = NULL,
                                       assay = "RNA"){
-  raw_mat = object@assays[[assay]]@counts
+  raw_mat = Seurat::GetAssayData(object, assay = assay, layer = "counts")
   meta = object@meta.data
   
   cluster_u = unique(meta[[by]])

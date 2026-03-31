@@ -202,7 +202,8 @@ differential_edgeR_pseudobulk_LRT.Seurat <- function(object,
         tab = edgeR::topTags(lrt, n = nrow(lrt$table), adjust.method = "BH" ,
                              p.value = 2, sort.by = "logFC") # take all, do the filtering later on
         tab = tab$table
-        binmat = Matrix::Matrix((object@assays[[assay]]@counts > 0) + 0, sparse = TRUE)
+        mat. = Seurat::GetAssayData(object, assay = assay, layer = "counts")
+        binmat = Matrix::Matrix((mat. > 0) + 0, sparse = TRUE)
         pct.1 = Matrix::rowSums(binmat[,which(object@meta.data[,by] == cluster_u[i])]) / length(which(object@meta.data[,by] == cluster_u[i]))
         pct.2 = Matrix::rowSums(binmat[,which(object@meta.data[,by]!= cluster_u[i])]) / length(which(object@meta.data[,by] != cluster_u[i]))
         

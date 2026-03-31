@@ -173,7 +173,7 @@ differential_edgeR_pseudobulk_LRT.Seurat <- function(object,
                                                      qval.th = 0.01,
                                                      min.pct = 0.2
 ){
-  raw_mat = object@assays[[assay]]@counts
+  raw_mat = Seurat::GetAssayData(object, assay = assay, layer = "counts")
   meta = object@meta.data
   
   cluster_u = unique(meta[,by])
